@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary
 {
-    internal enum NsfwLevel : byte
+    public enum NsfwLevel : byte
     {
         Default = 0,
         Explicit = 1,

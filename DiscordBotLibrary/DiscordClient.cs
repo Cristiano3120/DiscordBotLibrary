@@ -2,6 +2,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using DiscordBotLibrary.GuildCreateEvent;
 
 namespace DiscordBotLibrary
 {
@@ -16,8 +17,11 @@ namespace DiscordBotLibrary
         private int? _lastSequenceNumber = null;
 
         #region Events
-        internal delegate void ReadyEventHandler(object sender, ReadyEventArgs args);
+        internal delegate void ReadyEventHandler(DiscordClient discordClient, ReadyEventArgs args);
         internal event ReadyEventHandler? OnReady;
+
+        internal delegate void GuildCreateEventHandler(DiscordClient discordClient, IGuildCreateEventArgs args);
+        internal event GuildCreateEventHandler? OnGuildCreate;
 
         #endregion
 
@@ -39,15 +43,27 @@ namespace DiscordBotLibrary
 
         #endregion
 
+        /// <summary>
+        /// The <c>first</c> method you have to call after instantiating the DiscordClient.
+        /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot.
+        /// </summary>
+        /// <returns></returns>
         public async Task Start()
         {
-            Logger.LogInfo("Starting Discord client...");
+            try
+            {
+                Logger.LogInfo("Starting Discord client...");
 
-            Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_clientConfig.Version}&encoding=json");
-            await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
+                Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_clientConfig.Version}&encoding=json");
+                await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
 
-            _ = ReceiveMessagesAsync();
-            await SendIdentifyAsync();
+                _ = ReceiveMessagesAsync();
+                await SendIdentifyAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error starting Discord client: {ex.Message}");
+            }
         }
 
         #region ReceivePayload
@@ -106,22 +122,42 @@ namespace DiscordBotLibrary
             switch (events)
             {
                 case Events.READY:
-                    Logger.LogInfo("Received READY event");
-
-                    ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d").Deserialize<ReadyEventArgs>()!;              
-                    OnReady?.Invoke(this, readyEventArgs);
-                    _resumeConnInfos = new ResumeConnInfos
-                    {
-                        SessionId = readyEventArgs.SessionId,
-                        ResumeGatewayUri = new Uri(readyEventArgs.ResumeGatewayUri)
-                    };
-
+                    HandleReadyEvent(jsonElement);
+                    break;
+                case Events.GUILD_CREATE:
+                    HandleGuildCreateEvent(jsonElement);
                     break;
                 default:
                     Logger.LogWarning($"Unhandled event: {events}.");
                     break;
             }
         }
+
+        #region HandleEvents
+
+        internal void HandleReadyEvent(JsonElement jsonElement)
+        {
+            ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d").Deserialize<ReadyEventArgs>()!;
+            OnReady?.Invoke(this, readyEventArgs);
+
+            _resumeConnInfos = new ResumeConnInfos
+            {
+                SessionId = readyEventArgs.SessionId,
+                ResumeGatewayUri = new Uri(readyEventArgs.ResumeGatewayUri)
+            };
+        }
+
+        internal void HandleGuildCreateEvent(JsonElement jsonElement)
+        {
+            JsonElement data = jsonElement.GetProperty("d");
+            IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
+                ? data.Deserialize<UnavailableGuildCreateEventArgs>()!
+                : data.Deserialize<GuildCreateEventArgs>()!;
+
+            OnGuildCreate?.Invoke(this, guildCreateEventArgs);
+        }
+
+        #endregion
 
         private async Task HandleReceivedMessage(JsonDocument jsonDocument)
         {
@@ -150,7 +186,7 @@ namespace DiscordBotLibrary
         }
 
         #region SendPayload
-        public async Task SendPayloadWssAsync(object payload)
+        internal async Task SendPayloadWssAsync(object payload)
         {
             string jsonStr = JsonSerializer.Serialize(payload);
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);

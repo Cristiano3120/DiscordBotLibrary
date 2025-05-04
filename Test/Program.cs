@@ -11,6 +11,7 @@ namespace Test
             {
                 LogLevel = LogLevel.Debug,
                 Token = streamReader.ReadToEnd(),
+                Intents = Intents.All,
             };
 
             DiscordClient client = new(discordClientConfig);

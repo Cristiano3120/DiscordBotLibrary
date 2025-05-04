@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary
 {
-    internal enum NotificationLevel : byte
+    public enum NotificationLevel : byte
     {
         AllMessages = 0,
         OnlyMentions = 1,

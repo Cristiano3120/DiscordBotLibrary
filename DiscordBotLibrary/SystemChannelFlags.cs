@@ -1,7 +1,7 @@
 ﻿namespace DiscordBotLibrary
 {
     [Flags]
-    internal enum SystemChannelFlags : byte
+    public enum SystemChannelFlags : byte
     {
         SuppressJoinNotifications = 1 << 0,
         SuppressPremiumSubscriptions = 1 << 1,

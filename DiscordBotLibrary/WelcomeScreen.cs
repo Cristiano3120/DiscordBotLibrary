@@ -2,7 +2,7 @@
 
 namespace DiscordBotLibrary
 {
-    internal readonly struct WelcomeScreen
+    public readonly struct WelcomeScreen
     {
         public string? Description { get; init; }
 

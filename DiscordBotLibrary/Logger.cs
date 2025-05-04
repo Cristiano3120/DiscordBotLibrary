@@ -5,11 +5,45 @@ namespace DiscordBotLibrary
 {
     internal sealed class Logger
     {
+        private const byte MaxAmmountLoggingFiles = 10;
+        private readonly string _pathToLogFile;
         private readonly LogLevel _logLevel;
 
         public Logger(LogLevel logLevel)
         {
+            _pathToLogFile = MaintainLoggingSystem(MaxAmmountLoggingFiles);
             _logLevel = logLevel;
+        }
+
+        private static string MaintainLoggingSystem(int maxAmmountLoggingFiles)
+        {
+            string pathToLoggingDic = GetDynamicPath(@"Logging/");
+            if (!Directory.Exists(pathToLoggingDic))
+            {
+                Directory.CreateDirectory(pathToLoggingDic);
+            }
+            else
+            {
+                string[] files = Directory.GetFiles(pathToLoggingDic, "*.md");
+
+                if (files.Length >= maxAmmountLoggingFiles)
+                {
+                    files = [.. files.OrderBy(File.GetCreationTime)];
+                    // +1 to make room for a new File
+                    int filesToRemove = files.Length - maxAmmountLoggingFiles + 1;
+
+                    for (int i = 0; i < filesToRemove; i++)
+                    {
+                        File.Delete(files[i]);
+                    }
+                }
+            }
+
+            string timestamp = DateTime.Now.ToString("dd-MM-yyyy/HH-mm-ss");
+            string pathToNewFile = GetDynamicPath($"Logging/{timestamp}.md");
+            File.Create(pathToNewFile).Close();
+
+            return pathToNewFile;
         }
 
         private void Write(ConsoleColor color, LogLevel level, string tag, string message)
@@ -17,7 +51,12 @@ namespace DiscordBotLibrary
             Console.ForegroundColor = color;
             if (_logLevel >= level)
             {
-                Console.WriteLine($"[{DateTime.Now}] [{tag}]: {message}");
+                string log = $"[{DateTime.Now}] [{tag}]: {message}";
+                Console.WriteLine(log);
+                using (StreamWriter streamWriter = new(_pathToLogFile, true))
+                {
+                    streamWriter.WriteLine(log);
+                }
             }
             Console.ResetColor();
         }
@@ -101,11 +140,24 @@ namespace DiscordBotLibrary
 
             JsonNode jsonNode = JsonNode.Parse(payload)!;
 
-            string opCode = nameof(OpCode).ToCamelCase();
-            jsonNode[opCode] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
+            jsonNode["op"] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
 
             Console.WriteLine($"[{DateTime.Now:HH: dd: ss}]: {prefix} {jsonNode}");
             Console.WriteLine("");
+        }
+
+        public static string GetDynamicPath(string relativePath)
+        {
+            var projectBasePath = AppContext.BaseDirectory;
+            var binIndex = projectBasePath.IndexOf($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+
+            if (binIndex == -1)
+            {
+                throw new Exception("Could not determine project base path!");
+            }
+
+            projectBasePath = projectBasePath[..binIndex];
+            return Path.Combine(projectBasePath, relativePath);
         }
     }
 }

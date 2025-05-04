@@ -2,24 +2,24 @@
 
 namespace DiscordBotLibrary
 {
-    internal record RoleTags
+    public record RoleTags
     {
         [JsonPropertyName("bot_id")]
-        public string? BotId { get; init; }
+        public string? BotId { get; set; }
 
         [JsonPropertyName("integration_id")]
-        public string? IntegrationId { get; init; }
+        public string? IntegrationId { get; set; }
 
         [JsonPropertyName("premium_subscriber")]
-        public bool? PremiumSubscriber { get; init; }
+        public object? PremiumSubscriber { get; set; }
 
         [JsonPropertyName("subscription_listing_id")]
-        public string? SubscriptionListingId { get; init; }
+        public string? SubscriptionListingId { get; set; }
 
         [JsonPropertyName("available_for_purchase")]
-        public bool? AvailableForPurchase { get; init; }
+        public object? AvailableForPurchase { get; set; }
 
         [JsonPropertyName("guild_connections")]
-        public object? GuildConnections { get; init; }
+        public object? GuildConnections { get; set; }
     }
 }

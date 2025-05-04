@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary
 {
-    internal enum PremiumTier : byte
+    public enum PremiumTier : byte
     {
         None = 0,
         Tier1 = 1,

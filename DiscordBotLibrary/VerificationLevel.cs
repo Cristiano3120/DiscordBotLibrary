@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary
 {
-    internal enum VerificationLevel : byte
+    public enum VerificationLevel : byte
     {
         None = 0,
         Low = 1,

@@ -8,7 +8,7 @@ namespace DiscordBotLibrary
         public int Version { get; init; }
 
         [JsonPropertyName("user")]
-        public DiscordUser? DiscordUser { get; init; }
+        public User? DiscordUser { get; init; }
 
         [JsonPropertyName("session_id")]
         public string SessionId { get; init; } = "";

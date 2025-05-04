@@ -2,7 +2,7 @@
 
 namespace DiscordBotLibrary
 {
-    internal readonly struct AvatarDecorationData
+    public readonly struct AvatarDecorationData
     {
         public string Asset { get; init; }
 

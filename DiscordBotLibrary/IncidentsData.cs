@@ -2,7 +2,7 @@
 
 namespace DiscordBotLibrary
 {
-    internal readonly struct IncidentsData
+    public readonly struct IncidentsData
     {
         [JsonPropertyName("is_critical")]
         public bool IsCritical { get; init; }

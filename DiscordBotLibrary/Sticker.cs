@@ -2,7 +2,7 @@
 
 namespace DiscordBotLibrary
 {
-    internal record Sticker
+    public record Sticker
     {
         public string Id { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
@@ -18,7 +18,7 @@ namespace DiscordBotLibrary
         public string? GuildId { get; init; }
 
         [JsonPropertyName("user")]
-        public DiscordUser? User { get; init; }
+        public User? User { get; init; }
 
         [JsonPropertyName("sort_value")]
         public int? SortValue { get; init; }

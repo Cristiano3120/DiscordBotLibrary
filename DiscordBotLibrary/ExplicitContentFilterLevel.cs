@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary
 {
-    internal enum ExplicitContentFilterLevel : byte
+    public enum ExplicitContentFilterLevel : byte
     {
         Disabled = 0,
         MembersWithoutRoles = 1,

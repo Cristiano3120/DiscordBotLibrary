@@ -2,7 +2,7 @@
 
 namespace DiscordBotLibrary
 {
-    internal readonly struct WelcomeScreenChannel
+    public readonly struct WelcomeScreenChannel
     {
         [JsonPropertyName("channel_id")]
         public string ChannelId { get; init; }
