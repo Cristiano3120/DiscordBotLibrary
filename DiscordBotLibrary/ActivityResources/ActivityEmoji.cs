@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents an emoji used in an activity.
+    /// </summary>
     public readonly struct ActivityEmoji
     {
         /// <summary>

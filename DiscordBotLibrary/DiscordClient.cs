@@ -2,11 +2,10 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using DiscordBotLibrary.GuildCreateEvent;
 
 namespace DiscordBotLibrary
 {
-    public class DiscordClient
+    public sealed class DiscordClient
     {
         internal Logger Logger { get; init; }
         private readonly DiscordClientConfig _clientConfig;
@@ -94,7 +93,7 @@ namespace DiscordBotLibrary
                     Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
-                    await HandleReceivedMessage(jsonDocument);
+                    HandleReceivedMessage(jsonDocument);
 
                     ClearMs(ms);
                 }
@@ -159,7 +158,7 @@ namespace DiscordBotLibrary
 
         #endregion
 
-        private async Task HandleReceivedMessage(JsonDocument jsonDocument)
+        private void HandleReceivedMessage(JsonDocument jsonDocument)
         {
             JsonElement message = jsonDocument.RootElement;
             OpCode opCode = message.GetOpCode();

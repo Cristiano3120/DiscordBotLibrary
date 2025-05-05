@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents a button that is part of an activity.
+    /// </summary>
     public readonly struct ActivityButton
     {
         [JsonPropertyName("label")]

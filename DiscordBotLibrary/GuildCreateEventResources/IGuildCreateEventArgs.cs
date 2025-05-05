@@ -1,10 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.ChannelResources;
-using DiscordBotLibrary.GuildMemberResources;
-using DiscordBotLibrary.PresenceUpdateResources;
-using DiscordBotLibrary.StageInstanceResources;
-
-namespace DiscordBotLibrary.GuildCreateEvent
+﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
     /// <summary>
     /// Represents the extra data provided when a guild is created or becomes available.

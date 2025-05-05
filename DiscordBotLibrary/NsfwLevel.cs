@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents the NSFW level of a Guild
+    /// </summary>
     public enum NsfwLevel : byte
     {
         Default = 0,

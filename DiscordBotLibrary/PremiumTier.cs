@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents the premium tier of a Guild aka the Server boost level.
+    /// </summary>
     public enum PremiumTier : byte
     {
         None = 0,

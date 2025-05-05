@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents a party in an activity
+    /// </summary>
     public readonly struct ActivityParty
     {
         /// <summary>

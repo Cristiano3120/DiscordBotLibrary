@@ -1,10 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.ChannelResources;
-using DiscordBotLibrary.GuildMemberResources;
-using DiscordBotLibrary.PresenceUpdateResources;
-using DiscordBotLibrary.StageInstanceResources;
-
-namespace DiscordBotLibrary.GuildCreateEvent
+﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
     internal class GuildCreateEventArgs : Guild, IGuildCreateEventArgs
     {
@@ -21,27 +15,27 @@ namespace DiscordBotLibrary.GuildCreateEvent
         public int MemberCount { get; init; }
 
         [JsonPropertyName("voice_states")]
-        public VoiceState[] VoiceStates { get; init; }
+        public VoiceState[] VoiceStates { get; init; } = [];
 
         [JsonPropertyName("members")]
-        public GuildMember[] Members { get; init; }
+        public GuildMember[] Members { get; init; } = [];
 
         [JsonPropertyName("channels")]
-        public Channel[] Channels { get; init; }
+        public Channel[] Channels { get; init; } = [];
 
         [JsonPropertyName("threads")]
-        public Channel[] Threads { get; init; }
+        public Channel[] Threads { get; init; } = [];
 
         [JsonPropertyName("presences")]
-        public PresenceUpdate[] Presences { get; init; }
+        public PresenceUpdate[] Presences { get; init; } = [];
 
         [JsonPropertyName("stage_instances")]
-        public StageInstance[] StageInstances { get; init; }
+        public StageInstance[] StageInstances { get; init; } = [];
 
         [JsonPropertyName("guild_scheduled_events")]
-        public GuildScheduledEvent[] GuildScheduledEvents { get; init; }
+        public GuildScheduledEvent[] GuildScheduledEvents { get; init; } = [];
 
         [JsonPropertyName("soundboard_sounds")]
-        public SoundboardSound[] SoundboardSounds { get; init; }
+        public SoundboardSound[] SoundboardSounds { get; init; } = [];
     }
 }

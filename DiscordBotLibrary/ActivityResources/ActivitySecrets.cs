@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents the secrets for an activity.
+    /// </summary>
     public readonly struct ActivitySecrets
     {
         [JsonPropertyName("join")]

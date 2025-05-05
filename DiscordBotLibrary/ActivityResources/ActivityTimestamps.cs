@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents the timestamps of an activity.
+    /// </summary>
     public readonly struct ActivityTimestamps
     {
         /// <summary>

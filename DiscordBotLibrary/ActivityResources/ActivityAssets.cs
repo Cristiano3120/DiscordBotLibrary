@@ -2,6 +2,9 @@
 
 namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Represents the assets of an activity.
+    /// </summary>
     public record ActivityAssets
     {
         /// <summary>

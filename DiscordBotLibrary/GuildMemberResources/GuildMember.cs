@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.GuildMemberResources
+﻿namespace DiscordBotLibrary.GuildMemberResources
 {
     /// <summary>
     /// Represents a guild member in a Discord server.

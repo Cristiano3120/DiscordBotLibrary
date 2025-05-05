@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// An enumeration of all the events that can be received from the Discord API.
+    /// </summary>
     internal enum Events : byte
     {
         // Connection Lifecycle
