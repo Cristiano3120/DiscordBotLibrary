@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents a soundboard sound in a Discord server.

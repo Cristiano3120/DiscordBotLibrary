@@ -1,6 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
     using System.Text.Json.Serialization;
+    using DiscordBotLibrary.RoleResources;
+    using DiscordBotLibrary.StickerResources;
 
     public class Guild
     {

@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Flags for the system channel.
+    /// </summary>
     [Flags]
     public enum SystemChannelFlags : byte
     {

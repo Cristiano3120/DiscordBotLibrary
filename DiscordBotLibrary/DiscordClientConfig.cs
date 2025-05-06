@@ -9,7 +9,7 @@
 
         internal static DiscordClientConfig Default => new()
         {
-            Intents = Intents.ALL_GUILD_EVENTS | Intents.ALL_MESSAGE_EVENTS,
+            Intents = Intents.AllGuildEvents | Intents.AllMessageEvents,
             LogLevel = LogLevel.Info,
             Token = string.Empty,
             Version = 10,

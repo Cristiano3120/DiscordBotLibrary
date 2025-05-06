@@ -1,7 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents a decoration data object for an avatar in Discord.
+    /// </summary>
     public readonly struct AvatarDecorationData
     {
         [JsonPropertyName("asset")]

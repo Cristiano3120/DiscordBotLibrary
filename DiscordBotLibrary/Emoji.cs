@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.RoleResources;
+
+namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents a Discord emoji
@@ -19,7 +21,7 @@
         /// <summary>
         /// Roles allowed to use this emoji
         /// </summary>
-        public string[]? Roles { get; init; }
+        public Role[]? Roles { get; init; }
 
         /// <summary>
         /// The user that created this emoji

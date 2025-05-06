@@ -1,25 +1,68 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
-    public record RoleTags
+    /// <summary>
+    /// Represents tags associated with a Discord role, providing metadata like bot ownership,
+    /// integration origin, and special status like premium subscriber or purchasable roles.
+    /// </summary>
+    public sealed record RoleTags
     {
+        /// <summary>
+        /// The ID of the bot this role belongs to, if any.
+        /// TYPE: Snowflake
+        /// </summary>
         [JsonPropertyName("bot_id")]
-        public string? BotId { get; set; }
+        public string? BotId { get; init; }
 
+        /// <summary>
+        /// The ID of the integration this role belongs to, if any.
+        /// TYPE: Snowflake
+        /// </summary>
         [JsonPropertyName("integration_id")]
-        public string? IntegrationId { get; set; }
+        public string? IntegrationId { get; init; }
 
+        /// <summary>
+        /// Whether this role is the guild's premium subscriber (Booster) role.
+        /// This field is only present and set to null if true, and absent if false.
+        /// </summary>
         [JsonPropertyName("premium_subscriber")]
-        public object? PremiumSubscriber { get; set; }
+        public object? PremiumSubscriber { get; init; }
 
+        /// <summary>
+        /// The ID of this role's subscription SKU and listing, if any.
+        /// TYPE: Snowflake
+        /// </summary>
         [JsonPropertyName("subscription_listing_id")]
-        public string? SubscriptionListingId { get; set; }
+        public string? SubscriptionListingId { get; init; }
 
+        /// <summary>
+        /// Whether this role is available for purchase. This field is only present and set to null if true.
+        /// </summary>
         [JsonPropertyName("available_for_purchase")]
-        public object? AvailableForPurchase { get; set; }
+        public object? AvailableForPurchase { get; init; }
 
+        /// <summary>
+        /// Whether this role is associated with guild connections. Present and set to null if true.
+        /// </summary>
         [JsonPropertyName("guild_connections")]
-        public object? GuildConnections { get; set; }
+        public object? GuildConnections { get; init; }
+
+        /// <summary>
+        /// Indicates whether this role is a premium subscriber role.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsPremiumSubscriber => PremiumSubscriber is not null;
+
+        /// <summary>
+        /// Indicates whether this role is available for purchase.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsAvailableForPurchase => AvailableForPurchase is not null;
+
+        /// <summary>
+        /// Indicates whether this role has guild connections.
+        /// </summary>
+        [JsonIgnore]
+        public bool HasGuildConnections => GuildConnections is not null;
     }
+
 }

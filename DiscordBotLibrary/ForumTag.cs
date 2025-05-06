@@ -25,16 +25,16 @@
         public bool Moderated { get; init; }
 
         /// <summary>
-        /// The ID of a custom emoji associated with this tag.
+        /// The ID of a custom emoji associated with this tag
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("emoji_id")]
         public string? EmojiId { get; init; }
 
         /// <summary>
-        /// The Unicode emoji character associated with this tag.
+        /// The Unicode emoji character associated with this tag
         /// </summary>
         [JsonPropertyName("emoji_name")]
         public string? EmojiName { get; init; }
     }
-
 }
