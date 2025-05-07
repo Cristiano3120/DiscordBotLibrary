@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.StickerResources
+﻿using DiscordBotLibrary.UserResources;
+
+namespace DiscordBotLibrary.StickerResources
 {
     /// <summary>
     /// Represents a sticker object used within Discord.

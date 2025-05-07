@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.GuildMemberResources
+﻿using DiscordBotLibrary.UserResources;
+
+namespace DiscordBotLibrary.GuildMemberResources
 {
     /// <summary>
     /// Represents a guild member in a Discord server.

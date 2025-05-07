@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents the verification level of a Discord server
+    /// </summary>
     public enum VerificationLevel : byte
     {
         None = 0,

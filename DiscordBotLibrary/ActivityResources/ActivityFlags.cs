@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.ActivityResources
 {
+    /// <summary>
+    /// Flags for the activity.
+    /// </summary>
     [Flags]
     public enum ActivityFlags
     {

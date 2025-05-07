@@ -6,6 +6,8 @@ global using DiscordBotLibrary.StageInstanceResources;
 global using DiscordBotLibrary.GuildCreateEventResources;
 global using DiscordBotLibrary.OverwriteResources;
 global using DiscordBotLibrary.ThreadMemberResources;
+global using DiscordBotLibrary.TeamResources;
+global using DiscordBotLibrary.UserResources;
 global using DiscordBotLibrary.ActivityResources;
 global using System.Text.Json.Serialization;
 

@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.ActivityResources
+﻿namespace DiscordBotLibrary.ActivityResources
 {
     /// <summary>
     /// Represents a party in an activity
@@ -15,7 +13,7 @@ namespace DiscordBotLibrary.ActivityResources
 
         /// <summary>
         /// Used to show the party's current and maximum size
-        /// Contains two integers: current size and max size
+        /// Contains two integers: [current size, max size]
         /// </summary>
         [JsonPropertyName("size")]
         public int[]? Size { get; init; }

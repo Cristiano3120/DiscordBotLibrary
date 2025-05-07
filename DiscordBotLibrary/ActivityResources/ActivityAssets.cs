@@ -1,11 +1,9 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.ActivityResources
+﻿namespace DiscordBotLibrary.ActivityResources
 {
     /// <summary>
     /// Represents the assets of an activity.
     /// </summary>
-    public record ActivityAssets
+    public sealed record ActivityAssets
     {
         /// <summary>
         /// See Activity Asset Image

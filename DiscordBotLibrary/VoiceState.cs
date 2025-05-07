@@ -1,24 +1,27 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.GuildMemberResources;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents a voice state in a Discord server.
+    /// </summary>
     public record VoiceState
     {
         /// <summary>
-        /// The guild ID this voice state is for (optional).
+        /// The guild ID this voice state is for (optional).  
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("guild_id")]
         public string? GuildId { get; init; }
 
         /// <summary>
-        /// The channel ID this user is connected to (nullable).
+        /// The channel ID this user is connected to (nullable).  
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("channel_id")]
         public string? ChannelId { get; init; }
 
         /// <summary>
-        /// The user ID this voice state is for.
+        /// The user ID this voice state is for.  
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("user_id")]
         public string UserId { get; init; } = string.Empty;
@@ -83,5 +86,4 @@ namespace DiscordBotLibrary
         [JsonPropertyName("request_to_speak_timestamp")]
         public DateTimeOffset? RequestToSpeakTimestamp { get; init; }
     }
-
 }

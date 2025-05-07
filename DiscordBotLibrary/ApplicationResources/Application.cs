@@ -1,11 +1,9 @@
-﻿using DiscordBotLibrary.TeamResources;
-
-namespace DiscordBotLibrary.ApplicationResources
+﻿namespace DiscordBotLibrary.ApplicationResources
 {
     /// <summary>
     /// Represents a application object in Discord.
     /// </summary>
-    public class Application
+    public sealed record Application
     {
         /// <summary>
         /// Gets the ID of the application.

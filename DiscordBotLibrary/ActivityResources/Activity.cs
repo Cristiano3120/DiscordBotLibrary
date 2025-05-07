@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.ActivityResources
+﻿namespace DiscordBotLibrary.ActivityResources
 {
     /// <summary>
     /// Represents a user's activity (e.g., playing a game, listening to music) in their Discord presence.

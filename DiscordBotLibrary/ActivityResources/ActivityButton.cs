@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.ActivityResources
+﻿namespace DiscordBotLibrary.ActivityResources
 {
     /// <summary>
     /// Represents a button that is part of an activity.

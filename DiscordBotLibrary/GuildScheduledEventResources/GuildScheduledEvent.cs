@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecurrenceRuleResources;
+using DiscordBotLibrary.UserResources;
 
 namespace DiscordBotLibrary.GuildScheduledEventResources
 {

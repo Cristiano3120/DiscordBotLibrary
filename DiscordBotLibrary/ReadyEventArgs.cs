@@ -1,4 +1,5 @@
 ﻿using DiscordBotLibrary.ApplicationResources;
+using DiscordBotLibrary.UserResources;
 
 namespace DiscordBotLibrary
 {

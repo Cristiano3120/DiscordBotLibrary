@@ -1,4 +1,5 @@
 ﻿using DiscordBotLibrary.RoleResources;
+using DiscordBotLibrary.UserResources;
 
 namespace DiscordBotLibrary
 {

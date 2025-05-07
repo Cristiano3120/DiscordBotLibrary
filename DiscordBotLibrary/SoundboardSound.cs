@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.UserResources;
+
+namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents a soundboard sound in a Discord server.

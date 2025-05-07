@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.TeamResources
+﻿using DiscordBotLibrary.UserResources;
+
+namespace DiscordBotLibrary.TeamResources
 {
     /// <summary>
     /// Represents a member of a team.

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using DiscordBotLibrary.UserResources;
 using Activity = DiscordBotLibrary.ActivityResources.Activity;
 
 namespace DiscordBotLibrary.PresenceUpdateResources
