@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.ChannelResources
 {
+    /// <summary>
+    /// Represents the layout type of a forum channel.
+    /// </summary>
     public enum ForumLayoutType : byte
     {
         /// <summary>

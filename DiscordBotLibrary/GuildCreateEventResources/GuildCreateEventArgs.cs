@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
+    /// <summary>
+    /// Represents the extra data provided when a <see cref="Events.GUILD_CREATE"/> event is fired by the Discord API.
+    /// </summary>
     internal class GuildCreateEventArgs : Guild, IGuildCreateEventArgs
     {
         [JsonPropertyName("joined_at")]

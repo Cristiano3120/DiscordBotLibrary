@@ -1,5 +1,9 @@
 ﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
+    /// <summary>
+    /// Represents the extra data provided by the <see cref="Events.GUILD_CREATE"/> event. 
+    /// This object represents a guild that is unavailable.
+    /// </summary>
     internal class UnavailableGuildCreateEventArgs : IGuildCreateEventArgs
     {
         /// <summary>

@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.ChannelResources
 {
+    /// <summary>
+    /// Flags that specify the properties of a channel.
+    /// </summary>
     [Flags]
     public enum ChannelFlags
     {

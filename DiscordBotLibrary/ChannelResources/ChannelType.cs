@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents the type of a Discord channel.
     /// </summary>
-    public enum ChannelType
+    public enum ChannelType : byte
     {
         /// <summary>
         /// A text channel within a server.

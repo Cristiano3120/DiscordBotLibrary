@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.ChannelResources
 {
+    /// <summary>
+    /// Represents the sort order for forum posts in a Discord channel.
+    /// </summary>
     public enum SortOrderType : byte
     {
         /// <summary>

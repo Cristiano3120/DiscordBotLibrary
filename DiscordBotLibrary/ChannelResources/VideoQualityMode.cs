@@ -1,5 +1,8 @@
 ﻿namespace DiscordBotLibrary.ChannelResources
 {
+    /// <summary>
+    /// Represents the video quality mode of a <see cref="Channel"/>.
+    /// </summary>
     public enum VideoQualityMode : byte
     {
         /// <summary>
