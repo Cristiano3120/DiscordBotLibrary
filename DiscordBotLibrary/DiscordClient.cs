@@ -7,7 +7,11 @@ namespace DiscordBotLibrary
 {
     public sealed class DiscordClient
     {
+        // Musst machen das es extra klassen gibt die für den externen dev sind die dann alles kombinieren
+        //Dazu zählt dann auch exxtra Property für Vc, für TextChat etc.
+        public List<DiscordGuild> Guilds { get; init; } = [];
         internal Logger Logger { get; init; }
+
         private readonly DiscordClientConfig _clientConfig;
         private readonly ClientWebSocket _webSocket;
         private readonly HttpClient _httpClient;
@@ -16,11 +20,11 @@ namespace DiscordBotLibrary
         private int? _lastSequenceNumber = null;
 
         #region Events
-        internal delegate void ReadyEventHandler(DiscordClient discordClient, ReadyEventArgs args);
-        internal event ReadyEventHandler? OnReady;
+        public delegate void ReadyEventHandler(DiscordClient discordClient, ReadyEventArgs args);
+        public event ReadyEventHandler? OnReady;
 
-        internal delegate void GuildCreateEventHandler(DiscordClient discordClient, IGuildCreateEventArgs args);
-        internal event GuildCreateEventHandler? OnGuildCreate;
+        public delegate void GuildCreateEventHandler(DiscordClient discordClient, IGuildCreateEventArgs args);
+        public event GuildCreateEventHandler? OnGuildCreate;
 
         #endregion
 
@@ -47,11 +51,16 @@ namespace DiscordBotLibrary
         /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot.
         /// </summary>
         /// <returns></returns>
-        public async Task Start()
+        public async Task StartAsync()
         {
             try
             {
                 Logger.LogInfo("Starting Discord client...");
+
+                AppDomain.CurrentDomain.UnhandledException += (sender, ex) =>
+                {
+                    Logger.LogError(ex);
+                };
 
                 Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_clientConfig.Version}&encoding=json");
                 await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
@@ -118,17 +127,24 @@ namespace DiscordBotLibrary
 
         internal void InvokeEvent(Events events, JsonElement jsonElement)
         {
-            switch (events)
+            try
             {
-                case Events.READY:
-                    HandleReadyEvent(jsonElement);
-                    break;
-                case Events.GUILD_CREATE:
-                    HandleGuildCreateEvent(jsonElement);
-                    break;
-                default:
-                    Logger.LogWarning($"Unhandled event: {events}.");
-                    break;
+                switch (events)
+                {
+                    case Events.READY:
+                        HandleReadyEvent(jsonElement);
+                        break;
+                    case Events.GUILD_CREATE:
+                        HandleGuildCreateEvent(jsonElement);
+                        break;
+                    default:
+                        Logger.LogWarning($"Unhandled event: {events}.");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex);
             }
         }
 
@@ -152,6 +168,16 @@ namespace DiscordBotLibrary
             IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
                 ? data.Deserialize<UnavailableGuildCreateEventArgs>()!
                 : data.Deserialize<GuildCreateEventArgs>()!;
+
+            GuildCreateEventArgs? guildCreate = guildCreateEventArgs.TryGetAvailableGuild();
+            if (guildCreate != null)
+            {
+                Guilds.Add(new DiscordGuild(guildCreate));
+            }
+            else
+            {
+                Guilds.Add(new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!));
+            }
 
             OnGuildCreate?.Invoke(this, guildCreateEventArgs);
         }

@@ -1,12 +1,9 @@
-﻿using DiscordBotLibrary.ApplicationResources;
-using DiscordBotLibrary.UserResources;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents the payload received when the client successfully connects to the Discord Gateway.
     /// </summary>
-    internal record ReadyEventArgs
+    public sealed record ReadyEventArgs
     {
         /// <summary>
         /// API version.

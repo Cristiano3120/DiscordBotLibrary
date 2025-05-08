@@ -1,8 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecurrenceRuleResources;
-using DiscordBotLibrary.UserResources;
-
-namespace DiscordBotLibrary.GuildScheduledEventResources
+﻿namespace DiscordBotLibrary.GuildScheduledEventResources
 {
     /// <summary>
     /// Represents a scheduled event in a guild.
@@ -11,28 +7,28 @@ namespace DiscordBotLibrary.GuildScheduledEventResources
     {
         /// <summary>
         /// Gets the ID of the scheduled event.
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snoflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; }
+        public string Id { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the ID of the guild to which the scheduled event belongs.
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snoflake
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string GuildId { get; init; }
+        public string GuildId { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the ID of the channel where the scheduled event will be hosted, or null if the entity type is EXTERNAL.
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snoflake
         /// </summary>
         [JsonPropertyName("channel_id")]
         public string? ChannelId { get; init; }
 
         /// <summary>
         /// Gets the ID of the user who created the scheduled event. May be null for events created before October 25th, 2021.
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snoflake
         /// </summary>
         [JsonPropertyName("creator_id")]
         public string? CreatorId { get; init; }
@@ -81,7 +77,7 @@ namespace DiscordBotLibrary.GuildScheduledEventResources
 
         /// <summary>
         /// Gets the ID of the entity associated with the scheduled event, or null if none.
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("entity_id")]
         public string? EntityId { get; init; }

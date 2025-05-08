@@ -9,12 +9,12 @@
         /// Gets the Unix timestamp (in milliseconds) when the activity started.
         /// </summary>
         [JsonPropertyName("start")]
-        public int? Start { get; init; }
+        public long? Start { get; init; }
 
         /// <summary>
         /// Gets the Unix timestamp (in milliseconds) when the activity ends.
         /// </summary>
         [JsonPropertyName("end")]
-        public int? End { get; init; }
+        public long? End { get; init; }
     }
 }

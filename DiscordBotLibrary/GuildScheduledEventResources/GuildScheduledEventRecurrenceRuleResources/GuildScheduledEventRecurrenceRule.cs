@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecurrenceRuleResources
+﻿namespace DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecurrenceRuleResources
 {
     // <summary>
     /// Represents the recurrence rule for a scheduled guild event.

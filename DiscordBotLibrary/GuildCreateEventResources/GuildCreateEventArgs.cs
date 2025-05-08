@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents the extra data provided when a <see cref="Events.GUILD_CREATE"/> event is fired by the Discord API.
     /// </summary>
-    internal class GuildCreateEventArgs : Guild, IGuildCreateEventArgs
+    public record GuildCreateEventArgs : Guild, IGuildCreateEventArgs
     {
         [JsonPropertyName("joined_at")]
         public DateTime JoinedAt { get; init; }
@@ -40,5 +40,9 @@
 
         [JsonPropertyName("soundboard_sounds")]
         public SoundboardSound[] SoundboardSounds { get; init; } = [];
+
+        public GuildCreateEventArgs? TryGetAvailableGuild() => this;
+
+        public UnavailableGuildCreateEventArgs? TryGetUnavailableGuild() => null;
     }
 }

@@ -4,7 +4,7 @@
     /// Represents the extra data provided by the <see cref="Events.GUILD_CREATE"/> event. 
     /// This object represents a guild that is unavailable.
     /// </summary>
-    internal class UnavailableGuildCreateEventArgs : IGuildCreateEventArgs
+    public class UnavailableGuildCreateEventArgs : IGuildCreateEventArgs
     {
         /// <summary>
         /// The id of the guild
@@ -48,5 +48,9 @@
 
         [JsonPropertyName("soundboard_sounds")]
         public SoundboardSound[] SoundboardSounds { get; init; } = [];
+
+        public GuildCreateEventArgs? TryGetAvailableGuild() => null;
+
+        public UnavailableGuildCreateEventArgs? TryGetUnavailableGuild() => this;
     }
 }

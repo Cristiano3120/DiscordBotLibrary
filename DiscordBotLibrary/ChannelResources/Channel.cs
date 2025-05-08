@@ -3,7 +3,7 @@
     /// <summary>
     /// Represents a Discord channel object.
     /// </summary>
-    internal sealed record Channel
+    public sealed record Channel
     {
         /// <summary>
         /// TYPE: Snowflake  

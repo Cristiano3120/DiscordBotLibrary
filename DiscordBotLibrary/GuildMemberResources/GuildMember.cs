@@ -1,11 +1,9 @@
-﻿using DiscordBotLibrary.UserResources;
-
-namespace DiscordBotLibrary.GuildMemberResources
+﻿namespace DiscordBotLibrary.GuildMemberResources
 {
     /// <summary>
     /// Represents a guild member in a Discord server.
     /// </summary>
-    public record GuildMember
+    public sealed record GuildMember
     {
         /// <summary>
         /// The user this guild member represents (optional).

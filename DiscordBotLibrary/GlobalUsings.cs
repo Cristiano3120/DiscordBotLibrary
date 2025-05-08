@@ -1,4 +1,5 @@
-﻿global using DiscordBotLibrary.ChannelResources;
+﻿global using DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecurrenceRuleResources;
+global using DiscordBotLibrary.ChannelResources;
 global using DiscordBotLibrary.GuildMemberResources;
 global using DiscordBotLibrary.GuildScheduledEventResources;
 global using DiscordBotLibrary.PresenceUpdateResources;
@@ -9,5 +10,7 @@ global using DiscordBotLibrary.ThreadMemberResources;
 global using DiscordBotLibrary.TeamResources;
 global using DiscordBotLibrary.UserResources;
 global using DiscordBotLibrary.ActivityResources;
+global using DiscordBotLibrary.ApplicationResources;
+global using DiscordBotLibrary.ExternalExtraClasses;
 global using System.Text.Json.Serialization;
 

@@ -1,9 +1,19 @@
 ﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
     /// <summary>
-    /// Represents the extra data provided when a guild is created or becomes available.
+    /// Represents the extra data provided when a guild is created or becomes available. 
+    /// <para>
+    /// /// You have to convert this object to the correct type.
+    /// The correct type is determined by the <see cref="Unavailable"/> property 
+    /// and can either be <see cref="GuildCreateEventArgs"/> or <see cref="UnavailableGuildCreateEventArgs"/>.
+    /// </para>
+    /// 
+    /// <para>
+    /// This object is probably an <see cref="GuildCreateEventArgs"/> object 
+    /// as an <see cref="UnavailableGuildCreateEventArgs"/> obj only gets sent when the Guild has an outage.
+    /// </para>
     /// </summary>
-    internal interface IGuildCreateEventArgs
+    public interface IGuildCreateEventArgs
     {
         /// <summary>
         /// Gets the date and time when this guild was joined.
@@ -78,5 +88,23 @@
         /// </summary>
         [JsonPropertyName("soundboard_sounds")]
         public SoundboardSound[] SoundboardSounds { get; init; }
+
+        /// <summary>
+        /// Trys to convert the <see cref="IGuildCreateEventArgs"/> to an <see cref="GuildCreateEventArgs"/> object.
+        /// </summary>
+        /// <returns>
+        /// <para><c>If</c> convertable (<see cref="Unavailable"/> == <c>false</c>) an obj of type <see cref="GuildCreateEventArgs"/></para>
+        /// <c>else</c> <c>null</c>.
+        /// </returns>
+        public GuildCreateEventArgs? TryGetAvailableGuild();
+
+        /// <summary>
+        /// Trys to convert the <see cref="IGuildCreateEventArgs"/> to an <see cref="GuildCreateEventArgs"/> object.
+        /// </summary>
+        /// <returns>
+        /// <para><c>If</c> convertable (<see cref="Unavailable"/> == <c>true</c>) an obj of type <see cref="GuildCreateEventArgs"/></para>
+        /// <c>else</c> <c>null</c>.
+        /// </returns>
+        public UnavailableGuildCreateEventArgs? TryGetUnavailableGuild();
     }
 }

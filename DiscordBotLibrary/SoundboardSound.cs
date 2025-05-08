@@ -31,7 +31,7 @@ namespace DiscordBotLibrary
         /// The id of this sound's custom emoji
         /// TYPE: SNOWFLAKE
         /// </summary>
-        [JsonPropertyName("emoji_name")]
+        [JsonPropertyName("emoji_id")]
         public string? EmojiId { get; init; }
 
         /// <summary>
