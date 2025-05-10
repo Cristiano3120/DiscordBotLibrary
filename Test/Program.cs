@@ -1,6 +1,5 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ExternalExtraClasses;
-using DiscordBotLibrary.GuildCreateEventResources;
 
 namespace Test
 {
@@ -29,13 +28,9 @@ namespace Test
             Console.WriteLine("Ready!");
         }
 
-        private static void Client_OnGuildCreate(DiscordClient discordClient, IGuildCreateEventArgs args)
+        private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
         {
-            Console.WriteLine($"Guild created: {args}");
-            if (args is GuildCreateEventArgs guildCreateEventArgs)
-            {
-                DiscordGuild guild = new(guildCreateEventArgs);
-            }
+            
         }
     }
 }

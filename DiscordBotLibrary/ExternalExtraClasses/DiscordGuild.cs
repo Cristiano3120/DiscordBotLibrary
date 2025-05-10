@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// Represents a Discord guild.
+    /// If <c>Unavailable</c> is <c>true</c> most of the properties will be <c>null</c>.
     /// </summary>
     public record DiscordGuild : GuildCreateEventArgs
     {

@@ -5,8 +5,7 @@ namespace DiscordBotLibrary.TeamResources
     /// <summary>
     /// Represents the role of a team member in a Discord team.
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum TeamMemberRole
+    public enum TeamMemberRole : byte
     {
         /// <summary>
         /// Owners are the most permissible role, and can take destructive, irreversible actions like deleting team-owned apps or the team itself. Teams are limited to 1 owner.

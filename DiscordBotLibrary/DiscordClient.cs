@@ -3,19 +3,33 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
+
 namespace DiscordBotLibrary
 {
+    /// <summary>
+    /// Represents the main class for interacting with the Discord API.
+    /// </summary>
     public sealed class DiscordClient
     {
-        // Musst machen das es extra klassen gibt die für den externen dev sind die dann alles kombinieren
-        //Dazu zählt dann auch exxtra Property für Vc, für TextChat etc.
         public List<DiscordGuild> Guilds { get; init; } = [];
         internal Logger Logger { get; init; }
+        internal DiscordClientConfig ClientConfig { get; init; }
+        internal JsonSerializerOptions JsonSerializerOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters =
+            {
+                new EnumMemberConverter<PresenceStatus>(),
+                new EnumMemberConverter<TeamMemberRole>(),
+                new EnumMemberConverter<OAuth2Scope>(),
+                new EnumMemberConverter<Language>(),
+            }
+        };
 
-        private readonly DiscordClientConfig _clientConfig;
-        private readonly ClientWebSocket _webSocket;
+        private ResumeConnInfos _resumeConnInfos = ResumeConnInfos.EmptyConnInfos;
         private readonly HttpClient _httpClient;
-        private ResumeConnInfos _resumeConnInfos;
+        private ClientWebSocket _webSocket;
 
         private int? _lastSequenceNumber = null;
 
@@ -23,7 +37,7 @@ namespace DiscordBotLibrary
         public delegate void ReadyEventHandler(DiscordClient discordClient, ReadyEventArgs args);
         public event ReadyEventHandler? OnReady;
 
-        public delegate void GuildCreateEventHandler(DiscordClient discordClient, IGuildCreateEventArgs args);
+        public delegate void GuildCreateEventHandler(DiscordClient discordClient, DiscordGuild args);
         public event GuildCreateEventHandler? OnGuildCreate;
 
         #endregion
@@ -33,15 +47,15 @@ namespace DiscordBotLibrary
 
         public DiscordClient(DiscordClientConfig clientConfig)
         {
-            _clientConfig = clientConfig;
-            Logger = new Logger(_clientConfig.LogLevel);
+            ClientConfig = clientConfig;
+            Logger = new Logger(ClientConfig.LogLevel);
             _webSocket = new ClientWebSocket();
 
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri($"https://discord.com/api/v{_clientConfig}/"),
+                BaseAddress = new Uri($"https://discord.com/api/v{ClientConfig}/"),
             };
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", _clientConfig.Token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
         }
 
         #endregion
@@ -62,15 +76,14 @@ namespace DiscordBotLibrary
                     Logger.LogError(ex);
                 };
 
-                Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_clientConfig.Version}&encoding=json");
+                Uri gatewayUri = new($"wss://gateway.discord.gg/?v={ClientConfig.Version}&encoding=json");
                 await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
 
                 _ = ReceiveMessagesAsync();
-                await SendIdentifyAsync();
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error starting Discord client: {ex.Message}");
+                Logger.LogError(ex);
             }
         }
 
@@ -102,13 +115,13 @@ namespace DiscordBotLibrary
                     Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
-                    HandleReceivedMessage(jsonDocument);
+                    await HandleReceivedMessage(jsonDocument);
 
                     ClearMs(ms);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error receiving message: {ex.Message}");
+                    Logger.LogError(ex);
                 }
             }
 
@@ -152,7 +165,7 @@ namespace DiscordBotLibrary
 
         internal void HandleReadyEvent(JsonElement jsonElement)
         {
-            ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d").Deserialize<ReadyEventArgs>()!;
+            ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d").Deserialize<ReadyEventArgs>(JsonSerializerOptions)!;
             OnReady?.Invoke(this, readyEventArgs);
 
             _resumeConnInfos = new ResumeConnInfos
@@ -166,25 +179,20 @@ namespace DiscordBotLibrary
         {
             JsonElement data = jsonElement.GetProperty("d");
             IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
-                ? data.Deserialize<UnavailableGuildCreateEventArgs>()!
-                : data.Deserialize<GuildCreateEventArgs>()!;
+                ? data.Deserialize<UnavailableGuildCreateEventArgs>(JsonSerializerOptions)!
+                : data.Deserialize<GuildCreateEventArgs>(JsonSerializerOptions)!;
 
             GuildCreateEventArgs? guildCreate = guildCreateEventArgs.TryGetAvailableGuild();
-            if (guildCreate != null)
-            {
-                Guilds.Add(new DiscordGuild(guildCreate));
-            }
-            else
-            {
-                Guilds.Add(new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!));
-            }
+            DiscordGuild discordGuild = guildCreate is null
+                ? new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!)
+                : new DiscordGuild(guildCreate);
 
-            OnGuildCreate?.Invoke(this, guildCreateEventArgs);
+            OnGuildCreate?.Invoke(this, discordGuild);
         }
 
         #endregion
 
-        private void HandleReceivedMessage(JsonDocument jsonDocument)
+        private async Task HandleReceivedMessage(JsonDocument jsonDocument)
         {
             JsonElement message = jsonDocument.RootElement;
             OpCode opCode = message.GetOpCode();
@@ -197,29 +205,36 @@ namespace DiscordBotLibrary
                         _lastSequenceNumber = HandleDiscordPayload.HandleDispatch(message, this);
                         break;
                     case OpCode.Hello:
-                        HandleDiscordPayload.HandleHelloEvent(message, this);
+                        await HandleDiscordPayload.HandleHelloEvent(message, this, _resumeConnInfos, _lastSequenceNumber);
                         break;
                     case OpCode.HeartbeatAck:
                         Logger.LogDebug("Heartbeat acknowledged.");
+                        break;
+                    case OpCode.Reconnect:
+                        Logger.LogWarning("Reconnect requested.");
+                        await HandleDiscordPayload.HandleResumeConnAsync(this, _webSocket, _resumeConnInfos);
+                        break;
+                    case OpCode.InvalidSession:
+                        throw new NotImplementedException("Invalid session is not implemented yet.");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error handling message: {ex.Message}");
+                Logger.LogError(ex);
             }
         }
 
         #region SendPayload
         internal async Task SendPayloadWssAsync(object payload)
         {
-            string jsonStr = JsonSerializer.Serialize(payload);
+            string jsonStr = JsonSerializer.Serialize(payload, JsonSerializerOptions);
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
             await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
-        private async Task SendIdentifyAsync()
+        internal async Task SendIdentifyAsync()
         {
             Logger.LogInfo("Sending Identify payload");
             var identifyPayload = new
@@ -227,14 +242,14 @@ namespace DiscordBotLibrary
                 op = OpCode.Identify,
                 d = new
                 {
-                    token = _clientConfig.Token,
+                    token = ClientConfig.Token,
                     properties = new
                     {
                         os = Environment.OSVersion.Platform.ToString(),
                         browser = "DiscordBotLibrary",
                         device = "DiscordBotLibrary"
                     },
-                    intents = _clientConfig.Intents,
+                    intents = ClientConfig.Intents,
                 }
             };
 

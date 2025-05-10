@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace DiscordBotLibrary
+namespace DiscordBotLibrary.Json
 {
     internal static class JsonExtensions
     {

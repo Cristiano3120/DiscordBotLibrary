@@ -5,7 +5,6 @@ namespace DiscordBotLibrary
     /// <summary>
     /// Represents Discord-supported user locales.
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum Language
     {
         [EnumMember(Value = "id")]

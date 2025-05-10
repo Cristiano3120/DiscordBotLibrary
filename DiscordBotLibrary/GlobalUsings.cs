@@ -13,4 +13,5 @@ global using DiscordBotLibrary.ActivityResources;
 global using DiscordBotLibrary.ApplicationResources;
 global using DiscordBotLibrary.ExternalExtraClasses;
 global using System.Text.Json.Serialization;
+global using DiscordBotLibrary.Json;
 
