@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using DiscordBotLibrary.Sharding;
+using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -12,9 +13,7 @@ namespace DiscordBotLibrary
     public sealed class DiscordClient
     {
         public List<DiscordGuild> Guilds { get; private set; } = [];
-        internal Logger Logger { get; init; }
-        internal DiscordClientConfig ClientConfig { get; init; }
-        internal JsonSerializerOptions JsonSerializerOptions = new()
+        internal static JsonSerializerOptions JsonSerializerOptions { get; private set; } = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true,
@@ -27,6 +26,8 @@ namespace DiscordBotLibrary
                 new SnowflakeConverter(),
             }
         };
+        internal DiscordClientConfig ClientConfig { get; init; }
+        internal static Logger Logger { get; private set; } = default!;
 
         private ResumeConnInfos _resumeConnInfos = ResumeConnInfos.EmptyConnInfos;
         private readonly HttpClient _httpClient;
@@ -35,8 +36,8 @@ namespace DiscordBotLibrary
         private int? _lastSequenceNumber = null;
 
         #region Events
-        public event Action<DiscordClient, ReadyEventArgs>? OnReady;
         public event Action<DiscordClient, DiscordGuild>? OnGuildCreate;
+        public event Action<DiscordClient, ReadyEventArgs>? OnReady;
 
         #endregion
 
@@ -93,6 +94,7 @@ namespace DiscordBotLibrary
                 await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
 
                 _ = ReceiveMessagesAsync();
+                ShardHandler shardHandler = new(_httpClient);
             }
             catch (Exception ex)
             {
@@ -289,9 +291,5 @@ namespace DiscordBotLibrary
             }
         }
         #endregion
-
-        private static int GetResponsibleShardId(ulong guildId, int totalShards)
-            => (int)((guildId >> 22) % (ulong)totalShards);
-        
     }
 }

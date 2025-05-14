@@ -30,7 +30,7 @@ namespace Test
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
         {
-            Console.WriteLine(args.Id);
+            Console.WriteLine($"Guild received: {args.Name}");
         }
     }
 }

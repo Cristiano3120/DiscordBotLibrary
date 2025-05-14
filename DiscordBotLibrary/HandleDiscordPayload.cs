@@ -21,7 +21,7 @@ namespace DiscordBotLibrary
 
             if (resumeConnInfos != ResumeConnInfos.EmptyConnInfos)
             {
-                client.Logger.LogDebug("Resuming connection.");
+                DiscordClient.Logger.LogDebug("Resuming connection.");
                 var payload = new
                 {
                     op = OpCode.Resume,
@@ -56,7 +56,7 @@ namespace DiscordBotLibrary
             }
             catch (Exception ex)
             {
-                client.Logger.LogError(ex);
+                DiscordClient.Logger.LogError(ex);
             }
         }
 
