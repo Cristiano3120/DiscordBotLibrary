@@ -1,9 +1,5 @@
 ﻿namespace DiscordBotLibrary
 {
-    using System.Text.Json.Serialization;
-    using DiscordBotLibrary.RoleResources;
-    using DiscordBotLibrary.StickerResources;
-
     public record Guild
     {
         /// <summary>
@@ -11,7 +7,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// Guild name (2-100 characters, excluding trailing and leading whitespace)

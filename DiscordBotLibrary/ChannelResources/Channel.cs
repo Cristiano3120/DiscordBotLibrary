@@ -10,7 +10,8 @@
         /// The ID of this channel.
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// The type of channel.
@@ -23,7 +24,8 @@
         /// The ID of the guild (may be missing for some channel objects received over gateway guild dispatches).
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string? GuildId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? GuildId { get; init; }
 
         /// <summary>
         /// Sorting position of the channel (channels with the same position are sorted by ID).
@@ -62,7 +64,8 @@
         /// The ID of the last message sent in this channel or thread.
         /// </summary>
         [JsonPropertyName("last_message_id")]
-        public string? LastMessageId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? LastMessageId { get; init; }
 
         /// <summary>
         /// The bitrate (in bits) of the voice channel.
@@ -99,14 +102,16 @@
         /// ID of the creator of the group DM or thread.
         /// </summary>
         [JsonPropertyName("owner_id")]
-        public string? OwnerId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? OwnerId { get; init; }
 
         /// <summary>
         /// TYPE: Snowflake  
         /// Application ID of the group DM creator if bot-created.
         /// </summary>
         [JsonPropertyName("application_id")]
-        public string? ApplicationId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? ApplicationId { get; init; }
 
         /// <summary>
         /// Whether the channel is managed by an application via the gdm.join OAuth2 scope.
@@ -120,7 +125,8 @@
         /// For threads: ID of the text channel this thread was created in.
         /// </summary>
         [JsonPropertyName("parent_id")]
-        public string? ParentId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? ParentId { get; init; }
 
         /// <summary>
         /// ISO8601 timestamp of when the last pinned message was pinned.

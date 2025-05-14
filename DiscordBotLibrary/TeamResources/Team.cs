@@ -16,7 +16,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; } = default!;
 
         /// <summary>
         /// Gets the list of members associated with the team.
@@ -35,7 +36,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("owner_user_id")]
-        public string OwnerUserId { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong OwnerUserId { get; init; } = default!;
     }
 
 }

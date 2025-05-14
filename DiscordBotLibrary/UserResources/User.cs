@@ -10,7 +10,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// The user's username (not unique across the platform).

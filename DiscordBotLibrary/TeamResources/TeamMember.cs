@@ -18,7 +18,8 @@ namespace DiscordBotLibrary.TeamResources
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("team_id")]
-        public string TeamId { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong TeamId { get; init; } = default!;
 
         /// <summary>
         /// Gets the partial user object representing the user, including avatar, discriminator, ID, and username.

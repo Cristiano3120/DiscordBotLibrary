@@ -10,7 +10,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("emoji_id")]
-        public string? EmojiId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The unicode character of the emoji

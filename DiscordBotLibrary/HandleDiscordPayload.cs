@@ -1,6 +1,5 @@
 ﻿using System.Net.WebSockets;
 using System.Text.Json;
-using DiscordBotLibrary.Json;
 
 namespace DiscordBotLibrary
 {
@@ -14,10 +13,9 @@ namespace DiscordBotLibrary
             return jsonElement.GetSequenceNumber();
         }
 
-        internal static async Task HandleHelloEvent(JsonElement jsonElement, DiscordClient client, 
+        internal static async Task HandleHelloEvent(JsonElement jsonElement, DiscordClient client,
             ResumeConnInfos resumeConnInfos, int? lastSequenceNumber)
         {
-            client.Logger.LogInfo("Received Hello message.");
             int heartbeatInterval = jsonElement.GetProperty("d").GetProperty("heartbeat_interval").GetInt32();
             _ = client.SendHeartbeatsAsync(heartbeatInterval);
 
@@ -43,7 +41,8 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal static async Task HandleResumeConnAsync(DiscordClient client, ClientWebSocket webSocket, ResumeConnInfos resumeConnInfos)
+        internal static async Task HandleResumeConnAsync(DiscordClient client, ClientWebSocket webSocket, 
+            ResumeConnInfos resumeConnInfos)
         {
             try
             {
@@ -58,6 +57,21 @@ namespace DiscordBotLibrary
             catch (Exception ex)
             {
                 client.Logger.LogError(ex);
+            }
+        }
+
+        internal static async Task HandleSessionInvalidAsync(DiscordClient client, JsonElement jsonElement, 
+            ResumeConnInfos resumeConnInfos, ClientWebSocket clientWebSocket)
+        {
+            bool canResume = jsonElement.GetProperty("d").GetBoolean();
+
+            if (canResume)
+            {
+                await HandleResumeConnAsync(client, clientWebSocket, resumeConnInfos);
+            }
+            else
+            {
+                await client.RestartClientAsync();
             }
         }
     }

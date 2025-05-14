@@ -11,14 +11,16 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("bot_id")]
-        public string? BotId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? BotId { get; init; }
 
         /// <summary>
         /// The ID of the integration this role belongs to, if any.
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("integration_id")]
-        public string? IntegrationId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? IntegrationId { get; init; }
 
         /// <summary>
         /// Whether this role is the guild's premium subscriber (Booster) role.
@@ -32,7 +34,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("subscription_listing_id")]
-        public string? SubscriptionListingId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? SubscriptionListingId { get; init; }
 
         /// <summary>
         /// Whether this role is available for purchase. This field is only present and set to null if true.

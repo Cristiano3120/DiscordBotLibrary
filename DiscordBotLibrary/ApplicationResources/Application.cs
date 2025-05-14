@@ -10,7 +10,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// Gets the name of the application.
@@ -102,7 +103,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("primary_sku_id")]
-        public string? PrimarySkuId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? PrimarySkuId { get; init; }
 
         /// <summary>
         /// Gets the URL slug that links to the store page of the application, if applicable.

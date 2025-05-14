@@ -10,7 +10,8 @@
         /// ID of the unavailable guild.
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// True if the guild is unavailable.

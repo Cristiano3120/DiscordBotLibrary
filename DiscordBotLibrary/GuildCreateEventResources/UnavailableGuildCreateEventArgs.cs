@@ -8,10 +8,11 @@
     {
         /// <summary>
         /// The id of the guild
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         [JsonPropertyName("joined_at")]
         public DateTime JoinedAt { get; init; }

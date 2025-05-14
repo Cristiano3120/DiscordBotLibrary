@@ -11,7 +11,7 @@ namespace DiscordBotLibrary
     /// </summary>
     public sealed class DiscordClient
     {
-        public List<DiscordGuild> Guilds { get; init; } = [];
+        public List<DiscordGuild> Guilds { get; private set; } = [];
         internal Logger Logger { get; init; }
         internal DiscordClientConfig ClientConfig { get; init; }
         internal JsonSerializerOptions JsonSerializerOptions = new()
@@ -24,6 +24,7 @@ namespace DiscordBotLibrary
                 new EnumMemberConverter<TeamMemberRole>(),
                 new EnumMemberConverter<OAuth2Scope>(),
                 new EnumMemberConverter<Language>(),
+                new SnowflakeConverter(),
             }
         };
 
@@ -34,11 +35,8 @@ namespace DiscordBotLibrary
         private int? _lastSequenceNumber = null;
 
         #region Events
-        public delegate void ReadyEventHandler(DiscordClient discordClient, ReadyEventArgs args);
-        public event ReadyEventHandler? OnReady;
-
-        public delegate void GuildCreateEventHandler(DiscordClient discordClient, DiscordGuild args);
-        public event GuildCreateEventHandler? OnGuildCreate;
+        public event Action<DiscordClient, ReadyEventArgs>? OnReady;
+        public event Action<DiscordClient, DiscordGuild>? OnGuildCreate;
 
         #endregion
 
@@ -53,9 +51,24 @@ namespace DiscordBotLibrary
 
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri($"https://discord.com/api/v{ClientConfig}/"),
+                BaseAddress = new Uri($"https://discord.com/api/v{ClientConfig.Version}/"),
             };
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
+        }
+
+        internal async Task RestartClientAsync()
+        {
+            if (_webSocket.State == WebSocketState.Open)
+            {
+                await _webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, CancellationToken.None);
+            }
+
+            _webSocket = new ClientWebSocket();
+            _resumeConnInfos = ResumeConnInfos.EmptyConnInfos;
+            _lastSequenceNumber = null;
+            Guilds = [];
+
+            await StartAsync();
         }
 
         #endregion
@@ -89,9 +102,9 @@ namespace DiscordBotLibrary
 
         #region ReceivePayload
 
-        public async Task ReceiveMessagesAsync()
+        internal async Task ReceiveMessagesAsync()
         {
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[16384];
             MemoryStream ms = new();
 
             while (_webSocket.State == WebSocketState.Open)
@@ -205,6 +218,7 @@ namespace DiscordBotLibrary
                         _lastSequenceNumber = HandleDiscordPayload.HandleDispatch(message, this);
                         break;
                     case OpCode.Hello:
+                        Logger.LogInfo("Received Hello message.");
                         await HandleDiscordPayload.HandleHelloEvent(message, this, _resumeConnInfos, _lastSequenceNumber);
                         break;
                     case OpCode.HeartbeatAck:
@@ -215,7 +229,8 @@ namespace DiscordBotLibrary
                         await HandleDiscordPayload.HandleResumeConnAsync(this, _webSocket, _resumeConnInfos);
                         break;
                     case OpCode.InvalidSession:
-                        throw new NotImplementedException("Invalid session is not implemented yet.");
+                        Logger.LogWarning("Invalid session.");
+                        await HandleDiscordPayload.HandleSessionInvalidAsync(this, message, _resumeConnInfos, _webSocket);
                         break;
                 }
             }
@@ -237,6 +252,8 @@ namespace DiscordBotLibrary
         internal async Task SendIdentifyAsync()
         {
             Logger.LogInfo("Sending Identify payload");
+
+            const string clientId = "DiscordBotLibrary";
             var identifyPayload = new
             {
                 op = OpCode.Identify,
@@ -246,8 +263,8 @@ namespace DiscordBotLibrary
                     properties = new
                     {
                         os = Environment.OSVersion.Platform.ToString(),
-                        browser = "DiscordBotLibrary",
-                        device = "DiscordBotLibrary"
+                        browser = clientId,
+                        device = clientId,
                     },
                     intents = ClientConfig.Intents,
                 }
@@ -272,5 +289,9 @@ namespace DiscordBotLibrary
             }
         }
         #endregion
+
+        private static int GetResponsibleShardId(ulong guildId, int totalShards)
+            => (int)((guildId >> 22) % (ulong)totalShards);
+        
     }
 }

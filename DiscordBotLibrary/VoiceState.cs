@@ -10,21 +10,24 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string? GuildId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? GuildId { get; init; }
 
         /// <summary>
         /// The channel ID this user is connected to (nullable).  
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("channel_id")]
-        public string? ChannelId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? ChannelId { get; init; }
 
         /// <summary>
         /// The user ID this voice state is for.  
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("user_id")]
-        public string UserId { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong UserId { get; init; }
 
         /// <summary>
         /// The guild member this voice state is for (optional).

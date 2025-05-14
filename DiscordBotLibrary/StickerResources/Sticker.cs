@@ -13,14 +13,16 @@ namespace DiscordBotLibrary.StickerResources
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// For standard stickers, the ID of the pack this sticker belongs to.
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("pack_id")]
-        public string? PackId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? PackId { get; init; }
 
         /// <summary>
         /// The name of the sticker.
@@ -67,7 +69,8 @@ namespace DiscordBotLibrary.StickerResources
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string? GuildId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? GuildId { get; init; }
 
         /// <summary>
         /// The user who uploaded the guild sticker (only for guild stickers).

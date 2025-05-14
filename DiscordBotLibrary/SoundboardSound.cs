@@ -15,10 +15,11 @@ namespace DiscordBotLibrary
 
         /// <summary>
         /// The id of this sound
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("sound_id")]
-        public string SoundId { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong SoundId { get; init; }
 
         /// <summary>
         /// The volume of this sound.
@@ -29,10 +30,11 @@ namespace DiscordBotLibrary
 
         /// <summary>
         /// The id of this sound's custom emoji
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("emoji_id")]
-        public string? EmojiId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The unicode character of this sound's standard emoji
@@ -42,10 +44,11 @@ namespace DiscordBotLibrary
 
         /// <summary>
         /// The id of the guild this sound is in
-        /// TYPE: SNOWFLAKE
+        /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string? GuildId { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? GuildId { get; init; }
 
         /// <summary>
         /// Whether this sound can be used, may be false due to loss of Server Boosts

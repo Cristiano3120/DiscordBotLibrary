@@ -80,7 +80,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("entity_id")]
-        public string? EntityId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? EntityId { get; init; }
 
         /// <summary>
         /// Gets additional metadata for the scheduled event, or null if none.

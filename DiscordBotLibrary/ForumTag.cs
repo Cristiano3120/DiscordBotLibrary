@@ -10,7 +10,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong Id { get; init; }
 
         /// <summary>
         /// The name of the tag (0-20 characters).
@@ -29,7 +30,8 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonPropertyName("emoji_id")]
-        public string? EmojiId { get; init; }
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The Unicode emoji character associated with this tag
