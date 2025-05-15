@@ -2,15 +2,17 @@
 
 namespace DiscordBotLibrary.Sharding
 {
-    internal sealed class ShardHandler
+    internal static class ShardHandler
     {
-        private Shard[] _shards = [];
-        public ShardHandler(HttpClient httpClient)
+        public static int TotalShards;
+        private static Shard[] _shards = [];
+
+        public static void Start(HttpClient httpClient)
         {
             _ = GetShardingInfos(httpClient);
         }
 
-        public async Task GetShardingInfos(HttpClient httpClient)
+        private static async Task GetShardingInfos(HttpClient httpClient)
         {
             DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
 
@@ -24,6 +26,7 @@ namespace DiscordBotLibrary.Sharding
                 $"{gatewayShardingInfo.SessionStartLimit.Total} logins");
             DiscordClient.Logger.LogInfo($"Remaining logins will be reseted at: {resumeTime}");
 
+            TotalShards = gatewayShardingInfo.Shards;
             _shards = new Shard[gatewayShardingInfo.Shards];
             if (gatewayShardingInfo.Shards > gatewayShardingInfo.SessionStartLimit.Remaining)
             {
@@ -53,7 +56,7 @@ namespace DiscordBotLibrary.Sharding
                     if (round < shards[bucket].Count)
                     {
                         int shardId = shards[bucket][round];
-                        tasks.Add(StartShardAsync(shardId, gatewayShardingInfo.Shards));
+                        tasks.Add(StartShardAsync(shardId));
                     }
                 }
 
@@ -68,10 +71,10 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        public async Task StartShardAsync(int shardId, int totalShards)
+        private static async Task StartShardAsync(int shardId)
         {
-            Shard shard = new();
-            await shard.StartShardAsync(shardId, totalShards);
+            Shard shard = new(shardId);
+            await shard.StartShardAsync();
             _shards[shardId] = shard;
         }
 

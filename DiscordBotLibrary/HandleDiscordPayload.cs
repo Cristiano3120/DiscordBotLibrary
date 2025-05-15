@@ -1,23 +1,25 @@
-﻿using System.Net.WebSockets;
+﻿using DiscordBotLibrary.Sharding;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net.WebSockets;
 using System.Text.Json;
 
 namespace DiscordBotLibrary
 {
     internal static class HandleDiscordPayload
     {
-        internal static int HandleDispatch(JsonElement jsonElement, DiscordClient client)
+        internal static int HandleDispatch(Shard shard, JsonElement jsonElement)
         {
             Events events = jsonElement.GetEvent();
-            client.InvokeEvent(events, jsonElement);
+            shard.InvokeEvent(events, jsonElement);
 
             return jsonElement.GetSequenceNumber();
         }
 
-        internal static async Task HandleHelloEvent(JsonElement jsonElement, DiscordClient client,
+        internal static async Task HandleHelloEvent(JsonElement jsonElement, Shard shard,
             ResumeConnInfos resumeConnInfos, int? lastSequenceNumber)
         {
             int heartbeatInterval = jsonElement.GetProperty("d").GetProperty("heartbeat_interval").GetInt32();
-            _ = client.SendHeartbeatsAsync(heartbeatInterval);
+            _ = shard.SendHeartbeatsAsync(heartbeatInterval);
 
             if (resumeConnInfos != ResumeConnInfos.EmptyConnInfos)
             {
@@ -27,22 +29,21 @@ namespace DiscordBotLibrary
                     op = OpCode.Resume,
                     d = new
                     {
-                        token = client.ClientConfig.Token,
+                        token = DiscordClient.ClientConfig.Token,
                         session_id = resumeConnInfos.SessionId,
                         seq = lastSequenceNumber
                     }
                 };
 
-                await client.SendPayloadWssAsync(payload);
+                await shard.SendPayloadWssAsync(payload);
             }
             else
             {
-                await client.SendIdentifyAsync();
+                await shard.SendIdentifyAsync();
             }
         }
 
-        internal static async Task HandleResumeConnAsync(DiscordClient client, ClientWebSocket webSocket, 
-            ResumeConnInfos resumeConnInfos)
+        internal static async Task HandleResumeConnAsync(ClientWebSocket webSocket, ResumeConnInfos resumeConnInfos)
         {
             try
             {
@@ -60,19 +61,51 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal static async Task HandleSessionInvalidAsync(DiscordClient client, JsonElement jsonElement, 
+        internal static async Task HandleSessionInvalidAsync(Shard shard, JsonElement jsonElement, 
             ResumeConnInfos resumeConnInfos, ClientWebSocket clientWebSocket)
         {
             bool canResume = jsonElement.GetProperty("d").GetBoolean();
 
             if (canResume)
             {
-                await HandleResumeConnAsync(client, clientWebSocket, resumeConnInfos);
+                await HandleResumeConnAsync(clientWebSocket, resumeConnInfos);
             }
             else
             {
-                await client.RestartClientAsync();
+                await shard.RestartShardAsync();
             }
+        }
+
+        internal static void HandleReadyEvent(Shard shard, JsonElement jsonElement)
+        {
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
+                .Deserialize<ReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
+
+            client.InvokeOnReady(readyEventArgs);
+
+            shard.ResumeConnInfos = new ResumeConnInfos
+            {
+                SessionId = readyEventArgs.SessionId,
+                ResumeGatewayUri = new Uri(readyEventArgs.ResumeGatewayUri)
+            };
+        }
+
+        internal static void HandleGuildCreateEvent(JsonElement jsonElement, int shardId)
+        {
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+
+            JsonElement data = jsonElement.GetProperty("d");
+            IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
+                ? data.Deserialize<UnavailableGuildCreateEventArgs>(DiscordClient.JsonSerializerOptions)!
+                : data.Deserialize<GuildCreateEventArgs>(DiscordClient.JsonSerializerOptions)!;
+
+            GuildCreateEventArgs? guildCreate = guildCreateEventArgs.TryGetAvailableGuild();
+            DiscordGuild discordGuild = guildCreate is null
+                ? new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!, shardId)
+                : new DiscordGuild(guildCreate, shardId);
+
+            client.InvokeOnGuildCreate(discordGuild);
         }
     }
 }
