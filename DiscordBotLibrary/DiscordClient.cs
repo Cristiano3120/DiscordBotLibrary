@@ -2,6 +2,7 @@
 using DiscordBotLibrary.Sharding;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Collections.Concurrent;
 
 
 namespace DiscordBotLibrary
@@ -28,13 +29,14 @@ namespace DiscordBotLibrary
         };
         internal static DiscordClientConfig ClientConfig { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
+        internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
 
         private readonly HttpClient _httpClient;
 
         #endregion
 
         #region External fields
-        public List<DiscordGuild> Guilds { get; private set; } = [];
+        public IReadOnlyDictionary<ulong, DiscordGuild> Guilds => InternalGuilds;
 
         #region Events
         public event Action<DiscordClient, DiscordGuild>? OnGuildCreate;

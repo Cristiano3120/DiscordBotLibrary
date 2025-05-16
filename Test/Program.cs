@@ -19,7 +19,7 @@ namespace Test
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
             await client.StartAsync();
-            
+
             await Task.Delay(Timeout.Infinite);
         }
 

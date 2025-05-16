@@ -60,12 +60,12 @@ namespace DiscordBotLibrary.Sharding
                     }
                 }
 
+                DiscordClient.Logger.LogDebug($"Started {tasks.Count + _shards.Where(x => x is not null).Count()} out of {gatewayShardingInfo.Shards} shards");
                 await Task.WhenAll(tasks);
 
-                DiscordClient.Logger.LogDebug($"Started {shards[round].Count} out of {gatewayShardingInfo.Shards} shards");
                 if (round < maxRounds - 1)
                 {
-                    DiscordClient.Logger.LogDebug($"Waiting 5 seconds till the next {shards[++round].Count} shards will be started");
+                    DiscordClient.Logger.LogDebug($"Waiting 5 seconds till the next shards will be started");
                     await Task.Delay(5000);
                 }
             }

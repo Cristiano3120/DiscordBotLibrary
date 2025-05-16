@@ -93,8 +93,6 @@ namespace DiscordBotLibrary
 
         internal static void HandleGuildCreateEvent(JsonElement jsonElement, int shardId)
         {
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
-
             JsonElement data = jsonElement.GetProperty("d");
             IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
                 ? data.Deserialize<UnavailableGuildCreateEventArgs>(DiscordClient.JsonSerializerOptions)!
@@ -102,9 +100,11 @@ namespace DiscordBotLibrary
 
             GuildCreateEventArgs? guildCreate = guildCreateEventArgs.TryGetAvailableGuild();
             DiscordGuild discordGuild = guildCreate is null
-                ? new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!, shardId)
-                : new DiscordGuild(guildCreate, shardId);
+                ? new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!)
+                : new DiscordGuild(guildCreate);
 
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
             client.InvokeOnGuildCreate(discordGuild);
         }
     }

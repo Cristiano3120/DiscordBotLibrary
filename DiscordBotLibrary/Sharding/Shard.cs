@@ -42,7 +42,7 @@ namespace DiscordBotLibrary.Sharding
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
+                    //Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
@@ -137,6 +137,15 @@ namespace DiscordBotLibrary.Sharding
             string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.JsonSerializerOptions);
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
+            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+            await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        internal async Task SendPayloadWssAsync(string jsonStr)
+        {
+            byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
+
+            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
             await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
@@ -158,11 +167,11 @@ namespace DiscordBotLibrary.Sharding
                         device = clientId,
                     },
                     intents = DiscordClient.ClientConfig.Intents,
-                },
-                shard = new int[2]
-                { 
-                    _shardId,
-                    ShardHandler.TotalShards
+                    shard = new[]
+                    {
+                        _shardId,
+                        ShardHandler.TotalShards
+                    }
                 },
             };
 

@@ -6,8 +6,6 @@
     /// </summary>
     public record DiscordGuild : GuildCreateEventArgs
     {
-        internal int ShardId { get; init; }
-
         #region Channels
 
         /// <summary>
@@ -79,7 +77,7 @@
 
         #region Constructors
 
-        public DiscordGuild(GuildCreateEventArgs guildCreateEventArgs, int shardId)
+        public DiscordGuild(GuildCreateEventArgs guildCreateEventArgs)
         {
             AfkChannelId = guildCreateEventArgs.AfkChannelId;
             AfkTimeout = guildCreateEventArgs.AfkTimeout;
@@ -133,10 +131,9 @@
             WelcomeScreen = guildCreateEventArgs.WelcomeScreen;
             WidgetChannelId = guildCreateEventArgs.WidgetChannelId;
             WidgetEnabled = guildCreateEventArgs.WidgetEnabled;
-            ShardId = shardId;
         }
 
-        public DiscordGuild(UnavailableGuildCreateEventArgs unavailableGuildCreateEventArgs, int shardId)
+        public DiscordGuild(UnavailableGuildCreateEventArgs unavailableGuildCreateEventArgs)
         {
             JoinedAt = unavailableGuildCreateEventArgs.JoinedAt;
             GuildScheduledEvents = unavailableGuildCreateEventArgs.GuildScheduledEvents;
@@ -152,7 +149,6 @@
             SoundboardSounds = unavailableGuildCreateEventArgs.SoundboardSounds;
             Presences = unavailableGuildCreateEventArgs.Presences;
             Unavailable = unavailableGuildCreateEventArgs.Unavailable;
-            ShardId = shardId;
         }
 
         #endregion
