@@ -5,51 +5,75 @@ namespace DiscordBotLibrary
 {
     internal sealed class WsGatewayLimiter
     {
-        private readonly ConcurrentQueue<string> _messageQueue;
-        private byte _sentMessageCount;
-        private Shard _shard;
+        private const int MaxMessages = 120;
+        private static readonly TimeSpan Window = TimeSpan.FromSeconds(60);
+
+        private readonly ConcurrentQueue<DateTime> _timestamps = new();
+        private readonly ConcurrentQueue<string> _messageQueue = new();
+        private readonly Shard _shard;
+
+        private readonly SemaphoreSlim _sendLock = new(1, 1);
+        private readonly Timer _queueProcessor;
 
         public WsGatewayLimiter(Shard shard)
         {
             _shard = shard;
-            _messageQueue = new ConcurrentQueue<string>();
-            _ = ProcessQueueAsync();
+            _queueProcessor = new Timer(ProcessQueue, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
         }
 
-        private async Task ProcessQueueAsync()
+        public async Task<bool> TrySendAsync(string payload)
         {
-            using PeriodicTimer timer = new(TimeSpan.FromMinutes(1));
+            await _sendLock.WaitAsync();
+            try
             {
-                while (await timer.WaitForNextTickAsync())
+                CleanupOldTimestamps();
+
+                if (_timestamps.Count >= MaxMessages)
                 {
-                    _sentMessageCount = 0;
-
-                    while (_messageQueue.TryDequeue(out string? payload))
-                    {
-                        if (_sentMessageCount >= 120)
-                        {
-                            _messageQueue.Enqueue(payload);
-                            break;
-                        }
-
-                        _sentMessageCount++;
-                        await _shard.SendPayloadWssAsync(payload);
-                        await Task.Delay(200);
-                    }
+                    _messageQueue.Enqueue(payload);
+                    return false;
                 }
-            }        
-        }
 
-        public bool CheckIfRateLimitExceeded(string payload)
-        {
-            if (_sentMessageCount >= 120)
-            {
-                _messageQueue.Enqueue(payload);
+                await _shard.SendPayloadWssAsync(payload);
+                _timestamps.Enqueue(DateTime.UtcNow);
+
                 return true;
             }
+            finally
+            {
+                _sendLock.Release();
+            }
+        }
 
-            _sentMessageCount++;
-            return false;
+        private async void ProcessQueue(object? state)
+        {
+            if (_messageQueue.IsEmpty)
+                return;
+
+            await _sendLock.WaitAsync();
+            try
+            {
+                CleanupOldTimestamps();
+
+                while (_timestamps.Count < MaxMessages && _messageQueue.TryDequeue(out var payload))
+                {
+                    await _shard.SendPayloadWssAsync(payload);
+                    _timestamps.Enqueue(DateTime.UtcNow);
+                }
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
+        }
+
+        private void CleanupOldTimestamps()
+        {
+            DateTime threshold = DateTime.UtcNow - Window;
+
+            while (_timestamps.TryPeek(out DateTime time) && time < threshold)
+                _timestamps.TryDequeue(out _);
         }
     }
+
 }

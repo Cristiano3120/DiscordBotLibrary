@@ -7,6 +7,8 @@ namespace DiscordBotLibrary.Sharding
     internal sealed class Shard(int shardId)
     {
         internal ResumeConnInfos ResumeConnInfos { get; set; } = ResumeConnInfos.EmptyConnInfos;
+        private readonly CancellationTokenSource _cts = new();
+        private WsGatewayLimiter _wsGatewayLimiter = default!;
         private ClientWebSocket _webSocket = new();
         private int? _lastSequenceNumber = null;
         private readonly int _shardId = shardId;
@@ -14,8 +16,9 @@ namespace DiscordBotLibrary.Sharding
         public async Task StartShardAsync()
         {
             Uri gatewayUri = new($"wss://gateway.discord.gg/?v={DiscordClient.ClientConfig.Version}&encoding=json");
-            await _webSocket.ConnectAsync(gatewayUri, CancellationToken.None);
-
+            await _webSocket.ConnectAsync(gatewayUri, _cts.Token);
+            
+            _wsGatewayLimiter = new WsGatewayLimiter(this);
             _ = ReceiveMessagesAsync();
         }
 
@@ -52,6 +55,7 @@ namespace DiscordBotLibrary.Sharding
                 catch (Exception ex)
                 {
                     DiscordClient.Logger.LogError(ex);
+                    _cts.Cancel();
                 }
             }
 
@@ -132,20 +136,27 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal async Task SendPayloadWssAsync(object payload)
+        internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
         {
             string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.JsonSerializerOptions);
-            byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
-            await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            if (isHeartbeat)
+            {
+                await SendPayloadWssAsync(jsonStr);
+                return;
+            }
+
+            if (!await _wsGatewayLimiter.TrySendAsync(jsonStr))
+            {
+                DiscordClient.Logger.LogInfo($"Shard{_shardId}: Gateway limit reached!");
+            }
         }
 
         internal async Task SendPayloadWssAsync(string jsonStr)
         {
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+            //Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
             await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 

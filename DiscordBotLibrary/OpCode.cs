@@ -55,6 +55,11 @@
         /// <summary>
         /// Sent in response to receiving a heartbeat to acknowledge that it has been received.
         /// </summary>
-        HeartbeatAck = 11
+        HeartbeatAck = 11,
+
+        /// <summary>
+        /// Request information about soundboard sounds in a set of guilds.
+        /// </summary>
+        RequestSoundboardSounds = 31,
     }
 }
