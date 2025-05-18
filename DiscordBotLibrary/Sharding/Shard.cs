@@ -45,7 +45,7 @@ namespace DiscordBotLibrary.Sharding
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    //Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
+                    Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
@@ -107,7 +107,10 @@ namespace DiscordBotLibrary.Sharding
                         HandleDiscordPayload.HandleReadyEvent(this, jsonElement);
                         break;
                     case Events.GUILD_CREATE:
-                        HandleDiscordPayload.HandleGuildCreateEvent(jsonElement, _shardId);
+                        HandleDiscordPayload.HandleGuildCreateEvent(jsonElement);
+                        break;
+                    case Events.PRESENCE_UPDATE:
+                        HandleDiscordPayload.HandlePresenceUpdateEvent(jsonElement);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
@@ -156,7 +159,7 @@ namespace DiscordBotLibrary.Sharding
         {
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-            //Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
             await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 

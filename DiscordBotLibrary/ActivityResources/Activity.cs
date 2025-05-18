@@ -10,6 +10,7 @@
         /// Your application ID – read-only field.
         /// </summary>
         [JsonPropertyName("application_id")]
+        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong ApplicationId { get; init; }
 
         /// <summary>

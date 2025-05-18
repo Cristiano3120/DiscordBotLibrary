@@ -39,6 +39,7 @@ namespace DiscordBotLibrary
         public IReadOnlyDictionary<ulong, DiscordGuild> Guilds => InternalGuilds;
 
         #region Events
+        public event Action<DiscordClient, PresenceUpdate>? OnPresenceUpdate;
         public event Action<DiscordClient, DiscordGuild>? OnGuildCreate;
         public event Action<DiscordClient, ReadyEventArgs>? OnReady;
 
@@ -96,6 +97,9 @@ namespace DiscordBotLibrary
 
         internal void InvokeOnGuildCreate(DiscordGuild guild)
             => OnGuildCreate?.Invoke(this, guild);
+
+        internal void InvokeOnPresenceUpdate(PresenceUpdate presence)
+            => OnPresenceUpdate?.Invoke(this, presence);
         #endregion
     }
 }

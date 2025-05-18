@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.UserResources;
-using Activity = DiscordBotLibrary.ActivityResources.Activity;
+﻿using Activity = DiscordBotLibrary.ActivityResources.Activity;
 
 namespace DiscordBotLibrary.PresenceUpdateResources
 {
@@ -19,7 +17,8 @@ namespace DiscordBotLibrary.PresenceUpdateResources
         /// Gets the ID of the guild where the presence update occurred.
         /// </summary>
         [JsonPropertyName("guild_id")]
-        public string GuildId { get; init; } = string.Empty;
+        [JsonConverter(typeof(SnowflakeConverter))]
+        public ulong GuildId { get; init; }
 
         /// <summary>
         /// Gets the user's current status. 
@@ -38,5 +37,17 @@ namespace DiscordBotLibrary.PresenceUpdateResources
         /// </summary>
         [JsonPropertyName("client_status")]
         public ClientStatus ClientStatus { get; init; }
+
+        /// <summary>
+        /// Gets the timestamp at which this presence update was processed (milliseconds since epoch).
+        /// </summary>
+        [JsonPropertyName("processed_at_timestamp")]
+        private long ProcessedAtTimestamp { get; init; }
+
+        /// <summary>
+        /// Only has a value if this object was sent in a presence update event.
+        /// </summary>
+        [JsonIgnore]
+        public DateTime ProcessedAtUtc => DateTimeOffset.FromUnixTimeMilliseconds(ProcessedAtTimestamp).UtcDateTime;
     }
 }

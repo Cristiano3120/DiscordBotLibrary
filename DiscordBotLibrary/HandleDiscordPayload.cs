@@ -91,7 +91,7 @@ namespace DiscordBotLibrary
             };
         }
 
-        internal static void HandleGuildCreateEvent(JsonElement jsonElement, int shardId)
+        internal static void HandleGuildCreateEvent(JsonElement jsonElement)
         {
             JsonElement data = jsonElement.GetProperty("d");
             IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
@@ -106,6 +106,15 @@ namespace DiscordBotLibrary
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
             client.InvokeOnGuildCreate(discordGuild);
+        }
+
+        internal static void HandlePresenceUpdateEvent(JsonElement jsonElement)
+        {
+            PresenceUpdate presenceUpdate = jsonElement.GetProperty("d")
+                .Deserialize<PresenceUpdate>(DiscordClient.JsonSerializerOptions)!;
+
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            client.InvokeOnPresenceUpdate(presenceUpdate);
         }
     }
 }

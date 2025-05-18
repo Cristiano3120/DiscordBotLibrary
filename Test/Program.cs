@@ -1,5 +1,6 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ExternalExtraClasses;
+using DiscordBotLibrary.PresenceUpdateResources;
 
 namespace Test
 {
@@ -16,8 +17,11 @@ namespace Test
             };
 
             DiscordClient client = new(discordClientConfig);
+
+            client.OnPresenceUpdate += Client_OnPresenceUpdate;
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
+
             await client.StartAsync();
 
             await Task.Delay(Timeout.Infinite);
@@ -31,6 +35,11 @@ namespace Test
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
         {
             Console.WriteLine($"Guild received: {args.Name}");
+        }
+
+        private static void Client_OnPresenceUpdate(DiscordClient discordClient, PresenceUpdate args)
+        {
+            Console.WriteLine($"Presence update received: {args.User.Username} is now {args.Status}");
         }
     }
 }
