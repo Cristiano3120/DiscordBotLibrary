@@ -9,6 +9,7 @@ namespace DiscordBotLibrary.PresenceUpdateResources
     {
         /// <summary>
         /// Gets the user whose presence is being updated.
+        /// Contains only the Id sometimes.
         /// </summary>
         [JsonPropertyName("user")]
         public User User { get; init; } = null!;

@@ -151,6 +151,12 @@
             Unavailable = unavailableGuildCreateEventArgs.Unavailable;
         }
 
+        internal void UpdateUser(PresenceUpdate presenceUpdate)
+        {
+            throw new NotImplementedException("UpdateUser method is not implemented yet.");
+            GuildMember? guildMember = Members.FirstOrDefault(x => x?.User?.Id == presenceUpdate.User.Id);
+        }
+
         #endregion
     }
 }

@@ -1,4 +1,5 @@
 ﻿using DiscordBotLibrary;
+using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.PresenceUpdateResources;
 
@@ -27,9 +28,22 @@ namespace Test
             await Task.Delay(Timeout.Infinite);
         }
 
-        private static void Client_OnReady(DiscordClient discordClient, ReadyEventArgs args)
+        private static async void Client_OnReady(DiscordClient client, ReadyEventArgs args)
         {
             Console.WriteLine("Ready!");
+            await client.UpdatePresence(new SelfPresenceUpdate()
+            {
+                Status = PresenceStatus.Online,
+                Activities =
+                [
+                    new Activity()
+                    {
+                        Name = "Visual Studio 2022...",
+                        Type = ActivityType.Playing,
+                        State = "Coding...",
+                    },
+                ],
+            });
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
@@ -39,7 +53,7 @@ namespace Test
 
         private static void Client_OnPresenceUpdate(DiscordClient discordClient, PresenceUpdate args)
         {
-            Console.WriteLine($"Presence update received: {args.User.Username} is now {args.Status}");
+
         }
     }
 }

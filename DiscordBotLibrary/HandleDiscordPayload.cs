@@ -114,6 +114,9 @@ namespace DiscordBotLibrary
                 .Deserialize<PresenceUpdate>(DiscordClient.JsonSerializerOptions)!;
 
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            DiscordGuild guild = client.InternalGuilds[presenceUpdate.GuildId];
+
+            guild.UpdateUser(presenceUpdate);
             client.InvokeOnPresenceUpdate(presenceUpdate);
         }
     }

@@ -14,6 +14,7 @@
         /// <summary>
         /// Streaming {details}.  
         /// Example: "Streaming Rocket League"
+        /// Only Urls from twitch/youtube are supported.
         /// </summary>
         Streaming = 1,
 

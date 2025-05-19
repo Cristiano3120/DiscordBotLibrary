@@ -91,6 +91,26 @@ namespace DiscordBotLibrary
             }
         }
 
+        #region WebSocket Send 
+
+        /// <summary>
+        /// Sets the bot's presence and activity in Discord.
+        /// Bots can only set the activity propertys: <c> name, state, type, and url</c>/>
+        /// </summary>
+        /// <param name="presenceUpdate"></param>
+        /// <returns></returns>
+        public async Task UpdatePresence(SelfPresenceUpdate presenceUpdate)
+        {
+            var payload = new
+            {
+                op = OpCode.PresenceUpdate,
+                d = presenceUpdate
+            };
+
+            await ShardHandler.SendGlobalWebSocketMessageAsync(payload);
+        }
+        #endregion
+
         #region InvokeEvents
         internal void InvokeOnReady(ReadyEventArgs args)
            => OnReady?.Invoke(this, args);

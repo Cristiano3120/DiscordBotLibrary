@@ -78,6 +78,14 @@ namespace DiscordBotLibrary.Sharding
             _shards[shardId] = shard;
         }
 
+        public static async Task SendGlobalWebSocketMessageAsync(object payload)
+        {
+            foreach (Shard shard in _shards)
+            {
+                await shard.SendPayloadWssAsync(payload);
+            }
+        }
+
         private static int GetResponsibleShardId(ulong guildId, int totalShards)
             => (int)((guildId >> 22) % (ulong)totalShards);
     }

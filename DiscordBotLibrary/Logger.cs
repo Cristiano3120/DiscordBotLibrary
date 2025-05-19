@@ -134,7 +134,7 @@ namespace DiscordBotLibrary
             Write(ConsoleColor.Cyan, LogLevel.Debug, nameof(LogLevel.Debug), message);
         }
 
-        public static void LogPayload(ConsoleColor color, string payload, string prefix)
+        public void LogPayload(ConsoleColor color, string payload, string prefix)
         {
             Console.ForegroundColor = color;
 
@@ -142,7 +142,7 @@ namespace DiscordBotLibrary
 
             jsonNode["op"] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
 
-            Console.WriteLine($"[{DateTime.Now:HH: dd: ss}]: {prefix} {jsonNode}");
+            Write(color, LogLevel.Debug, prefix, jsonNode.ToString());
             Console.WriteLine("");
         }
 

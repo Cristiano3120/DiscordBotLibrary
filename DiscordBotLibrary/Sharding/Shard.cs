@@ -45,7 +45,7 @@ namespace DiscordBotLibrary.Sharding
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
+                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
@@ -159,7 +159,7 @@ namespace DiscordBotLibrary.Sharding
         {
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-            Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+            DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
             await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
