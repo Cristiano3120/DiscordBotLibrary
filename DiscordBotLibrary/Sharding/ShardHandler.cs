@@ -1,18 +1,27 @@
 ﻿using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.Sharding
 {
     internal static class ShardHandler
     {
-        public static int TotalShards;
+        public static ReadyEventArgs ReadyEventArgs { get; set; } = new();
+        public static int TotalShards { get; private set; }
+
+        private static HashSet<int> _shardIds = new();
         private static Shard[] _shards = [];
 
         public static void Start(HttpClient httpClient)
+            => _ = InitAndConnectShardsAsync(httpClient);
+        
+        #region StartShards
+        private static async Task InitAndConnectShardsAsync(HttpClient httpClient)
         {
-            _ = GetShardingInfos(httpClient);
+            GatewayShardingInfo gatewayShardingInfo = await FetchGatewayShardingInfoAsync(httpClient);
+            await StartShardsAsync(gatewayShardingInfo);
         }
 
-        private static async Task GetShardingInfos(HttpClient httpClient)
+        private static async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync(HttpClient httpClient)
         {
             DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
 
@@ -34,6 +43,11 @@ namespace DiscordBotLibrary.Sharding
                 await Task.Delay(waitTime);
             }
 
+            return gatewayShardingInfo;
+        }
+
+        private static async Task StartShardsAsync(GatewayShardingInfo gatewayShardingInfo)
+        {
             List<List<int>> shards = [];
             for (int i = 0; i < gatewayShardingInfo.SessionStartLimit.MaxConcurrency; i++)
             {
@@ -76,6 +90,22 @@ namespace DiscordBotLibrary.Sharding
             Shard shard = new(shardId);
             await shard.StartShardAsync();
             _shards[shardId] = shard;
+        }
+
+        #endregion
+
+        public static void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
+        {
+            _shardIds.Add(shardReadyEventArgs.Shard![0]);
+            ReadyEventArgs.Guilds = [..ReadyEventArgs.Guilds, ..shardReadyEventArgs.Guilds];
+
+            if (_shardIds.Count == TotalShards)
+            {
+                DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+                client.InvokeOnReady(ReadyEventArgs);
+
+                _shardIds = null!;
+            }
         }
 
         public static async Task SendGlobalWebSocketMessageAsync(object payload)

@@ -5,13 +5,13 @@ namespace DiscordBotLibrary
 {
     internal sealed class Logger
     {
-        private const byte MaxAmmountLoggingFiles = 10;
+        private const byte _maxAmmountLoggingFiles = 10;
         private readonly string _pathToLogFile;
         private readonly LogLevel _logLevel;
 
         public Logger(LogLevel logLevel)
         {
-            _pathToLogFile = MaintainLoggingSystem(MaxAmmountLoggingFiles);
+            _pathToLogFile = MaintainLoggingSystem(_maxAmmountLoggingFiles);
             _logLevel = logLevel;
         }
 

@@ -24,6 +24,7 @@ namespace DiscordBotLibrary
                 new EnumMemberConverter<TeamMemberRole>(),
                 new EnumMemberConverter<OAuth2Scope>(),
                 new EnumMemberConverter<Language>(),
+                new ActivityButtonsConverter(),
                 new SnowflakeConverter(),
             }
         };
@@ -72,7 +73,7 @@ namespace DiscordBotLibrary
         /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot.
         /// </summary>
         /// <returns></returns>
-        public async Task StartAsync()
+        public void Start()
         {
             try
             {
@@ -99,6 +100,7 @@ namespace DiscordBotLibrary
         /// </summary>
         /// <param name="presenceUpdate"></param>
         /// <returns></returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Member als statisch markieren", Justification = "<Ausstehend>")]
         public async Task UpdatePresence(SelfPresenceUpdate presenceUpdate)
         {
             var payload = new

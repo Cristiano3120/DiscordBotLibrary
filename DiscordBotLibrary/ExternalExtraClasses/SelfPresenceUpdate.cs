@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace DiscordBotLibrary.ExternalExtraClasses
+﻿namespace DiscordBotLibrary.ExternalExtraClasses
 {
     /// <summary>
     /// Represents the presence update payload sent by the client to Discord to set its status.

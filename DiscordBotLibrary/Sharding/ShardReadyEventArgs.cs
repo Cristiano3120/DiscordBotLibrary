@@ -1,9 +1,9 @@
-﻿namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary.Sharding
 {
     /// <summary>
     /// Represents the payload received when the client successfully connects to the Discord Gateway.
     /// </summary>
-    public sealed record ReadyEventArgs
+    public sealed record ShardReadyEventArgs
     {
         /// <summary>
         /// API version.

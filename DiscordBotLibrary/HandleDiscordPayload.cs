@@ -15,7 +15,7 @@ namespace DiscordBotLibrary
             return jsonElement.GetSequenceNumber();
         }
 
-        internal static async Task HandleHelloEvent(JsonElement jsonElement, Shard shard,
+        internal static async Task HandleHelloEventAsync(JsonElement jsonElement, Shard shard,
             ResumeConnInfos resumeConnInfos, int? lastSequenceNumber)
         {
             int heartbeatInterval = jsonElement.GetProperty("d").GetProperty("heartbeat_interval").GetInt32();
@@ -78,12 +78,10 @@ namespace DiscordBotLibrary
 
         internal static void HandleReadyEvent(Shard shard, JsonElement jsonElement)
         {
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
-            ReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
-                .Deserialize<ReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
+            ShardReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
+                .Deserialize<ShardReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
 
-            client.InvokeOnReady(readyEventArgs);
-
+            ShardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos
             {
                 SessionId = readyEventArgs.SessionId,
@@ -105,6 +103,7 @@ namespace DiscordBotLibrary
 
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
+
             client.InvokeOnGuildCreate(discordGuild);
         }
 
@@ -116,7 +115,7 @@ namespace DiscordBotLibrary
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             DiscordGuild guild = client.InternalGuilds[presenceUpdate.GuildId];
 
-            guild.UpdateUser(presenceUpdate);
+            guild.UpdatePresence(presenceUpdate);
             client.InvokeOnPresenceUpdate(presenceUpdate);
         }
     }

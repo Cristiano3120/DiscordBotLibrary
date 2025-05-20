@@ -23,7 +23,7 @@ namespace Test
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
 
-            await client.StartAsync();
+            client.Start();
 
             await Task.Delay(Timeout.Infinite);
         }
@@ -38,7 +38,7 @@ namespace Test
                 [
                     new Activity()
                     {
-                        Name = "Visual Studio 2022...",
+                        Name = "Visual Studio 2022",
                         Type = ActivityType.Playing,
                         State = "Coding...",
                     },

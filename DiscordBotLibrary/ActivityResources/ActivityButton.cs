@@ -6,9 +6,9 @@
     public readonly struct ActivityButton
     {
         [JsonPropertyName("label")]
-        public string Label { get; init; }
+        public string? Label { get; init; }
 
         [JsonPropertyName("url")]
-        public string Url { get; init; }
+        public string? Url { get; init; }
     }
 }

@@ -10,16 +10,30 @@ namespace DiscordBotLibrary.Sharding
         private readonly CancellationTokenSource _cts = new();
         private WsGatewayLimiter _wsGatewayLimiter = default!;
         private ClientWebSocket _webSocket = new();
-        private int? _lastSequenceNumber = null;
         private readonly int _shardId = shardId;
+        private int? _lastSequenceNumber;
 
-        public async Task StartShardAsync()
+        internal async Task StartShardAsync()
         {
             Uri gatewayUri = new($"wss://gateway.discord.gg/?v={DiscordClient.ClientConfig.Version}&encoding=json");
             await _webSocket.ConnectAsync(gatewayUri, _cts.Token);
             
             _wsGatewayLimiter = new WsGatewayLimiter(this);
             _ = ReceiveMessagesAsync();
+        }
+
+        internal async Task RestartShardAsync()
+        {
+            if (_webSocket.State == WebSocketState.Open)
+            {
+                await _webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, CancellationToken.None);
+            }
+
+            _webSocket = new ClientWebSocket();
+            ResumeConnInfos = ResumeConnInfos.EmptyConnInfos;
+            _lastSequenceNumber = null;
+
+            await StartShardAsync();
         }
 
         internal async Task ReceiveMessagesAsync()
@@ -76,7 +90,7 @@ namespace DiscordBotLibrary.Sharding
                         break;
                     case OpCode.Hello:
                         DiscordClient.Logger.LogInfo("Received Hello message.");
-                        await HandleDiscordPayload.HandleHelloEvent(message, this, ResumeConnInfos, _lastSequenceNumber);
+                        await HandleDiscordPayload.HandleHelloEventAsync(message, this, ResumeConnInfos, _lastSequenceNumber);
                         break;
                     case OpCode.HeartbeatAck:
                         DiscordClient.Logger.LogDebug("Heartbeat acknowledged.");
@@ -123,7 +137,69 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        public async Task SendHeartbeatsAsync(int interval)
+        #region Send
+
+        internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
+        {
+            string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.JsonSerializerOptions);
+
+            if (isHeartbeat)
+            {
+                await SendPayloadWssAsync(jsonStr);
+                return;
+            }
+
+            if (!await _wsGatewayLimiter.TrySendAsync(_webSocket, jsonStr))
+            {
+                DiscordClient.Logger.LogInfo($"Shard{_shardId}: Gateway limit reached!");
+            }
+        }
+
+        internal async Task SendPayloadWssAsync(string jsonStr)
+        {
+            try
+            {
+                byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
+
+                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+                await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                DiscordClient.Logger.LogError(ex);
+            }
+        }
+
+        internal async Task SendIdentifyAsync()
+        {
+            DiscordClient.Logger.LogInfo("Sending Identify payload");
+
+            const string clientId = "DiscordBotLibrary";
+            var identifyPayload = new
+            {
+                op = OpCode.Identify,
+                d = new
+                {
+                    intents = DiscordClient.ClientConfig.Intents,
+                    token = DiscordClient.ClientConfig.Token,
+                    properties = new
+                    {
+                        os = Environment.OSVersion.Platform.ToString(),
+                        browser = clientId,
+                        device = clientId,
+                    },
+                    shard = new[]
+                    {
+                        _shardId,
+                        ShardHandler.TotalShards
+                    }
+                },
+            };
+
+            await SendPayloadWssAsync(identifyPayload);
+        }
+
+        internal async Task SendHeartbeatsAsync(int interval)
         {
             while (_webSocket.State == WebSocketState.Open)
             {
@@ -139,73 +215,7 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
-        {
-            string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.JsonSerializerOptions);
-
-            if (isHeartbeat)
-            {
-                await SendPayloadWssAsync(jsonStr);
-                return;
-            }
-
-            if (!await _wsGatewayLimiter.TrySendAsync(jsonStr))
-            {
-                DiscordClient.Logger.LogInfo($"Shard{_shardId}: Gateway limit reached!");
-            }
-        }
-
-        internal async Task SendPayloadWssAsync(string jsonStr)
-        {
-            byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
-
-            DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
-            await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-
-        internal async Task SendIdentifyAsync()
-        {
-            DiscordClient.Logger.LogInfo("Sending Identify payload");
-
-            const string clientId = "DiscordBotLibrary";
-            var identifyPayload = new
-            {
-                op = OpCode.Identify,
-                d = new
-                {
-                    token = DiscordClient.ClientConfig.Token,
-                    properties = new
-                    {
-                        os = Environment.OSVersion.Platform.ToString(),
-                        browser = clientId,
-                        device = clientId,
-                    },
-                    intents = DiscordClient.ClientConfig.Intents,
-                    shard = new[]
-                    {
-                        _shardId,
-                        ShardHandler.TotalShards
-                    }
-                },
-            };
-
-            await SendPayloadWssAsync(identifyPayload);
-        }
-
-        internal async Task RestartShardAsync()
-        {
-            if (_webSocket.State == WebSocketState.Open)
-            {
-                await _webSocket.CloseAsync(WebSocketCloseStatus.Empty, string.Empty, CancellationToken.None);
-            }
-
-            _webSocket = new ClientWebSocket();
-            ResumeConnInfos = ResumeConnInfos.EmptyConnInfos;
-            _lastSequenceNumber = null;
-            //Guilds = [];
-
-            await StartShardAsync();
-        }
+        #endregion
 
         private static void ClearMs(MemoryStream ms)
         {

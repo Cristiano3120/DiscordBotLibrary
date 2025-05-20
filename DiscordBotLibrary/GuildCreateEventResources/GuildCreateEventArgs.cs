@@ -30,7 +30,7 @@
         public Channel[] Threads { get; init; } = [];
 
         [JsonPropertyName("presences")]
-        public PresenceUpdate[] Presences { get; init; } = [];
+        public List<PresenceUpdate> Presences { get; init; } = [];
 
         [JsonPropertyName("stage_instances")]
         public StageInstance[] StageInstances { get; init; } = [];

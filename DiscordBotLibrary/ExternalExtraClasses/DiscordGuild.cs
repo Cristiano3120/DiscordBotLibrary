@@ -151,10 +151,25 @@
             Unavailable = unavailableGuildCreateEventArgs.Unavailable;
         }
 
-        internal void UpdateUser(PresenceUpdate presenceUpdate)
+        internal void UpdatePresence(PresenceUpdate presenceUpdate)
         {
-            throw new NotImplementedException("UpdateUser method is not implemented yet.");
-            GuildMember? guildMember = Members.FirstOrDefault(x => x?.User?.Id == presenceUpdate.User.Id);
+            PresenceUpdate? oldState = Presences.FirstOrDefault(x => x.User.Id == presenceUpdate.User.Id);
+
+            if (presenceUpdate.Status == PresenceStatus.Offline && oldState is not null)
+            {
+                Presences.Remove(oldState);
+                return;
+            }
+
+            if (oldState is null)
+            {
+                Presences.Add(presenceUpdate);
+            }
+            else
+            {
+                int index = Presences.IndexOf(oldState);
+                Presences[index] = presenceUpdate;
+            }
         }
 
         #endregion
