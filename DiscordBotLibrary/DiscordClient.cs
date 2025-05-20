@@ -70,7 +70,7 @@ namespace DiscordBotLibrary
 
         /// <summary>
         /// The <c>first</c> method you have to call after instantiating the DiscordClient.
-        /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot.
+        /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot
         /// </summary>
         /// <returns>An Logger that is recommended to use</returns>
         public Logger Start()
