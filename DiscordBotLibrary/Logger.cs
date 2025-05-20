@@ -143,21 +143,25 @@ namespace DiscordBotLibrary
             JsonNode jsonNode = JsonNode.Parse(payload)!;
 
             jsonNode["op"] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
-            FilterSensitiveData(jsonNode);
+            JsonObject obj = FilterSensitiveData(jsonNode.AsObject());
             
-            Write(color, LogLevel.Debug, prefix, jsonNode.ToString());
+            Write(color, LogLevel.Debug, prefix, obj.ToString());
             Console.WriteLine("");
         }
 
         #region Filter
 
-        private void FilterSensitiveData(JsonNode jsonNode)
+        private JsonObject FilterSensitiveData(JsonObject jsonNode)
         {
+            if (jsonNode["d"] is not JsonObject dObj)
+                return jsonNode;
+
             foreach (string key in _sensitiveKeys)
             {
-                if (jsonNode["d"]?[key] is JsonNode tokenNode)
-                    tokenNode.ReplaceWith("**********");
+                dObj.Remove(key);
             }
+
+            return jsonNode;
         }
 
         #endregion
@@ -165,10 +169,9 @@ namespace DiscordBotLibrary
         #region ExternalAddMethods
 
         /// <summary>
-        /// Adds a key to the list of sensitive keys. The key will be replaced with "**********" in the log/console.
-        /// For example if one of ur json payloads contains a key "token" and u want to log it, u can add the key to the list 
-        /// of sensitive keys and it will be replaced with "**********".
-        /// In the case of the key "token" this is done by default.
+        /// Adds a key to the list of sensitive keys. The key removed in the log/console
+        /// This is useful for removing sensitive data like tokens or passwords from the log/console.
+        /// By default, the key "token" is added to the list of sensitive keys.
         /// </summary>
         /// <param name="key"></param>
         public void AddSensitiveKey(string key)

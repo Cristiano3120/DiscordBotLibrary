@@ -28,8 +28,6 @@ namespace Test
             client.OnReady += Client_OnReady;
 
             Logger logger = client.Start();
-            logger.AddEnumToLog<PresenceStatus>();
-            logger.AddEnumToLog<Language>();
             
             ServiceCollection services = new();
             services.AddSingleton(logger);
