@@ -3,8 +3,10 @@ using System.Text.Json.Nodes;
 
 namespace DiscordBotLibrary
 {
-    internal sealed class Logger
+    public sealed class Logger
     {
+        private readonly HashSet<string> _sensitiveKeys = ["token"];
+
         private const byte _maxAmmountLoggingFiles = 10;
         private readonly string _pathToLogFile;
         private readonly LogLevel _logLevel;
@@ -111,15 +113,15 @@ namespace DiscordBotLibrary
 
             if (stackFrame is not null)
             {
-                var methodName = stackFrame?.GetMethod()?.Name + "()";
-                var filename = stackFrame?.GetFileName() ?? "missing filename";
-                var lineNum = stackFrame?.GetFileLineNumber();
-                var columnNum = stackFrame?.GetFileColumnNumber();
+                string methodName = stackFrame?.GetMethod()?.Name + "()";
+                string filename = stackFrame?.GetFileName() ?? "missing filename";
+                int lineNum = stackFrame?.GetFileLineNumber() ?? 0;
+                int columnNum = stackFrame?.GetFileColumnNumber() ?? 0;
 
-                var index = filename.LastIndexOf('\\') + 1;
+                int index = filename.LastIndexOf('\\') + 1;
                 filename = filename[index..];
 
-                var errorInfos = $"ERROR in file {filename}, in {methodName}, at line: {lineNum}, at column: {columnNum}";
+                string errorInfos = $"ERROR in file {filename}, in {methodName}, at line: {lineNum}, at column: {columnNum}";
                 Write(ConsoleColor.Red, LogLevel.Error, tag, errorInfos);
             }
 
@@ -141,15 +143,43 @@ namespace DiscordBotLibrary
             JsonNode jsonNode = JsonNode.Parse(payload)!;
 
             jsonNode["op"] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
-
+            FilterSensitiveData(jsonNode);
+            
             Write(color, LogLevel.Debug, prefix, jsonNode.ToString());
             Console.WriteLine("");
         }
 
+        #region Filter
+
+        private void FilterSensitiveData(JsonNode jsonNode)
+        {
+            foreach (string key in _sensitiveKeys)
+            {
+                if (jsonNode["d"]?[key] is JsonNode tokenNode)
+                    tokenNode.ReplaceWith("**********");
+            }
+        }
+
+        #endregion
+
+        #region ExternalAddMethods
+
+        /// <summary>
+        /// Adds a key to the list of sensitive keys. The key will be replaced with "**********" in the log/console.
+        /// For example if one of ur json payloads contains a key "token" and u want to log it, u can add the key to the list 
+        /// of sensitive keys and it will be replaced with "**********".
+        /// In the case of the key "token" this is done by default.
+        /// </summary>
+        /// <param name="key"></param>
+        public void AddSensitiveKey(string key)
+            => _sensitiveKeys.Add(key);
+
+        #endregion
+
         public static string GetDynamicPath(string relativePath)
         {
-            var projectBasePath = AppContext.BaseDirectory;
-            var binIndex = projectBasePath.IndexOf($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+            string projectBasePath = AppContext.BaseDirectory;
+            int binIndex = projectBasePath.IndexOf($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
 
             if (binIndex == -1)
             {

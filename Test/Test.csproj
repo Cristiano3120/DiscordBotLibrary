@@ -11,4 +11,8 @@
     <ProjectReference Include="..\DiscordBotLibrary\DiscordBotLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Logging\" />
+  </ItemGroup>
+
 </Project>

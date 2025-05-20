@@ -2,11 +2,15 @@
 using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.PresenceUpdateResources;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Test
 {
     internal class Program
     {
+        private static IServiceProvider _serviceProvider = default!;
+        private Logger _logger = default!;
+
         static async Task Main()
         {
             StreamReader streamReader = new(@"C:\Users\Crist\Desktop\LibraryTestToken.txt");
@@ -23,7 +27,14 @@ namespace Test
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
 
-            client.Start();
+            Logger logger = client.Start();
+            logger.AddEnumToLog<PresenceStatus>();
+            logger.AddEnumToLog<Language>();
+            
+            ServiceCollection services = new();
+            services.AddSingleton(logger);
+            services.AddSingleton(client);
+            _serviceProvider = services.BuildServiceProvider();
 
             await Task.Delay(Timeout.Infinite);
         }

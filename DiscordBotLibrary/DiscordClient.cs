@@ -72,8 +72,8 @@ namespace DiscordBotLibrary
         /// The <c>first</c> method you have to call after instantiating the DiscordClient.
         /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot.
         /// </summary>
-        /// <returns></returns>
-        public void Start()
+        /// <returns>An Logger that is recommended to use</returns>
+        public Logger Start()
         {
             try
             {
@@ -85,10 +85,12 @@ namespace DiscordBotLibrary
                 };
 
                 ShardHandler.Start(_httpClient);
+                return Logger;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex);
+                throw new Exception("Failed to start Discord client");
             }
         }
 
