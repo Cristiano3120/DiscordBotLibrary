@@ -11,7 +11,7 @@ namespace Test
     internal class Program
     {
         private static IServiceProvider _serviceProvider = default!;
-        private Logger _logger = default!;
+        private readonly Logger _logger = default!;
 
         static async Task Main()
         {
@@ -22,8 +22,6 @@ namespace Test
                 Token = streamReader.ReadToEnd(),
                 Intents = Intents.Guilds,
             };
-
-            
 
             DiscordClient client = new(discordClientConfig);
 

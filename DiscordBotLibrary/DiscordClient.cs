@@ -137,18 +137,18 @@ namespace DiscordBotLibrary
         [DebuggerStepThrough]
         private void IntentChecker(string methodSignature, params Intents[] neededIntents)
         {
+            HashSet<Intents> missingIntents = [];
             foreach (Intents intent in neededIntents)
-            {
-                HashSet<Intents> missingIntents = [];
+            {    
                 if (!ClientConfig.Intents.HasFlag(intent))
                 {
                     missingIntents.Add(intent);
                 }
+            }
 
-                if (missingIntents.Count > 0)
-                {
-                    throw new MissingIntentException(neededIntents, missingIntents, methodSignature);
-                }
+            if (missingIntents.Count > 0)
+            {
+                throw new MissingIntentException(neededIntents, missingIntents, methodSignature);
             }
         }
 
