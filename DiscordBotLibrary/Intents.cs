@@ -40,7 +40,6 @@
         // Guild Scheduled Events
         GuildScheduledEvents = 1 << 19,
 
-        All = 1118481
+        All = 1048575
     }
-
 }

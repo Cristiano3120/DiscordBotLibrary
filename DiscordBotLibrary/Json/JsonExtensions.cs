@@ -30,11 +30,11 @@ namespace DiscordBotLibrary.Json
             throw new JsonException("Invalid Payload");
         }
 
-        internal static Events GetEvent(this JsonElement jsonElement)
+        internal static Event GetEvent(this JsonElement jsonElement)
         {
             if (jsonElement.TryGetProperty("t", out JsonElement eventElement))
             {
-                return Enum.Parse<Events>(eventElement.GetString() ?? throw new Exception("Invalid Payload"));
+                return Enum.Parse<Event>(eventElement.GetString() ?? throw new Exception("Invalid Payload"));
             }
 
             throw new JsonException("Invalid Payload");

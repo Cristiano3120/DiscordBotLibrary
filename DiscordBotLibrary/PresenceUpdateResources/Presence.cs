@@ -5,7 +5,7 @@ namespace DiscordBotLibrary.PresenceUpdateResources
     /// <summary>
     /// Represents a user's presence update within a guild.
     /// </summary>
-    public sealed record PresenceUpdate
+    public sealed record Presence
     {
         /// <summary>
         /// Gets the user whose presence is being updated.

@@ -1,4 +1,7 @@
-﻿namespace DiscordBotLibrary.ExternalExtraClasses
+﻿using DiscordBotLibrary.VoiceChannelHandling;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace DiscordBotLibrary.ExternalExtraClasses
 {
     /// <summary>
     /// Represents a Discord guild.
@@ -151,9 +154,9 @@
             Unavailable = unavailableGuildCreateEventArgs.Unavailable;
         }
 
-        internal void UpdatePresence(PresenceUpdate presenceUpdate)
+        internal void UpdatePresence(Presence presenceUpdate)
         {
-            PresenceUpdate? oldState = Presences.FirstOrDefault(x => x.User.Id == presenceUpdate.User.Id);
+            Presence? oldState = Presences.FirstOrDefault(x => x.User.Id == presenceUpdate.User.Id);
 
             if (presenceUpdate.Status == PresenceStatus.Offline && oldState is not null)
             {
@@ -171,6 +174,30 @@
                 Presences[index] = presenceUpdate;
             }
         }
+
+        #region VoiceChannelHandling
+
+        /// <summary>
+        /// Connects the bot to a voice channel in a specific guild.
+        /// </summary>
+        /// <returns></returns>
+        public async Task ConnectToVcAsync(ulong channelId, bool selfDeaf = false, bool selfMute = false)
+        {
+            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+                .ConnectToVcAsync(Id, channelId, selfDeaf, selfMute);
+        }
+
+        /// <summary>
+        /// Disconnects the bot from the voice channel in a specific guild.
+        /// </summary>
+        /// <returns></returns>
+        public async Task DisconnectFromVcAsync()
+        {
+            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+                .DisconnectFromVcAsync(Id);
+        }
+
+        #endregion
 
         #endregion
     }

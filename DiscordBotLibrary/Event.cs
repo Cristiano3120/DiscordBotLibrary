@@ -3,7 +3,7 @@
     /// <summary>
     /// An enumeration of all the events that can be received from the Discord API.
     /// </summary>
-    internal enum Events : byte
+    internal enum Event : byte
     {
         // Connection Lifecycle
         READY = 0,

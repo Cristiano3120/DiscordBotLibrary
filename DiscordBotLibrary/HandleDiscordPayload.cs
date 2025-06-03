@@ -9,7 +9,7 @@ namespace DiscordBotLibrary
     {
         internal static int HandleDispatch(Shard shard, JsonElement jsonElement)
         {
-            Events events = jsonElement.GetEvent();
+            Event events = jsonElement.GetEvent();
             shard.InvokeEvent(events, jsonElement);
 
             return jsonElement.GetSequenceNumber();
@@ -61,7 +61,7 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal static async Task HandleSessionInvalidAsync(Shard shard, JsonElement jsonElement, 
+        internal static async Task HandleSessionInvalidAsync(Shard shard, JsonElement jsonElement,
             ResumeConnInfos resumeConnInfos, ClientWebSocket clientWebSocket)
         {
             bool canResume = jsonElement.GetProperty("d").GetBoolean();
@@ -80,7 +80,7 @@ namespace DiscordBotLibrary
         {
             ShardReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
                 .Deserialize<ShardReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
-
+            
             ShardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos
             {
@@ -109,14 +109,50 @@ namespace DiscordBotLibrary
 
         internal static void HandlePresenceUpdateEvent(JsonElement jsonElement)
         {
-            PresenceUpdate presenceUpdate = jsonElement.GetProperty("d")
-                .Deserialize<PresenceUpdate>(DiscordClient.JsonSerializerOptions)!;
+            Presence presenceUpdate = jsonElement.GetProperty("d")
+                .Deserialize<Presence>(DiscordClient.JsonSerializerOptions)!;
 
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             DiscordGuild guild = client.InternalGuilds[presenceUpdate.GuildId];
 
             guild.UpdatePresence(presenceUpdate);
             client.InvokeOnPresenceUpdate(presenceUpdate);
+        }
+
+        internal static void HandleVoiceServerUpdateEvent(JsonElement jsonElement)
+        {
+            VoiceServerUpdate voiceServerUpdate = jsonElement.GetProperty("d")
+                .Deserialize<VoiceServerUpdate>(DiscordClient.JsonSerializerOptions)!;
+
+            DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().ReceivedVoiceServerUpdate(voiceServerUpdate);
+        }
+
+        internal static void HandleGuildMembersChunkEvent(JsonElement jsonElement, Shard shard)
+        {
+            GuildMembersChunk guildMembersChunk = jsonElement.GetProperty("d")
+                .Deserialize<GuildMembersChunk>(DiscordClient.JsonSerializerOptions)!;
+
+            shard.GuildMemberRequests.TryGetValue(guildMembersChunk.Nonce, out (TaskCompletionSource<List<GuildMember>>, List<GuildMember>) value);
+            (TaskCompletionSource<List<GuildMember>> taskCompletionSource, List<GuildMember> members) = value;
+
+            members.AddRange(guildMembersChunk.Members);
+
+            Dictionary<ulong, Presence> presenceMap = guildMembersChunk.Presences?
+                .ToDictionary(p => p.User.Id) ?? [];
+
+            foreach (GuildMember member in value.Item2)
+            {
+                if (member is not null && presenceMap.TryGetValue(member.User?.Id ?? 0, out Presence? presence))
+                {
+                    member.SetPresence(presence);
+                }
+            }
+
+            if (guildMembersChunk.ChunkIndex == guildMembersChunk.ChunkCount -1)
+            {
+                taskCompletionSource.SetResult(value.Item2);
+                shard.GuildMemberRequests.Remove(guildMembersChunk.Nonce);
+            }
         }
     }
 }

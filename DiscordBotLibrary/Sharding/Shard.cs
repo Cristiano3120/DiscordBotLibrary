@@ -13,11 +13,13 @@ namespace DiscordBotLibrary.Sharding
         private readonly int _shardId = shardId;
         private int? _lastSequenceNumber;
 
+        public Dictionary<string, (TaskCompletionSource<List<GuildMember>>, List<GuildMember>)> GuildMemberRequests { get; init; } = new();
+
         internal async Task StartShardAsync()
         {
             Uri gatewayUri = new($"wss://gateway.discord.gg/?v={DiscordClient.ClientConfig.Version}&encoding=json");
             await _webSocket.ConnectAsync(gatewayUri, _cts.Token);
-            
+
             _wsGatewayLimiter = new WsGatewayLimiter(this);
             _ = ReceiveMessagesAsync();
         }
@@ -59,7 +61,7 @@ namespace DiscordBotLibrary.Sharding
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, "[RECEIVED]:");
+                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, PayloadType.Received);
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
@@ -74,6 +76,7 @@ namespace DiscordBotLibrary.Sharding
             }
 
             DiscordClient.Logger.LogDebug("Connection closed!");
+            DiscordClient.Logger.LogDebug($"CloseCode: {_webSocket.CloseStatus}, Reason: {_webSocket.CloseStatusDescription}");
         }
 
         private async Task HandleReceivedMessage(JsonDocument jsonDocument)
@@ -111,20 +114,26 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal void InvokeEvent(Events events, JsonElement jsonElement)
+        internal void InvokeEvent(Event events, JsonElement jsonElement)
         {
             try
             {
                 switch (events)
                 {
-                    case Events.READY:
+                    case Event.READY:
                         HandleDiscordPayload.HandleReadyEvent(this, jsonElement);
                         break;
-                    case Events.GUILD_CREATE:
+                    case Event.GUILD_CREATE:
                         HandleDiscordPayload.HandleGuildCreateEvent(jsonElement);
                         break;
-                    case Events.PRESENCE_UPDATE:
+                    case Event.PRESENCE_UPDATE:
                         HandleDiscordPayload.HandlePresenceUpdateEvent(jsonElement);
+                        break;
+                    case Event.VOICE_SERVER_UPDATE:
+                        HandleDiscordPayload.HandleVoiceServerUpdateEvent(jsonElement);
+                        break;
+                    case Event.GUILD_MEMBERS_CHUNK:
+                        HandleDiscordPayload.HandleGuildMembersChunkEvent(jsonElement, this);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
@@ -161,7 +170,7 @@ namespace DiscordBotLibrary.Sharding
             {
                 byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, "[SENT]:");
+                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, PayloadType.Sent);
                 await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception ex)
@@ -213,6 +222,19 @@ namespace DiscordBotLibrary.Sharding
                 await SendPayloadWssAsync(heartbeatPayload);
                 await Task.Delay(interval);
             }
+        }
+
+        internal async Task SendGuildMemberRequestAsync(TaskCompletionSource<List<GuildMember>> tcs, RequestGuildMembers requestGuildMembers)
+        {
+            GuildMemberRequests.Add(requestGuildMembers.Nonce, (tcs, []));
+
+            var payload = new
+            {
+                op = OpCode.RequestGuildMembers,
+                d = requestGuildMembers
+            };
+
+            await SendPayloadWssAsync(payload);
         }
 
         #endregion

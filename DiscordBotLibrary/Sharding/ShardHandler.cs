@@ -5,15 +5,22 @@ namespace DiscordBotLibrary.Sharding
 {
     internal static class ShardHandler
     {
-        public static ReadyEventArgs ReadyEventArgs { get; set; } = new();
+        public static ReadyEventArgs? ReadyEventArgs { get; set; } = new();
         public static int TotalShards { get; private set; }
 
         private static HashSet<int> _shardIds = new();
         private static Shard[] _shards = [];
 
-        public static void Start(HttpClient httpClient)
-            => _ = InitAndConnectShardsAsync(httpClient);
-        
+        public static void Start(DiscordClient client, HttpClient httpClient)
+        {
+            _ = InitAndConnectShardsAsync(httpClient);
+            client.OnGuildMemberRequested += async (tcs, guildId, payload) =>
+            {
+                 int shardId = GetResponsibleShardId(guildId);
+                 await _shards[shardId].SendGuildMemberRequestAsync(tcs, payload);
+            };
+        }
+
         #region StartShards
         private static async Task InitAndConnectShardsAsync(HttpClient httpClient)
         {
@@ -97,15 +104,20 @@ namespace DiscordBotLibrary.Sharding
         public static void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
         {
             _shardIds.Add(shardReadyEventArgs.Shard![0]);
-            ReadyEventArgs.Guilds = [..ReadyEventArgs.Guilds, ..shardReadyEventArgs.Guilds];
+            ReadyEventArgs!.Guilds = [.. ReadyEventArgs.Guilds, .. shardReadyEventArgs.Guilds];
 
             if (_shardIds.Count == TotalShards)
             {
                 DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
-                client.InvokeOnReady(ReadyEventArgs);
-
+                _ = client.ShardsReady(ReadyEventArgs);
                 _shardIds = null!;
             }
+        }
+
+        public static async Task SendShardSpecificMessageAsync(ulong guildId, object payload)
+        {
+            int shardID = GetResponsibleShardId(guildId);
+            await _shards[shardID].SendPayloadWssAsync(payload);
         }
 
         public static async Task SendGlobalWebSocketMessageAsync(object payload)
@@ -116,7 +128,7 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        private static int GetResponsibleShardId(ulong guildId, int totalShards)
-            => (int)((guildId >> 22) % (ulong)totalShards);
+        private static int GetResponsibleShardId(ulong guildId)
+            => (int)((guildId >> 22) % (ulong)TotalShards);
     }
 }

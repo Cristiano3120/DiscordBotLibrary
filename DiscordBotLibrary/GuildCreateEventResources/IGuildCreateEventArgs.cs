@@ -69,7 +69,7 @@
         /// Will only include non-offline members if the size is greater than the large threshold.
         /// </summary>
         [JsonPropertyName("presences")]
-        List<PresenceUpdate> Presences { get; init; }
+        List<Presence> Presences { get; init; }
 
         /// <summary>
         /// Gets the stage instances in the guild.

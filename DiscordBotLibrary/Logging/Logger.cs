@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DiscordBotLibrary
+namespace DiscordBotLibrary.Logging
 {
     public sealed class Logger
     {
@@ -136,16 +137,21 @@ namespace DiscordBotLibrary
             Write(ConsoleColor.Cyan, LogLevel.Debug, nameof(LogLevel.Debug), message);
         }
 
-        public void LogPayload(ConsoleColor color, string payload, string prefix)
+        internal void LogPayload(ConsoleColor color, string payload, PayloadType payloadType)
         {
             Console.ForegroundColor = color;
-
             JsonNode jsonNode = JsonNode.Parse(payload)!;
+            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
+            if (opCode == OpCode.Dispatch)
+            {
+                FilterEventData(jsonNode, false, Event.GUILD_CREATE);
+            }
 
-            jsonNode["op"] = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()).ToString();
+            jsonNode["op"] = opCode.ToString();
+
             JsonObject obj = FilterSensitiveData(jsonNode.AsObject());
-            
-            Write(color, LogLevel.Debug, prefix, obj.ToString());
+
+            Write(color, LogLevel.Debug, $"{payloadType}", obj.ToString());
             Console.WriteLine("");
         }
 
@@ -162,6 +168,26 @@ namespace DiscordBotLibrary
             }
 
             return jsonNode;
+        }
+
+        /// <summary>
+        /// Clears the event data from the JSON node based on the provided events.
+        /// This leads to a cleaner log output, as only the at the moment relevant event data is logged.
+        /// <para>
+        /// <paramref name="onlyLogThose"/> indicates whether to log only the specified events and filter the rest out
+        /// or to filter them out and only log the rest.
+        /// </para>
+        /// </summary>
+        /// <param name="jsonNode"></param>
+        /// <param name="onlyLogThose"></param>
+        /// <param name="events"></param>
+        private static void FilterEventData(JsonNode jsonNode, bool onlyLogThoseEvents, params Event[] events)
+        {
+            Event dispatchEvent = Enum.Parse<Event>(jsonNode["t"]!.ToString()!);
+            if (onlyLogThoseEvents && !events.Contains(dispatchEvent) || !onlyLogThoseEvents && events.Contains(dispatchEvent))
+            {
+                jsonNode["d"] = "";
+            }
         }
 
         #endregion

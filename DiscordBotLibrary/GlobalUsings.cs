@@ -16,4 +16,8 @@ global using System.Text.Json.Serialization;
 global using DiscordBotLibrary.Json;
 global using DiscordBotLibrary.RoleResources;
 global using DiscordBotLibrary.StickerResources;
+global using DiscordBotLibrary.VoiceChannelHandling;
+global using DiscordBotLibrary.RequestGuildMembersResources;
+global using DiscordBotLibrary.Logging;
+global using DiscordBotLibrary.Exceptions;
 

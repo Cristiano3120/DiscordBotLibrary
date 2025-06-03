@@ -1,7 +1,7 @@
 ﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
     /// <summary>
-    /// Represents the extra data provided when a <see cref="Events.GUILD_CREATE"/> event is fired by the Discord API.
+    /// Represents the extra data provided when a <see cref="Event.GUILD_CREATE"/> event is fired by the Discord API.
     /// </summary>
     public record GuildCreateEventArgs : Guild, IGuildCreateEventArgs
     {
@@ -30,7 +30,7 @@
         public Channel[] Threads { get; init; } = [];
 
         [JsonPropertyName("presences")]
-        public List<PresenceUpdate> Presences { get; init; } = [];
+        public List<Presence> Presences { get; init; } = [];
 
         [JsonPropertyName("stage_instances")]
         public StageInstance[] StageInstances { get; init; } = [];

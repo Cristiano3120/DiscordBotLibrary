@@ -1,7 +1,7 @@
 ﻿namespace DiscordBotLibrary.GuildCreateEventResources
 {
     /// <summary>
-    /// Represents the extra data provided by the <see cref="Events.GUILD_CREATE"/> event. 
+    /// Represents the extra data provided by the <see cref="Event.GUILD_CREATE"/> event. 
     /// This object represents a guild that is unavailable.
     /// </summary>
     public class UnavailableGuildCreateEventArgs : IGuildCreateEventArgs
@@ -39,7 +39,7 @@
         public Channel[] Threads { get; init; } = [];
 
         [JsonPropertyName("presences")]
-        public List<PresenceUpdate> Presences { get; init; } = [];
+        public List<Presence> Presences { get; init; } = [];
 
         [JsonPropertyName("stage_instances")]
         public StageInstance[] StageInstances { get; init; } = [];

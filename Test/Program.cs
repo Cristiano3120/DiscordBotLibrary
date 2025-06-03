@@ -1,6 +1,8 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
+using DiscordBotLibrary.GuildMemberResources;
+using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,8 +20,10 @@ namespace Test
             {
                 LogLevel = LogLevel.Debug,
                 Token = streamReader.ReadToEnd(),
-                Intents = Intents.All,
+                Intents = Intents.Guilds,
             };
+
+            
 
             DiscordClient client = new(discordClientConfig);
 
@@ -28,7 +32,7 @@ namespace Test
             client.OnReady += Client_OnReady;
 
             Logger logger = client.Start();
-            
+
             ServiceCollection services = new();
             services.AddSingleton(logger);
             services.AddSingleton(client);
@@ -53,6 +57,14 @@ namespace Test
                     },
                 ],
             });
+
+            const ulong guildId = 1126185640745246731;
+            List<GuildMember>? allMembers = await client.RequestAllGuildMembersAsync(guildId, true);
+            List<GuildMember>? queryMembers = await client.RequestGuildMembersByPrefixAsync(guildId, "C", true);
+            List<GuildMember>? membersByID = await client.RequestGuildMembersByIdAsync(guildId, [912014865898549378], true);
+            //await client.ConnectToVcAsync(1341844969085862021, 1358065342240264242, selfDeaf: true, selfMute: false);
+            //await Task.Delay(7500);
+            //await client.DisconnectFromVcAsync(1341844969085862021);
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
@@ -60,7 +72,7 @@ namespace Test
             Console.WriteLine($"Guild received: {args.Name}");
         }
 
-        private static void Client_OnPresenceUpdate(DiscordClient discordClient, PresenceUpdate args)
+        private static void Client_OnPresenceUpdate(DiscordClient discordClient, Presence args)
         {
 
         }

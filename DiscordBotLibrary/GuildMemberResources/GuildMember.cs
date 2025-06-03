@@ -90,6 +90,16 @@
         /// </summary>
         [JsonPropertyName("avatar_decoration_data")]
         public AvatarDecorationData? AvatarDecorationData { get; init; }
-    }
 
+        /// <summary>
+        /// The member's presence in the guild, if requested.
+        /// </summary>
+        [JsonIgnore]
+        public Presence? Presence { get; private set; } = null;
+
+        internal void SetPresence(Presence? presence)
+        {
+            Presence = presence;
+        }
+    }
 }
