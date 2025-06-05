@@ -39,7 +39,7 @@
         public GuildScheduledEvent[] GuildScheduledEvents { get; init; } = [];
 
         [JsonPropertyName("soundboard_sounds")]
-        public SoundboardSound[] SoundboardSounds { get; init; } = [];
+        public SoundboardSound[] SoundboardSounds { get; protected set; } = [];
 
         public GuildCreateEventArgs? TryGetAvailableGuild() => this;
 

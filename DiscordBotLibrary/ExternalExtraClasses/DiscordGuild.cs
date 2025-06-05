@@ -1,4 +1,5 @@
 ﻿using DiscordBotLibrary.GuildCreateEventResources;
+using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -197,6 +198,17 @@ namespace DiscordBotLibrary.ExternalExtraClasses
                 }
             }
         }
+
+        public async Task<SoundboardSound[]> GetSoundboardSoundsAsync()
+        {
+            if (SoundboardSounds is null || SoundboardSounds.Length > 0)
+            {
+                SoundboardSounds = await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().GetSoundboardSoundsAsync(Id);
+            }
+
+            return SoundboardSounds;
+        }
+        
 
         #region VoiceChannelHandling
 

@@ -87,15 +87,7 @@
         /// Gets the soundboard sounds in the guild.
         /// </summary>
         [JsonPropertyName("soundboard_sounds")]
-        SoundboardSound[] SoundboardSounds { get; init; }
-
-        /// <summary>
-        /// Trys to convert the <see cref="IGuildCreateEventArgs"/> to an <see cref="GuildCreateEventArgs"/> object.
-        /// </summary>
-        /// <returns>
-        /// <para><c>If</c> convertable (<see cref="Unavailable"/> == <c>false</c>) an obj of type <see cref="GuildCreateEventArgs"/></para>
-        /// <c>else</c> <c>null</c>.
-        /// </returns>
+        SoundboardSound[] SoundboardSounds { get; protected set; }
         GuildCreateEventArgs? TryGetAvailableGuild();
 
         /// <summary>

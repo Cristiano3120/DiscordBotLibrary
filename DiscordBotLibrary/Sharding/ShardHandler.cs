@@ -1,6 +1,4 @@
 ﻿using System.Text.Json;
-using DiscordBotLibrary.RequestGuildMembersResources;
-using DiscordBotLibrary.RequestSoundboardResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.Sharding
