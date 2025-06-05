@@ -1,4 +1,5 @@
-﻿using DiscordBotLibrary.Sharding;
+﻿using DiscordBotLibrary.RequestSoundboardResources;
+using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.WebSockets;
 using System.Text.Json;
@@ -80,7 +81,7 @@ namespace DiscordBotLibrary
         {
             ShardReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
                 .Deserialize<ShardReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
-            
+
             ShardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos
             {
@@ -132,15 +133,17 @@ namespace DiscordBotLibrary
             GuildMembersChunk guildMembersChunk = jsonElement.GetProperty("d")
                 .Deserialize<GuildMembersChunk>(DiscordClient.JsonSerializerOptions)!;
 
-            shard.GuildMemberRequests.TryGetValue(guildMembersChunk.Nonce, out (TaskCompletionSource<List<GuildMember>>, List<GuildMember>) value);
-            (TaskCompletionSource<List<GuildMember>> taskCompletionSource, List<GuildMember> members) = value;
+            shard.GuildMemberRequests.TryGetValue(guildMembersChunk.Nonce, out RequestGuildMembersCache? requestGuildMembersCache);
 
-            members.AddRange(guildMembersChunk.Members);
+            if (requestGuildMembersCache is null)
+                return;
+
+            requestGuildMembersCache.GuildMembers.AddRange(guildMembersChunk.Members);
 
             Dictionary<ulong, Presence> presenceMap = guildMembersChunk.Presences?
                 .ToDictionary(p => p.User.Id) ?? [];
 
-            foreach (GuildMember member in value.Item2)
+            foreach (GuildMember member in requestGuildMembersCache.GuildMembers)
             {
                 if (member is not null && presenceMap.TryGetValue(member.User?.Id ?? 0, out Presence? presence))
                 {
@@ -148,11 +151,30 @@ namespace DiscordBotLibrary
                 }
             }
 
-            if (guildMembersChunk.ChunkIndex == guildMembersChunk.ChunkCount -1)
+            if (guildMembersChunk.ChunkIndex == guildMembersChunk.ChunkCount - 1)
             {
-                taskCompletionSource.SetResult(value.Item2);
+                requestGuildMembersCache.TaskCompletionSource.SetResult(requestGuildMembersCache.GuildMembers);
                 shard.GuildMemberRequests.Remove(guildMembersChunk.Nonce);
+
+                if (requestGuildMembersCache.Cache)
+                {
+                    DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+                        .InternalGuilds[guildMembersChunk.GuildId].AddGuildMembers(requestGuildMembersCache.GuildMembers);              
+                }
             }
+        }
+
+        internal static void HandleSoundboardSoundsEvent(JsonElement jsonElement, Shard shard)
+        {
+            SoundboardSounds soundboardSounds = jsonElement.GetProperty("d")
+                .Deserialize<SoundboardSounds>(DiscordClient.JsonSerializerOptions)!;
+
+            shard.SoundboardRequests.TryGetValue(soundboardSounds.GuildId, out TaskCompletionSource<SoundboardSound[]>? tsc);
+            if (tsc is null)
+                return;
+
+            tsc.SetResult(soundboardSounds.SoundboardSoundsArr);
+            shard.SoundboardRequests.Remove(soundboardSounds.GuildId);
         }
     }
 }

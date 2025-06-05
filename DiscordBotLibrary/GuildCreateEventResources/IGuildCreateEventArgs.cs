@@ -50,7 +50,7 @@
         /// Gets the users currently in the guild.
         /// </summary>
         [JsonPropertyName("members")]
-        GuildMember[] Members { get; init; }
+        List<GuildMember> Members { get; init; }
 
         /// <summary>
         /// Gets the channels in the guild.

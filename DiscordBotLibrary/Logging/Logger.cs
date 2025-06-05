@@ -137,21 +137,22 @@ namespace DiscordBotLibrary.Logging
             Write(ConsoleColor.Cyan, LogLevel.Debug, nameof(LogLevel.Debug), message);
         }
 
-        internal void LogPayload(ConsoleColor color, string payload, PayloadType payloadType)
+        internal void LogPayload(ConsoleColor color, string payload, PayloadType payloadType, int shardId)
         {
             Console.ForegroundColor = color;
             JsonNode jsonNode = JsonNode.Parse(payload)!;
             OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
+
             if (opCode == OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, false, Event.GUILD_CREATE);
+                FilterEventData(jsonNode, true, Event.SOUNDBOARD_SOUNDS);
             }
 
             jsonNode["op"] = opCode.ToString();
 
             JsonObject obj = FilterSensitiveData(jsonNode.AsObject());
 
-            Write(color, LogLevel.Debug, $"{payloadType}", obj.ToString());
+            Write(color, LogLevel.Debug, $"{payloadType}[Id: {shardId}]", obj.ToString());
             Console.WriteLine("");
         }
 

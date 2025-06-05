@@ -20,7 +20,7 @@ namespace Test
             {
                 LogLevel = LogLevel.Debug,
                 Token = streamReader.ReadToEnd(),
-                Intents = Intents.Guilds,
+                Intents = Intents.All,
             };
 
             DiscordClient client = new(discordClientConfig);
@@ -29,7 +29,7 @@ namespace Test
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
 
-            Logger logger = client.Start();
+            Logger logger = await client.Start();
 
             ServiceCollection services = new();
             services.AddSingleton(logger);
@@ -56,10 +56,11 @@ namespace Test
                 ],
             });
 
-            const ulong guildId = 1126185640745246731;
-            List<GuildMember>? allMembers = await client.RequestAllGuildMembersAsync(guildId, true);
-            List<GuildMember>? queryMembers = await client.RequestGuildMembersByPrefixAsync(guildId, "C", true);
-            List<GuildMember>? membersByID = await client.RequestGuildMembersByIdAsync(guildId, [912014865898549378], true);
+            const ulong crisDc = 1126185640745246731;
+            const ulong familyDc = 1341844969085862021;
+            const ulong rlDc = 1257608066975924266;
+
+            Dictionary<ulong, SoundboardSound[]> dict = await client.GetSoundboardSoundsAsync([crisDc, familyDc, rlDc]);
             //await client.ConnectToVcAsync(1341844969085862021, 1358065342240264242, selfDeaf: true, selfMute: false);
             //await Task.Delay(7500);
             //await client.DisconnectFromVcAsync(1341844969085862021);

@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using DiscordBotLibrary.RequestGuildMembersResources;
+using DiscordBotLibrary.RequestSoundboardResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.Sharding
@@ -11,14 +13,9 @@ namespace DiscordBotLibrary.Sharding
         private static HashSet<int> _shardIds = new();
         private static Shard[] _shards = [];
 
-        public static void Start(DiscordClient client, HttpClient httpClient)
+        public static async Task Start(HttpClient httpClient)
         {
-            _ = InitAndConnectShardsAsync(httpClient);
-            client.OnGuildMemberRequested += async (tcs, guildId, payload) =>
-            {
-                 int shardId = GetResponsibleShardId(guildId);
-                 await _shards[shardId].SendGuildMemberRequestAsync(tcs, payload);
-            };
+            await InitAndConnectShardsAsync(httpClient);
         }
 
         #region StartShards
@@ -98,6 +95,58 @@ namespace DiscordBotLibrary.Sharding
             await shard.StartShardAsync();
             _shards[shardId] = shard;
         }
+
+        #endregion
+
+        #region WssRequests
+
+        public static async Task RequestGuildMembersAsync(RequestGuildMembersCache requestGuildMembersCache)
+        {
+            int shardId = GetResponsibleShardId(requestGuildMembersCache.RequestGuildMembers.GuildId);
+            await _shards[shardId].SendGuildMemberRequestAsync(requestGuildMembersCache);
+        }
+
+        public static async Task<Dictionary<ulong, SoundboardSound[]>> RequestSoundboardSoundsAsync(ulong[] guildIds)
+        {
+            if (guildIds.Length == 0)
+                throw new ArgumentException("Can't request soundboard sounds with an empty array.");
+
+            Dictionary<int, ulong[]> guildsPerShard = guildIds
+                .GroupBy(GetResponsibleShardId)
+                .ToDictionary(g => g.Key, g => g.ToArray());
+
+            List<ulong> allGuildIdsInOrder = new();
+
+            List<Task<SoundboardSound[]>> tasks = new();
+            foreach ((int shardId, ulong[] shardGuildIds) in guildsPerShard)
+            {
+                RequestSoundboardSounds requestSoundboardSounds = new(shardGuildIds);
+                foreach (ulong guildId in shardGuildIds)
+                {
+                    requestSoundboardSounds.TaskCompletionSources
+                        .TryGetValue(guildId, out TaskCompletionSource<SoundboardSound[]>? tcs);
+
+                    if (tcs == null)
+                        throw new InvalidOperationException($"No TaskCompletionSource for guildId {guildId}");
+
+                    tasks.Add(tcs.Task);
+                    allGuildIdsInOrder.Add(guildId);
+                }
+
+                _ = _shards[shardId].SendSoundboardRequestAsync(requestSoundboardSounds);
+            }
+
+            SoundboardSound[][] soundboardSounds = await Task.WhenAll(tasks);
+
+            Dictionary<ulong, SoundboardSound[]> result = new Dictionary<ulong, SoundboardSound[]>(allGuildIdsInOrder.Count);
+            for (int i = 0; i < allGuildIdsInOrder.Count; i++)
+            {
+                result[allGuildIdsInOrder[i]] = soundboardSounds[i];
+            }
+
+            return result;
+        }
+
 
         #endregion
 

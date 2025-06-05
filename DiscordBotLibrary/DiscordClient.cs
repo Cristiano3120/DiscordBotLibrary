@@ -57,12 +57,6 @@ namespace DiscordBotLibrary
 
         #endregion
 
-        #region InternalEvents
-
-        internal event Action<TaskCompletionSource<List<GuildMember>>, ulong, RequestGuildMembers>? OnGuildMemberRequested;
-
-        #endregion
-
         #endregion
 
         #region Constructors
@@ -91,7 +85,7 @@ namespace DiscordBotLibrary
         /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot
         /// </summary>
         /// <returns>An Logger that is recommended to use</returns>
-        public Logger Start()
+        public async Task<Logger> Start()
         {
             try
             {
@@ -102,7 +96,7 @@ namespace DiscordBotLibrary
                     Logger.LogError(ex);
                 };
 
-                ShardHandler.Start(this, _httpClient);
+                await ShardHandler.Start(_httpClient);
                 return Logger;
             }
             catch (Exception ex)
@@ -150,6 +144,13 @@ namespace DiscordBotLibrary
             {
                 throw new MissingIntentException(neededIntents, missingIntents, methodSignature);
             }
+        }
+
+        public DiscordGuild? GetGuild(ulong guildId)
+        {
+            return InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild) 
+                ? guild 
+                : null;
         }
 
         #region WebSocket Send 
@@ -208,7 +209,7 @@ namespace DiscordBotLibrary
         /// <param name="userIds">A list of user IDs to request.</param>
         /// <exception cref="ArgumentException">Thrown if more than 100 user IDs are passed.</exception>
         [DebuggerStepThrough]
-        public async Task<List<GuildMember>?> RequestGuildMembersByIdAsync(ulong guildId, ulong[] userIds, bool presences)
+        public async Task<List<GuildMember>?> GetGuildMembersByIdAsync(ulong guildId, ulong[] userIds, bool presences, bool cacheFetchedMembers = true)
         {
             HashSet<Intents> neededIntents = [Intents.GuildMembers];
             if (presences)
@@ -257,7 +258,9 @@ namespace DiscordBotLibrary
                 Presences = presences,
                 Limit = userIds.Length,
             };
-            OnGuildMemberRequested?.Invoke(taskCompletionSource, guildId, requestGuildMembers);
+
+            RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
+            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
 
             List<GuildMember> fetchedMembers = await taskCompletionSource.Task;
             members.AddRange(fetchedMembers);
@@ -271,7 +274,7 @@ namespace DiscordBotLibrary
         /// <param name="guildId">The guild to request the member from.</param>
         /// <param name="userId">The ID of the user to request.</param>
         [DebuggerStepThrough]
-        public async Task RequestGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences)
+        public async Task GetGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences, bool cacheFetchedMembers = true)
         {
             HashSet<Intents> neededIntents = [Intents.GuildMembers];
             if (presences)
@@ -280,7 +283,7 @@ namespace DiscordBotLibrary
             }
             IntentChecker("RequestGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences)", [..neededIntents]);
 
-            await RequestGuildMembersByIdAsync(guildId, [userId], presences);
+            await GetGuildMembersByIdAsync(guildId, [userId], presences, cacheFetchedMembers);
         }
 
         /// <summary>
@@ -292,7 +295,7 @@ namespace DiscordBotLibrary
         /// <param name="presences">Whether to include presence data. For exapmle if the user is online etc</param>
         /// <exception cref="ArgumentOutOfRangeException">If limit is not between 1 and 100.</exception>
         [DebuggerStepThrough]
-        public async Task<List<GuildMember>> RequestGuildMembersByPrefixAsync(ulong guildId, string prefix, bool presences, int limit = 0)
+        public async Task<List<GuildMember>> GetGuildMembersByPrefixAsync(ulong guildId, string prefix, bool presences, int limit = 0, bool cacheFetchedMembers = true)
         {
             HashSet<Intents> neededIntents = [Intents.GuildMembers];
             if (presences)
@@ -315,13 +318,20 @@ namespace DiscordBotLibrary
             };
 
             TaskCompletionSource<List<GuildMember>> taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            OnGuildMemberRequested?.Invoke(taskCompletionSource, guildId, requestGuildMembers);
+            RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
 
+            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
             return await taskCompletionSource.Task;
         }
 
+        /// <summary>
+        /// Requests all guild members in a guild
+        /// </summary>
+        /// <param name="guildId"></param>
+        /// <param name="presences"></param>
+        /// <returns></returns>
         [DebuggerStepThrough]
-        public async Task<List<GuildMember>> RequestAllGuildMembersAsync(ulong guildId, bool presences)
+        public async Task<List<GuildMember>> GetAllGuildMembersAsync(ulong guildId, bool presences, bool cacheFetchedMembers = true)
         {
             HashSet<Intents> neededIntents = [Intents.GuildMembers];
             if (presences)
@@ -339,12 +349,27 @@ namespace DiscordBotLibrary
             };
 
             TaskCompletionSource<List<GuildMember>> taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            OnGuildMemberRequested?.Invoke(taskCompletionSource, guildId, requestGuildMembers);
+            RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
 
+            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
             return await taskCompletionSource.Task;
         }
 
         #endregion
+
+        #region RequestSoundboardSounds
+
+        public async Task<SoundboardSound[]> GetSoundboardSoundsAsync(ulong guildId)
+        {
+            Dictionary<ulong, SoundboardSound[]> dict = await ShardHandler.RequestSoundboardSoundsAsync([guildId]);
+            return dict.First().Value;
+        }
+        
+        public async Task<Dictionary<ulong, SoundboardSound[]>> GetSoundboardSoundsAsync(ulong[] guildIds)
+            => await ShardHandler.RequestSoundboardSoundsAsync(guildIds);
+        
+        #endregion
+
         #endregion
 
         #region InvokeEvents

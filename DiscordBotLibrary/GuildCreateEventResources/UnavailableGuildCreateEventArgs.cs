@@ -30,7 +30,7 @@
         public VoiceState[] VoiceStates { get; init; } = [];
 
         [JsonPropertyName("members")]
-        public GuildMember[] Members { get; init; } = [];
+        public List<GuildMember> Members { get; init; } = [];
 
         [JsonPropertyName("channels")]
         public Channel[] Channels { get; init; } = [];

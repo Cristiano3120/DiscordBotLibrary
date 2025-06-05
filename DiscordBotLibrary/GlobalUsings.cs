@@ -20,4 +20,5 @@ global using DiscordBotLibrary.VoiceChannelHandling;
 global using DiscordBotLibrary.RequestGuildMembersResources;
 global using DiscordBotLibrary.Logging;
 global using DiscordBotLibrary.Exceptions;
+global using DiscordBotLibrary.RequestSoundboardResources;
 

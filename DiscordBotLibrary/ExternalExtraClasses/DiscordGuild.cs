@@ -1,4 +1,4 @@
-﻿using DiscordBotLibrary.VoiceChannelHandling;
+﻿using DiscordBotLibrary.GuildCreateEventResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -106,7 +106,6 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             MaxStageVideoChannelUsers = guildCreateEventArgs.MaxStageVideoChannelUsers;
             MaxVideoChannelUsers = guildCreateEventArgs.MaxVideoChannelUsers;
             MemberCount = guildCreateEventArgs.MemberCount;
-            Members = guildCreateEventArgs.Members;
             MfaLevel = guildCreateEventArgs.MfaLevel;
             Name = guildCreateEventArgs.Name;
             NsfwLevel = guildCreateEventArgs.NsfwLevel;
@@ -134,6 +133,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             WelcomeScreen = guildCreateEventArgs.WelcomeScreen;
             WidgetChannelId = guildCreateEventArgs.WidgetChannelId;
             WidgetEnabled = guildCreateEventArgs.WidgetEnabled;
+            Members = [.. guildCreateEventArgs.Members.GroupBy(m => m.User?.Id).Select(g => g.First())];
         }
 
         public DiscordGuild(UnavailableGuildCreateEventArgs unavailableGuildCreateEventArgs)
@@ -152,6 +152,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             SoundboardSounds = unavailableGuildCreateEventArgs.SoundboardSounds;
             Presences = unavailableGuildCreateEventArgs.Presences;
             Unavailable = unavailableGuildCreateEventArgs.Unavailable;
+            Members = [.. unavailableGuildCreateEventArgs.Members.GroupBy(m => m.User?.Id).Select(g => g.First())];
         }
 
         internal void UpdatePresence(Presence presenceUpdate)
@@ -172,6 +173,28 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             {
                 int index = Presences.IndexOf(oldState);
                 Presences[index] = presenceUpdate;
+            }
+        }
+
+        internal void AddGuildMembers(List<GuildMember> guildMembers)
+        {
+            Dictionary<ulong, int> idToIndex = new(Members.Count);
+            for (int i = 0; i < Members.Count; i++)
+            {
+                idToIndex[Members[i].User.Id] = i;
+            }
+
+            foreach (GuildMember member in guildMembers)
+            {
+                if (idToIndex.TryGetValue(member.User.Id, out int index))
+                {
+                    Members[index] = member;
+                }
+                else
+                {
+                    idToIndex[member.User.Id] = Members.Count;
+                    Members.Add(member);
+                }
             }
         }
 

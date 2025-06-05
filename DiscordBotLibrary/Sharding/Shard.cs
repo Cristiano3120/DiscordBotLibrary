@@ -6,14 +6,15 @@ namespace DiscordBotLibrary.Sharding
 {
     internal sealed class Shard(int shardId)
     {
-        internal ResumeConnInfos ResumeConnInfos { get; set; } = ResumeConnInfos.EmptyConnInfos;
         private readonly CancellationTokenSource _cts = new();
         private WsGatewayLimiter _wsGatewayLimiter = default!;
         private ClientWebSocket _webSocket = new();
         private readonly int _shardId = shardId;
         private int? _lastSequenceNumber;
 
-        public Dictionary<string, (TaskCompletionSource<List<GuildMember>>, List<GuildMember>)> GuildMemberRequests { get; init; } = new();
+        public Dictionary<string, RequestGuildMembersCache> GuildMemberRequests { get; init; } = new();
+        public Dictionary<ulong, TaskCompletionSource<SoundboardSound[]>> SoundboardRequests { get; init; } = new();
+        internal ResumeConnInfos ResumeConnInfos { get; set; } = ResumeConnInfos.EmptyConnInfos;
 
         internal async Task StartShardAsync()
         {
@@ -61,7 +62,7 @@ namespace DiscordBotLibrary.Sharding
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, PayloadType.Received);
+                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, PayloadType.Received, _shardId);
 
                     JsonDocument jsonDocument = JsonDocument.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
@@ -135,6 +136,9 @@ namespace DiscordBotLibrary.Sharding
                     case Event.GUILD_MEMBERS_CHUNK:
                         HandleDiscordPayload.HandleGuildMembersChunkEvent(jsonElement, this);
                         break;
+                    case Event.SOUNDBOARD_SOUNDS:
+                        HandleDiscordPayload.HandleSoundboardSoundsEvent(jsonElement, this);
+                        break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
                         break;
@@ -170,7 +174,7 @@ namespace DiscordBotLibrary.Sharding
             {
                 byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
 
-                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, PayloadType.Sent);
+                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, PayloadType.Sent, _shardId);
                 await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception ex)
@@ -224,16 +228,35 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal async Task SendGuildMemberRequestAsync(TaskCompletionSource<List<GuildMember>> tcs, RequestGuildMembers requestGuildMembers)
+        internal async Task SendGuildMemberRequestAsync(RequestGuildMembersCache requestGuildMembersCache)
         {
-            GuildMemberRequests.Add(requestGuildMembers.Nonce, (tcs, []));
+            GuildMemberRequests.Add(requestGuildMembersCache.RequestGuildMembers.Nonce, requestGuildMembersCache);
 
             var payload = new
             {
                 op = OpCode.RequestGuildMembers,
-                d = requestGuildMembers
+                d = requestGuildMembersCache.RequestGuildMembers
             };
 
+            await SendPayloadWssAsync(payload);
+        }
+
+        internal async Task SendSoundboardRequestAsync(RequestSoundboardSounds requestSoundoardSounds)
+        {
+            foreach ((ulong guildId, TaskCompletionSource<SoundboardSound[]> tcs) in requestSoundoardSounds.TaskCompletionSources)
+            {
+                SoundboardRequests.Add(guildId, tcs);
+            }
+
+            var payload = new
+            {
+                op = OpCode.RequestSoundboardSounds,
+                d = new
+                {
+                    guild_ids = requestSoundoardSounds.GuildIds.Select(x => x.ToString()).ToArray(),
+                }
+            };
+            
             await SendPayloadWssAsync(payload);
         }
 
