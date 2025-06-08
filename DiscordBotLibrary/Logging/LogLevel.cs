@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary.Logging
 {
     /// <summary>
     /// Log levels for the Discord bot library. This is used to control the amount of logging that is done by the library.

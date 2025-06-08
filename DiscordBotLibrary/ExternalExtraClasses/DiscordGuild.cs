@@ -1,6 +1,4 @@
-﻿using DiscordBotLibrary.GuildCreateEventResources;
-using DiscordBotLibrary.Sharding;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
 {
@@ -8,70 +6,161 @@ namespace DiscordBotLibrary.ExternalExtraClasses
     /// Represents a Discord guild.
     /// If <c>Unavailable</c> is <c>true</c> most of the properties will be <c>null</c>.
     /// </summary>
-    public record DiscordGuild : GuildCreateEventArgs
+    public sealed class DiscordGuild : Guild
     {
+        #region GuildCreateExtraProperties
+
+        /// <summary>
+        /// Gets the date and time when this guild was joined.
+        /// </summary>
+        [JsonPropertyName("joined_at")]
+        public DateTime JoinedAt { get; init; }
+
+        /// <summary>
+        /// Gets a value indicating whether this is considered a large guild.
+        /// </summary>
+        [JsonPropertyName("large")]
+        public bool Large { get; init; }
+
+        /// <summary>
+        /// Gets a value indicating whether this guild is unavailable due to an outage.
+        /// </summary>
+        [JsonPropertyName("unavailable")]
+        public bool? Unavailable { get; init; }
+
+        /// <summary>
+        /// Gets the total number of members in this guild.
+        /// </summary>
+        [JsonPropertyName("member_count")]
+        public int MemberCount { get; init; }
+
+        /// <summary>
+        /// Gets the voice states of members currently in voice channels.
+        /// These states do not include the guild_id key.
+        /// </summary>
+        [JsonPropertyName("voice_states")]
+        [JsonInclude]
+        internal VoiceState[]? VoiceStates { get; set; }
+
+        /// <summary>
+        /// Gets the users currently in the guild.
+        /// </summary>
+        [JsonPropertyName("members")]
+        public List<GuildMember> Members { get; init; } = [];
+
+        /// <summary>
+        /// Gets the channels in the guild.
+        /// </summary>
+        [JsonPropertyName("channels")]
+        [JsonInclude]
+        internal Channel[] Channels { get; set; } = [];
+
+        /// <summary>
+        /// Gets all active threads in the guild that the current user has permission to view.
+        /// </summary>
+        [JsonPropertyName("threads")]
+        public Channel[] Threads { get; init; } = [];
+
+        /// <summary>
+        /// Gets the presence updates of the members in the guild.
+        /// Will only include non-offline members if the size is greater than the large threshold.
+        /// </summary>
+        [JsonPropertyName("presences")]
+        public List<Presence> Presences { get; init; } = [];
+
+        /// <summary>
+        /// Gets the stage instances in the guild.
+        /// </summary>
+        [JsonPropertyName("stage_instances")]
+        public StageInstance[] StageInstances { get; init; } = [];
+
+        /// <summary>
+        /// Gets the scheduled events in the guild.
+        /// </summary>
+        [JsonPropertyName("guild_scheduled_events")]
+        public GuildScheduledEvent[] GuildScheduledEvents { get; init; } = [];
+
+        /// <summary>
+        /// Gets the soundboard sounds in the guild.
+        /// </summary>
+        [JsonPropertyName("soundboard_sounds")]
+        public SoundboardSound[] SoundboardSounds { get; internal set; } = [];
+
+        #endregion
+
         #region Channels
 
+        [JsonIgnore]
         /// <summary>
         /// A text channel within a server.
         /// TYPE: <see cref="ChannelType.GuildText"/>
         /// </summary>
         public Channel[] TextChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildText)];
 
+        [JsonIgnore]
         /// <summary>
         /// A voice channel within a server.
         /// TYPE: <see cref="ChannelType.GuildVoice"/>
         /// </summary>
         public Channel[] VoiceChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildVoice)];
 
+        [JsonIgnore]
         /// <summary>
         /// An organizational category that contains up to 50 channels.
         /// TYPE: <see cref="ChannelType.GuildCategory"/>
         /// </summary>
         public Channel[] Categories => [.. Channels.Where(x => x.Type == ChannelType.GuildCategory)];
 
+        [JsonIgnore]
         /// <summary>
         /// A channel that users can follow and crosspost into their own server.
         /// TYPE: <see cref="ChannelType.GuildAnnouncement"/>
         /// </summary>
         public Channel[] AnnouncementChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildAnnouncement)];
 
+        [JsonIgnore]
         /// <summary>
         /// A temporary sub-channel within a GuildAnnouncement channel.
         /// TYPE: <see cref="ChannelType.AnnouncementThread"/>
         /// </summary>
         public Channel[] AnnouncementThreads => [.. Channels.Where(x => x.Type == ChannelType.AnnouncementThread)];
 
+        [JsonIgnore]
         /// <summary>
         /// A temporary sub-channel within a GuildText or GuildForum channel.
         /// TYPE: <see cref="ChannelType.PublicThread"/>
         /// </summary>
         public Channel[] PublicThreads => [.. Channels.Where(x => x.Type == ChannelType.PublicThread)];
 
+        [JsonIgnore]
         /// <summary>
         /// A temporary sub-channel within a GuildText channel with limited access.
         /// TYPE: <see cref="ChannelType.PrivateThread"/>
         /// </summary>
         public Channel[] PrivateThreads => [.. Channels.Where(x => x.Type == ChannelType.PrivateThread)];
 
+        [JsonIgnore]
         /// <summary>
         /// A voice channel for hosting events with an audience.
         /// TYPE: <see cref="ChannelType.GuildStageVoice"/>
         /// </summary>
         public Channel[] StageChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildStageVoice)];
 
+        [JsonIgnore]
         /// <summary>
         /// The channel in a hub containing the listed servers.
         /// TYPE: <see cref="ChannelType.GuildDirectory"/>
         /// </summary>
         public Channel[] DirectoryChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildDirectory)];
 
+        [JsonIgnore]
         /// <summary>
         /// A channel that can only contain threads.
         /// TYPE: <see cref="ChannelType.GuildForum"/>
         /// </summary>
         public Channel[] ForumChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildForum)];
 
+        [JsonIgnore]
         /// <summary>
         /// A channel that can only contain threads, similar to GuildForum.
         /// TYPE: <see cref="ChannelType.GuildMedia"/>
@@ -79,125 +168,29 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public Channel[] MediaChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildMedia)];
         #endregion
 
-        #region Constructors
-
-        public DiscordGuild(GuildCreateEventArgs guildCreateEventArgs)
+        public DiscordGuild()
         {
-            AfkChannelId = guildCreateEventArgs.AfkChannelId;
-            AfkTimeout = guildCreateEventArgs.AfkTimeout;
-            ApplicationId = guildCreateEventArgs.ApplicationId;
-            ApproximateMemberCount = guildCreateEventArgs.ApproximateMemberCount;
-            ApproximatePresenceCount = guildCreateEventArgs.ApproximatePresenceCount;
-            Banner = guildCreateEventArgs.Banner;
-            DefaultMessageNotifications = guildCreateEventArgs.DefaultMessageNotifications;
-            Description = guildCreateEventArgs.Description;
-            DiscoverySplash = guildCreateEventArgs.DiscoverySplash;
-            Emojis = guildCreateEventArgs.Emojis;
-            ExplicitContentFilter = guildCreateEventArgs.ExplicitContentFilter;
-            Features = guildCreateEventArgs.Features;
-            GuildScheduledEvents = guildCreateEventArgs.GuildScheduledEvents;
-            Icon = guildCreateEventArgs.Icon;
-            IconHash = guildCreateEventArgs.IconHash;
-            Id = guildCreateEventArgs.Id;
-            IncidentsData = guildCreateEventArgs.IncidentsData;
-            JoinedAt = guildCreateEventArgs.JoinedAt;
-            Large = guildCreateEventArgs.Large;
-            MaxMembers = guildCreateEventArgs.MaxMembers;
-            MaxPresences = guildCreateEventArgs.MaxPresences;
-            MaxStageVideoChannelUsers = guildCreateEventArgs.MaxStageVideoChannelUsers;
-            MaxVideoChannelUsers = guildCreateEventArgs.MaxVideoChannelUsers;
-            MemberCount = guildCreateEventArgs.MemberCount;
-            MfaLevel = guildCreateEventArgs.MfaLevel;
-            Name = guildCreateEventArgs.Name;
-            NsfwLevel = guildCreateEventArgs.NsfwLevel;
-            Owner = guildCreateEventArgs.Owner;
-            OwnerId = guildCreateEventArgs.OwnerId;
-            Permissions = guildCreateEventArgs.Permissions;
-            PreferredLocale = guildCreateEventArgs.PreferredLocale;
-            PremiumProgressBarEnabled = guildCreateEventArgs.PremiumProgressBarEnabled;
-            PremiumSubscriptionCount = guildCreateEventArgs.PremiumSubscriptionCount;
-            PremiumTier = guildCreateEventArgs.PremiumTier;
-            Presences = guildCreateEventArgs.Presences;
-            PublicUpdatesChannelId = guildCreateEventArgs.PublicUpdatesChannelId;
-            Roles = guildCreateEventArgs.Roles;
-            RulesChannelId = guildCreateEventArgs.RulesChannelId;
-            SafetyAlertsChannelId = guildCreateEventArgs.SafetyAlertsChannelId;
-            SoundboardSounds = guildCreateEventArgs.SoundboardSounds;
-            Splash = guildCreateEventArgs.Splash;
-            StageInstances = guildCreateEventArgs.StageInstances;
-            Stickers = guildCreateEventArgs.Stickers;
-            SystemChannelFlags = guildCreateEventArgs.SystemChannelFlags;
-            SystemChannelId = guildCreateEventArgs.SystemChannelId;
-            Unavailable = guildCreateEventArgs.Unavailable;
-            VanityUrlCode = guildCreateEventArgs.VanityUrlCode;
-            VerificationLevel = guildCreateEventArgs.VerificationLevel;
-            WelcomeScreen = guildCreateEventArgs.WelcomeScreen;
-            WidgetChannelId = guildCreateEventArgs.WidgetChannelId;
-            WidgetEnabled = guildCreateEventArgs.WidgetEnabled;
-            Members = [.. guildCreateEventArgs.Members.GroupBy(m => m.User?.Id).Select(g => g.First())];
+            SortVoiceStatesAccordingToChannel();
         }
 
-        public DiscordGuild(UnavailableGuildCreateEventArgs unavailableGuildCreateEventArgs)
+        private void SortVoiceStatesAccordingToChannel()
         {
-            JoinedAt = unavailableGuildCreateEventArgs.JoinedAt;
-            GuildScheduledEvents = unavailableGuildCreateEventArgs.GuildScheduledEvents;
-            Id = unavailableGuildCreateEventArgs.Id;
-            Large = unavailableGuildCreateEventArgs.Large;
-            MemberCount = unavailableGuildCreateEventArgs.MemberCount;
-            Members = unavailableGuildCreateEventArgs.Members;
-            Channels = unavailableGuildCreateEventArgs.Channels;
-            Threads = unavailableGuildCreateEventArgs.Threads;
-            Presences = unavailableGuildCreateEventArgs.Presences;
-            VoiceStates = unavailableGuildCreateEventArgs.VoiceStates;
-            StageInstances = unavailableGuildCreateEventArgs.StageInstances;
-            SoundboardSounds = unavailableGuildCreateEventArgs.SoundboardSounds;
-            Presences = unavailableGuildCreateEventArgs.Presences;
-            Unavailable = unavailableGuildCreateEventArgs.Unavailable;
-            Members = [.. unavailableGuildCreateEventArgs.Members.GroupBy(m => m.User?.Id).Select(g => g.First())];
-        }
-
-        internal void UpdatePresence(Presence presenceUpdate)
-        {
-            Presence? oldState = Presences.FirstOrDefault(x => x.User.Id == presenceUpdate.User.Id);
-
-            if (presenceUpdate.Status == PresenceStatus.Offline && oldState is not null)
-            {
-                Presences.Remove(oldState);
+            if (VoiceStates is null || VoiceStates.Length == 0)
                 return;
+
+            Dictionary<ulong, Channel> channels = Channels.ToDictionary(c => c.Id, c => c);
+            foreach (VoiceState voiceState in VoiceStates)
+            {
+                Channel channel = channels[voiceState.ChannelId!.Value];
+                channel.VoiceStates ??= [];
+                channel.VoiceStates.Add(voiceState);
             }
 
-            if (oldState is null)
-            {
-                Presences.Add(presenceUpdate);
-            }
-            else
-            {
-                int index = Presences.IndexOf(oldState);
-                Presences[index] = presenceUpdate;
-            }
+            VoiceStates = null;
         }
 
-        internal void AddGuildMembers(List<GuildMember> guildMembers)
-        {
-            Dictionary<ulong, int> idToIndex = new(Members.Count);
-            for (int i = 0; i < Members.Count; i++)
-            {
-                idToIndex[Members[i].User.Id] = i;
-            }
 
-            foreach (GuildMember member in guildMembers)
-            {
-                if (idToIndex.TryGetValue(member.User.Id, out int index))
-                {
-                    Members[index] = member;
-                }
-                else
-                {
-                    idToIndex[member.User.Id] = Members.Count;
-                    Members.Add(member);
-                }
-            }
-        }
+        #region External Methods
 
         public async Task<SoundboardSound[]> GetSoundboardSoundsAsync()
         {
@@ -208,7 +201,13 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
             return SoundboardSounds;
         }
-        
+
+        public GuildMember? GetMember(ulong userId)
+            => Members.FirstOrDefault(x => x.User?.Id == userId);
+
+        public Channel? GetChannel(ulong channelId)
+            => Channels.FirstOrDefault(x => x.Id == channelId);
+
 
         #region VoiceChannelHandling
 
@@ -235,5 +234,91 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         #endregion
 
         #endregion
+
+        #region Update Methods(Internal)
+
+        internal void AddGuildMembers(List<GuildMember> guildMembers)
+        {
+            Dictionary<ulong, int> idToIndex = new(Members.Count);
+            for (int i = 0; i < Members.Count; i++)
+            {
+                if (Members[i].User is null)
+                    continue;
+
+                idToIndex[Members[i].User!.Id] = i;
+            }
+
+            foreach (GuildMember member in guildMembers)
+            {
+                if (member.User is null)
+                    continue;
+
+                if (idToIndex.TryGetValue(member.User.Id, out int index))
+                {
+                    Members[index] = member;
+                }
+                else
+                {
+                    idToIndex[member.User.Id] = Members.Count;
+                    Members.Add(member);
+                }
+            }
+        }
+
+        internal void UpdatePresence(Presence presenceUpdate)
+        {
+            for (int i = 0; i < Presences.Count; i++)
+            {
+                if (Presences[i].User.Id == presenceUpdate.User.Id)
+                {
+                    if (presenceUpdate.Status == PresenceStatus.Offline)
+                    {
+                        Presences.RemoveAt(i);
+                    }
+                    else
+                    {
+                        Presences[i] = presenceUpdate;
+                    }
+
+                    return;
+                }
+            }
+
+            if (presenceUpdate.Status != PresenceStatus.Offline)
+            {
+                Presences.Add(presenceUpdate);
+            }
+        }
+
+        internal void UpdateVoiceState(VoiceState voiceState)
+        {
+            DiscordClient.Logger.LogInfo($"{Name}: User({GetMember(voiceState.UserId)?.Nickname} left a vc)");
+            if (voiceState.ChannelId is null)
+            {
+                Channel? leftChannel = Channels.FirstOrDefault(x => x.VoiceStates?.FirstOrDefault(x => x.UserId == voiceState.UserId) is not null);
+                leftChannel?.VoiceStates?.RemoveAll(x => x.UserId == voiceState.UserId);
+
+                return;
+            }
+
+            DiscordClient.Logger.LogInfo($"[{Name}]: User({GetMember(voiceState.UserId)?.Nickname} joined a vc)");
+            foreach (Channel vc in VoiceChannels)
+            {
+                Dictionary<ulong, VoiceState> voiceStates = vc.VoiceStates?.ToDictionary(x => x.UserId) ?? [];
+                VoiceState? oldVoiceState = voiceStates.GetValueOrDefault(voiceState.UserId);
+                if (oldVoiceState is not null)
+                {
+                    vc.VoiceStates?.Remove(oldVoiceState);
+                    break;  
+                }
+            }
+
+            Channel? channel = GetChannel(voiceState.ChannelId.Value);
+            channel?.VoiceStates ??= [];
+            channel?.VoiceStates?.Add(voiceState);
+        }
+
+        #endregion
     }
 }
+    

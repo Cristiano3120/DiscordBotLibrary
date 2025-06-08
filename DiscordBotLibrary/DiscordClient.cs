@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +18,7 @@ namespace DiscordBotLibrary
         internal static JsonSerializerOptions JsonSerializerOptions { get; private set; } = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            IncludeFields = true,
             WriteIndented = true,
             Converters =
             {
@@ -133,7 +133,7 @@ namespace DiscordBotLibrary
         {
             HashSet<Intents> missingIntents = [];
             foreach (Intents intent in neededIntents)
-            {    
+            {
                 if (!ClientConfig.Intents.HasFlag(intent))
                 {
                     missingIntents.Add(intent);
@@ -147,11 +147,14 @@ namespace DiscordBotLibrary
         }
 
         public DiscordGuild? GetGuild(ulong guildId)
-        {
-            return InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild) 
-                ? guild 
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? guild
                 : null;
-        }
+
+        public Channel? GetChannel(ulong guildId, ulong channelId)
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? guild.GetChannel(channelId)
+                : null;
 
         #region WebSocket Send 
 
@@ -216,13 +219,13 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMembersByIdAsync(ulong guildId, ulong[] userIds, bool presences)", [..neededIntents]);
+            IntentChecker("RequestGuildMembersByIdAsync(ulong guildId, ulong[] userIds, bool presences)", [.. neededIntents]);
 
             if (userIds.Length == 0)
             {
                 Logger.LogError("No user IDs provided for RequestGuildMembersByIdAsync().");
                 return null;
-            }    
+            }
 
             if (userIds.Length > 100)
                 userIds = [.. userIds.Take(100)];
@@ -281,7 +284,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences)", [..neededIntents]);
+            IntentChecker("RequestGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences)", [.. neededIntents]);
 
             await GetGuildMembersByIdAsync(guildId, [userId], presences, cacheFetchedMembers);
         }
@@ -302,7 +305,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMembersByPrefixAsync(ulong guildId, string prefix, bool presences, int limit = 0)", [..neededIntents]);
+            IntentChecker("RequestGuildMembersByPrefixAsync(ulong guildId, string prefix, bool presences, int limit = 0)", [.. neededIntents]);
 
             if (limit < 1)
                 limit = 1;
@@ -364,10 +367,10 @@ namespace DiscordBotLibrary
             Dictionary<ulong, SoundboardSound[]> dict = await ShardHandler.RequestSoundboardSoundsAsync([guildId]);
             return dict.First().Value;
         }
-        
+
         public async Task<Dictionary<ulong, SoundboardSound[]>> GetSoundboardSoundsAsync(ulong[] guildIds)
             => await ShardHandler.RequestSoundboardSoundsAsync(guildIds);
-        
+
         #endregion
 
         #endregion

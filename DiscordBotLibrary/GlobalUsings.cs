@@ -4,7 +4,6 @@ global using DiscordBotLibrary.GuildMemberResources;
 global using DiscordBotLibrary.GuildScheduledEventResources;
 global using DiscordBotLibrary.PresenceUpdateResources;
 global using DiscordBotLibrary.StageInstanceResources;
-global using DiscordBotLibrary.GuildCreateEventResources;
 global using DiscordBotLibrary.OverwriteResources;
 global using DiscordBotLibrary.ThreadMemberResources;
 global using DiscordBotLibrary.TeamResources;
@@ -21,4 +20,6 @@ global using DiscordBotLibrary.RequestGuildMembersResources;
 global using DiscordBotLibrary.Logging;
 global using DiscordBotLibrary.Exceptions;
 global using DiscordBotLibrary.RequestSoundboardResources;
+global using DiscordBotLibrary.GuildResources;
+global using System.Text.Json;
 

@@ -79,8 +79,7 @@ namespace DiscordBotLibrary
 
         internal static void HandleReadyEvent(Shard shard, JsonElement jsonElement)
         {
-            ShardReadyEventArgs readyEventArgs = jsonElement.GetProperty("d")
-                .Deserialize<ShardReadyEventArgs>(DiscordClient.JsonSerializerOptions)!;
+            ShardReadyEventArgs readyEventArgs = jsonElement.Deserialize<ShardReadyEventArgs>();
 
             ShardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos
@@ -92,16 +91,8 @@ namespace DiscordBotLibrary
 
         internal static void HandleGuildCreateEvent(JsonElement jsonElement)
         {
-            JsonElement data = jsonElement.GetProperty("d");
-            IGuildCreateEventArgs guildCreateEventArgs = data.GetProperty("unavailable").GetBoolean()
-                ? data.Deserialize<UnavailableGuildCreateEventArgs>(DiscordClient.JsonSerializerOptions)!
-                : data.Deserialize<GuildCreateEventArgs>(DiscordClient.JsonSerializerOptions)!;
-
-            GuildCreateEventArgs? guildCreate = guildCreateEventArgs.TryGetAvailableGuild();
-            DiscordGuild discordGuild = guildCreate is null
-                ? new DiscordGuild(guildCreateEventArgs.TryGetUnavailableGuild()!)
-                : new DiscordGuild(guildCreate);
-
+            DiscordGuild discordGuild = jsonElement.Deserialize<DiscordGuild>();
+            
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
 
@@ -110,8 +101,7 @@ namespace DiscordBotLibrary
 
         internal static void HandlePresenceUpdateEvent(JsonElement jsonElement)
         {
-            Presence presenceUpdate = jsonElement.GetProperty("d")
-                .Deserialize<Presence>(DiscordClient.JsonSerializerOptions)!;
+            Presence presenceUpdate = jsonElement.Deserialize<Presence>()!;
 
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             DiscordGuild guild = client.InternalGuilds[presenceUpdate.GuildId];
@@ -122,17 +112,13 @@ namespace DiscordBotLibrary
 
         internal static void HandleVoiceServerUpdateEvent(JsonElement jsonElement)
         {
-            VoiceServerUpdate voiceServerUpdate = jsonElement.GetProperty("d")
-                .Deserialize<VoiceServerUpdate>(DiscordClient.JsonSerializerOptions)!;
-
+            VoiceServerUpdate voiceServerUpdate = jsonElement.Deserialize<VoiceServerUpdate>();
             DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().ReceivedVoiceServerUpdate(voiceServerUpdate);
         }
 
         internal static void HandleGuildMembersChunkEvent(JsonElement jsonElement, Shard shard)
         {
-            GuildMembersChunk guildMembersChunk = jsonElement.GetProperty("d")
-                .Deserialize<GuildMembersChunk>(DiscordClient.JsonSerializerOptions)!;
-
+            GuildMembersChunk guildMembersChunk = jsonElement.Deserialize<GuildMembersChunk>();
             shard.GuildMemberRequests.TryGetValue(guildMembersChunk.Nonce, out RequestGuildMembersCache? requestGuildMembersCache);
 
             if (requestGuildMembersCache is null)
@@ -166,8 +152,7 @@ namespace DiscordBotLibrary
 
         internal static void HandleSoundboardSoundsEvent(JsonElement jsonElement, Shard shard)
         {
-            SoundboardSounds soundboardSounds = jsonElement.GetProperty("d")
-                .Deserialize<SoundboardSounds>(DiscordClient.JsonSerializerOptions)!;
+            SoundboardSounds soundboardSounds = jsonElement.Deserialize<SoundboardSounds>();
 
             shard.SoundboardRequests.TryGetValue(soundboardSounds.GuildId, out TaskCompletionSource<SoundboardSound[]>? tsc);
             if (tsc is null)
@@ -175,6 +160,17 @@ namespace DiscordBotLibrary
 
             tsc.SetResult(soundboardSounds.SoundboardSoundsArr);
             shard.SoundboardRequests.Remove(soundboardSounds.GuildId);
+        }
+
+        internal static void HandleVoiceStateUpdateEvent(JsonElement jsonElement)
+        {
+            VoiceState voiceState = jsonElement.Deserialize<VoiceState>();
+
+            if (!voiceState.GuildId.HasValue)
+                return;
+
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            client.GetGuild(voiceState.GuildId.Value)?.UpdateVoiceState(voiceState);
         }
     }
 }

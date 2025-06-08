@@ -1,7 +1,6 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
-using DiscordBotLibrary.GuildMemberResources;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,7 +59,8 @@ namespace Test
             const ulong familyDc = 1341844969085862021;
             const ulong rlDc = 1257608066975924266;
 
-            Dictionary<ulong, SoundboardSound[]> dict = await client.GetSoundboardSoundsAsync([crisDc, familyDc, rlDc]);
+            DiscordGuild discordGuild = client.GetGuild(crisDc);
+            //Dictionary<ulong, SoundboardSound[]> dict = await client.GetSoundboardSoundsAsync([crisDc, familyDc, rlDc]);
             //await client.ConnectToVcAsync(1341844969085862021, 1358065342240264242, selfDeaf: true, selfMute: false);
             //await Task.Delay(7500);
             //await client.DisconnectFromVcAsync(1341844969085862021);

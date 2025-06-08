@@ -1,6 +1,5 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 
 namespace DiscordBotLibrary.Sharding
 {
@@ -138,6 +137,9 @@ namespace DiscordBotLibrary.Sharding
                         break;
                     case Event.SOUNDBOARD_SOUNDS:
                         HandleDiscordPayload.HandleSoundboardSoundsEvent(jsonElement, this);
+                        break;
+                    case Event.VOICE_STATE_UPDATE:
+                        HandleDiscordPayload.HandleVoiceStateUpdateEvent(jsonElement);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");

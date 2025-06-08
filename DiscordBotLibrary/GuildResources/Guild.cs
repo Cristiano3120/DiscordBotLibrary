@@ -1,6 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary.GuildResources
 {
-    public record Guild
+    public class Guild
     {
         /// <summary>
         /// Guild id

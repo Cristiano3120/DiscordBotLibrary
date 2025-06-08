@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary.VoiceChannelHandling
 {
     /// <summary>
     /// Represents a voice state in a Discord server.
@@ -45,13 +45,13 @@
         /// Whether this user is deafened by the server.
         /// </summary>
         [JsonPropertyName("deaf")]
-        public bool Deaf { get; init; }
+        public bool ServerDeaf { get; init; }
 
         /// <summary>
         /// Whether this user is muted by the server.
         /// </summary>
         [JsonPropertyName("mute")]
-        public bool Mute { get; init; }
+        public bool ServerMute { get; init; }
 
         /// <summary>
         /// Whether this user is locally deafened.

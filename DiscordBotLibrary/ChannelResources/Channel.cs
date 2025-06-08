@@ -229,5 +229,12 @@
         /// </summary>
         [JsonPropertyName("default_forum_layout")]
         public ForumLayoutType? DefaultForumLayout { get; init; }
+
+        /// <summary>
+        /// The users in the channel.
+        /// Null if the channel is empty or not a voice channel.
+        /// </summary>
+        [JsonIgnore]
+        public List<VoiceState>? VoiceStates { get; internal set; } = null;
     }
 }

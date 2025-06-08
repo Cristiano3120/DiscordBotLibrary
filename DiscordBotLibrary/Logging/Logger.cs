@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace DiscordBotLibrary.Logging
@@ -143,9 +142,10 @@ namespace DiscordBotLibrary.Logging
             JsonNode jsonNode = JsonNode.Parse(payload)!;
             OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
 
+            //jsonNode["d"] = "";
             if (opCode == OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, true, Event.SOUNDBOARD_SOUNDS);
+                //FilterEventData(jsonNode, false, Event.GUILD_CREATE);
             }
 
             jsonNode["op"] = opCode.ToString();
