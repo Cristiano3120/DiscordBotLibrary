@@ -143,12 +143,11 @@ namespace DiscordBotLibrary.Logging
             JsonNode jsonNode = JsonNode.Parse(payload)!;
             OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
 
-            //jsonNode["d"] = "";
             if (opCode is OpCode.Dispatch)
             {
                 FilterEventData(jsonNode, false, Event.GUILD_CREATE, Event.PRESENCE_UPDATE);
             }
-            else if (opCode is OpCode.PresenceUpdate)
+            else
             {
                 FilterOpCode(jsonNode, false, OpCode.PresenceUpdate);
             }
