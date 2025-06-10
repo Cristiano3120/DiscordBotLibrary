@@ -141,6 +141,15 @@ namespace DiscordBotLibrary.Sharding
                     case Event.VOICE_STATE_UPDATE:
                         HandleDiscordPayload.HandleVoiceStateUpdateEvent(jsonElement);
                         break;
+                    case Event.CHANNEL_CREATE:
+                        HandleDiscordPayload.HandleChannelCreateEvent(jsonElement);
+                        break;
+                    case Event.CHANNEL_DELETE:
+                        HandleDiscordPayload.HandleChannelDeleteEvent(jsonElement);
+                        break;
+                    case Event.CHANNEL_UPDATE:
+                        HandleDiscordPayload.HandleChannelUpdateEvent(jsonElement);
+                        break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
                         break;

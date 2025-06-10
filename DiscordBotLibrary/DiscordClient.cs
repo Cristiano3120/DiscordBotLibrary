@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
-
 namespace DiscordBotLibrary
 {
     /// <summary>
@@ -49,13 +48,16 @@ namespace DiscordBotLibrary
 
         #region Events
 
-        #region ExternalEvents
-
-        public event Action<DiscordClient, Presence>? OnPresenceUpdate;
+        public event Action<DiscordClient, VoiceState>? OnVoiceStateUpdate;
         public event Action<DiscordClient, DiscordGuild>? OnGuildCreate;
-        public event Action<DiscordClient, ReadyEventArgs>? OnReady;
+        public event Action<DiscordClient, Presence>? OnPresenceUpdate;
 
+        #region ChannelEvents
+        public event Action<DiscordClient, Channel>? OnChannelCreated;
+        public event Action<DiscordClient, Channel>? OnChannelDeleted;
+        public event Action<DiscordClient, Channel>? OnChannelUpdated;
         #endregion
+        public event Action<DiscordClient, ReadyEventArgs>? OnReady;   
 
         #endregion
 
@@ -146,18 +148,6 @@ namespace DiscordBotLibrary
             }
         }
 
-        public DiscordGuild? GetGuild(ulong guildId)
-            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
-                ? guild
-                : null;
-
-        public Channel? GetChannel(ulong guildId, ulong channelId)
-            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
-                ? guild.GetChannel(channelId)
-                : null;
-
-        #region WebSocket Send 
-
         /// <summary>
         /// Sets the bot's presence and activity in Discord.
         /// Bots can only set the activity propertys: <c> name, state, type, and url</c>/>
@@ -181,8 +171,19 @@ namespace DiscordBotLibrary
         /// Connects the bot to a voice channel in a specific guild.
         /// </summary>
         /// <returns></returns>
+        [DebuggerStepThrough]
         public async Task ConnectToVcAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
+            if (!InternalGuilds.TryGetValue(guildId, out DiscordGuild? discordGuild))
+            {
+                throw new ArgumentException($"No guild found with that guild id", nameof(guildId));
+            }
+
+            if (!discordGuild.CheckIfChannelIsVc(channelId))
+            {
+                throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
+            }
+
             _voiceChannelHandler ??= new VoiceChannelHandler();
             await _voiceChannelHandler.ConnectToVcAsync(guildId, channelId, selfDeaf, selfMute);
         }
@@ -373,14 +374,37 @@ namespace DiscordBotLibrary
 
         #endregion
 
-        #endregion
-
         #region InvokeEvents
         internal void InvokeOnGuildCreate(DiscordGuild guild)
             => OnGuildCreate?.Invoke(this, guild);
 
         internal void InvokeOnPresenceUpdate(Presence presence)
             => OnPresenceUpdate?.Invoke(this, presence);
+
+        internal void InvokeOnVoiceStateUpdate(VoiceState voiceState)
+            => OnVoiceStateUpdate?.Invoke(this, voiceState);
+
+        internal void InvokeOnChannelCreated(Channel channel)
+            => OnChannelCreated?.Invoke(this, channel);
+
+        internal void InvokeOnChannelDeleted(Channel channel)
+            => OnChannelDeleted?.Invoke(this, channel);
+
+        internal void InvokeOnChannelUpdated(Channel channel)
+            => OnChannelUpdated?.Invoke(this, channel);
+        #endregion
+
+        #region GetMethods
+        public DiscordGuild? GetGuild(ulong guildId)
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? guild
+                : null;
+
+        public Channel? GetChannel(ulong guildId, ulong channelId)
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? guild.GetChannel(channelId)
+                : null;
+
         #endregion
     }
 }

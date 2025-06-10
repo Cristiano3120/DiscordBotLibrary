@@ -1,8 +1,10 @@
-﻿using DiscordBotLibrary.RequestSoundboardResources;
+﻿using System.Collections.Generic;
+using System.Net.WebSockets;
+using System.Runtime.ConstrainedExecution;
+using System.Text.Json;
+using DiscordBotLibrary.RequestSoundboardResources;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.WebSockets;
-using System.Text.Json;
 
 namespace DiscordBotLibrary
 {
@@ -165,12 +167,40 @@ namespace DiscordBotLibrary
         internal static void HandleVoiceStateUpdateEvent(JsonElement jsonElement)
         {
             VoiceState voiceState = jsonElement.Deserialize<VoiceState>();
-
+            
             if (!voiceState.GuildId.HasValue)
                 return;
 
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             client.GetGuild(voiceState.GuildId.Value)?.UpdateVoiceState(voiceState);
+            client.InvokeOnVoiceStateUpdate(voiceState);
+        }
+
+        internal static void HandleChannelCreateEvent(JsonElement jsonElement)
+        {
+            Channel channel = jsonElement.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+
+            client.GetGuild(channel.GuildId!.Value)?.AddChannel(channel);
+            client.InvokeOnChannelCreated(channel); 
+        }
+
+        internal static void HandleChannelDeleteEvent(JsonElement jsonElement)
+        {
+            Channel channel = jsonElement.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+
+            client.GetGuild(channel.GuildId!.Value)?.DeleteChannel(channel);
+            client.InvokeOnChannelDeleted(channel);
+        }
+
+        internal static void HandleChannelUpdateEvent(JsonElement jsonElement)
+        {
+            Channel channel = jsonElement.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+
+            client.GetGuild(channel.GuildId!.Value)?.UpdateChannel(channel);
+            client.InvokeOnChannelUpdated(channel);
         }
     }
 }

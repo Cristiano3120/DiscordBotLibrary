@@ -36,6 +36,11 @@ namespace DiscordBotLibrary.VoiceChannelHandling
 
         public async Task DisconnectFromVcAsync(ulong guildId)
         {
+            if (!VoiceConnections.TryRemove(guildId, out _))
+            {
+                return;
+            }
+
             UpdateVoiceState updateVoiceState = new()
             {
                 GuildId = guildId,
@@ -51,7 +56,6 @@ namespace DiscordBotLibrary.VoiceChannelHandling
             };
 
             await ShardHandler.SendShardSpecificMessageAsync(guildId, payload);
-            VoiceConnections.TryRemove(guildId, out _);
         }
 
         public void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)

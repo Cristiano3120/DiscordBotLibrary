@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Logging;
 
 namespace DiscordBotLibrary.Logging
 {
@@ -143,9 +144,13 @@ namespace DiscordBotLibrary.Logging
             OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
 
             //jsonNode["d"] = "";
-            if (opCode == OpCode.Dispatch)
+            if (opCode is OpCode.Dispatch)
             {
-                //FilterEventData(jsonNode, false, Event.GUILD_CREATE);
+                FilterEventData(jsonNode, false, Event.GUILD_CREATE, Event.PRESENCE_UPDATE);
+            }
+            else if (opCode is OpCode.PresenceUpdate)
+            {
+                FilterOpCode(jsonNode, false, OpCode.PresenceUpdate);
             }
 
             jsonNode["op"] = opCode.ToString();
@@ -186,6 +191,15 @@ namespace DiscordBotLibrary.Logging
         {
             Event dispatchEvent = Enum.Parse<Event>(jsonNode["t"]!.ToString()!);
             if (onlyLogThoseEvents && !events.Contains(dispatchEvent) || !onlyLogThoseEvents && events.Contains(dispatchEvent))
+            {
+                jsonNode["d"] = "";
+            }
+        }
+
+        private static void FilterOpCode(JsonNode jsonNode, bool onlyLogThoseEvents, params OpCode[] opCodes)
+        {
+            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()!);
+            if (onlyLogThoseEvents && !opCodes.Contains(opCode) || !onlyLogThoseEvents && opCodes.Contains(opCode))
             {
                 jsonNode["d"] = "";
             }

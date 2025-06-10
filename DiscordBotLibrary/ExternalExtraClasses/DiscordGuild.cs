@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
 {
@@ -53,7 +54,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// </summary>
         [JsonPropertyName("channels")]
         [JsonInclude]
-        internal Channel[] Channels { get; set; } = [];
+        internal List<Channel> Channels { get; set; } = [];
 
         /// <summary>
         /// Gets all active threads in the guild that the current user has permission to view.
@@ -168,6 +169,19 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public Channel[] MediaChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildMedia)];
         #endregion
 
+        #region Events
+
+        public event Action<DiscordGuild, VoiceState>? OnVoiceStateUpdated;
+        public event Action<DiscordGuild, Presence>? OnPresenceUpdated;
+
+        #region ChannelEvents
+        public event Action<DiscordGuild, Channel>? OnChannelCreated;
+        public event Action<DiscordGuild, Channel>? OnChannelUpdated;
+        public event Action<DiscordGuild, Channel>? OnChannelDeleted;
+        #endregion
+
+        #endregion
+
         public DiscordGuild()
         {
             SortVoiceStatesAccordingToChannel();
@@ -189,8 +203,13 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             VoiceStates = null;
         }
 
+        internal bool CheckIfChannelIsVc(ulong channelId)
+        {
+            Channel? channel = GetChannel(channelId);
+            return channel is not null && channel.Type == ChannelType.GuildVoice;
+        }
 
-        #region External Methods
+        #region GetMethods
 
         public async Task<SoundboardSound[]> GetSoundboardSoundsAsync()
         {
@@ -208,6 +227,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public Channel? GetChannel(ulong channelId)
             => Channels.FirstOrDefault(x => x.Id == channelId);
 
+        #endregion
 
         #region VoiceChannelHandling
 
@@ -215,10 +235,33 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// Connects the bot to a voice channel in a specific guild.
         /// </summary>
         /// <returns></returns>
+        [DebuggerStepThrough]
         public async Task ConnectToVcAsync(ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
+            Channel? channel = GetChannel(channelId);
+            if (channel is null || channel.Type != ChannelType.GuildVoice)
+            {
+                throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
+            }
+
             await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
                 .ConnectToVcAsync(Id, channelId, selfDeaf, selfMute);
+        }
+
+        /// <summary>
+        /// Connects the bot to a voice channel in a specific guild.
+        /// </summary>
+        /// <returns></returns>
+        [DebuggerStepThrough]
+        public async Task ConnectToVcAsync(Channel channel, bool selfDeaf = false, bool selfMute = false)
+        {
+            if (channel.Type != ChannelType.GuildVoice || channel.GuildId != Id)
+            {
+                throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
+            }
+
+            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+                .ConnectToVcAsync(Id, channel.Id, selfDeaf, selfMute);
         }
 
         /// <summary>
@@ -226,12 +269,8 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// </summary>
         /// <returns></returns>
         public async Task DisconnectFromVcAsync()
-        {
-            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+           =>  await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
                 .DisconnectFromVcAsync(Id);
-        }
-
-        #endregion
 
         #endregion
 
@@ -267,6 +306,8 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
         internal void UpdatePresence(Presence presenceUpdate)
         {
+            OnPresenceUpdated?.Invoke(this, presenceUpdate);
+
             for (int i = 0; i < Presences.Count; i++)
             {
                 if (Presences[i].User.Id == presenceUpdate.User.Id)
@@ -292,7 +333,8 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
         internal void UpdateVoiceState(VoiceState voiceState)
         {
-            DiscordClient.Logger.LogInfo($"{Name}: User({GetMember(voiceState.UserId)?.Nickname} left a vc)");
+            OnVoiceStateUpdated?.Invoke(this, voiceState);
+
             if (voiceState.ChannelId is null)
             {
                 Channel? leftChannel = Channels.FirstOrDefault(x => x.VoiceStates?.FirstOrDefault(x => x.UserId == voiceState.UserId) is not null);
@@ -301,7 +343,6 @@ namespace DiscordBotLibrary.ExternalExtraClasses
                 return;
             }
 
-            DiscordClient.Logger.LogInfo($"[{Name}]: User({GetMember(voiceState.UserId)?.Nickname} joined a vc)");
             foreach (Channel vc in VoiceChannels)
             {
                 Dictionary<ulong, VoiceState> voiceStates = vc.VoiceStates?.ToDictionary(x => x.UserId) ?? [];
@@ -316,6 +357,33 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             Channel? channel = GetChannel(voiceState.ChannelId.Value);
             channel?.VoiceStates ??= [];
             channel?.VoiceStates?.Add(voiceState);
+        }
+
+        #endregion
+
+        #region ChannelEventsHandling
+
+        internal void AddChannel(Channel channel)
+        {
+            DiscordClient.Logger.LogInfo($"Adding channel: {channel.Name} to guild: {Name}");
+            OnChannelCreated?.Invoke(this, channel);
+            Channels.Add(channel);
+        }
+
+        internal void DeleteChannel(Channel channel)
+        {
+            DiscordClient.Logger.LogInfo($"Deleting channel: {channel.Name} from guild: {Name}");
+            OnChannelDeleted?.Invoke(this, channel);
+            Channels.RemoveAll(x => x.Id == channel.Id);
+        }
+
+        internal void UpdateChannel(Channel channel)
+        {
+            DiscordClient.Logger.LogInfo($"Updating channel: {channel.Name} from guild: {Name}");
+            OnChannelUpdated?.Invoke(this, channel);
+            
+            int index = Channels.FindIndex(x => x.Id == channel.Id);
+            Channels[index] = channel;
         }
 
         #endregion

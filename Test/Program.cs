@@ -58,12 +58,6 @@ namespace Test
             const ulong crisDc = 1126185640745246731;
             const ulong familyDc = 1341844969085862021;
             const ulong rlDc = 1257608066975924266;
-
-            DiscordGuild discordGuild = client.GetGuild(crisDc);
-            //Dictionary<ulong, SoundboardSound[]> dict = await client.GetSoundboardSoundsAsync([crisDc, familyDc, rlDc]);
-            //await client.ConnectToVcAsync(1341844969085862021, 1358065342240264242, selfDeaf: true, selfMute: false);
-            //await Task.Delay(7500);
-            //await client.DisconnectFromVcAsync(1341844969085862021);
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

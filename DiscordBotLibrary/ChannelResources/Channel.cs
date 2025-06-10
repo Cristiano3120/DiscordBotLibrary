@@ -236,5 +236,10 @@
         /// </summary>
         [JsonIgnore]
         public List<VoiceState>? VoiceStates { get; internal set; } = null;
+
+        /// <summary>
+        /// Only holds an valid count if the channel is of type voice channel.
+        /// </summary>
+        public int? CountOfUsersInVc => VoiceStates?.Count;
     }
 }
