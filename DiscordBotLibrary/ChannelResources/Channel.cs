@@ -132,7 +132,7 @@
         /// ISO8601 timestamp of when the last pinned message was pinned.
         /// </summary>
         [JsonPropertyName("last_pin_timestamp")]
-        public DateTimeOffset? LastPinTimestamp { get; init; }
+        public DateTimeOffset? LastPinTimestamp { get; internal set; }
 
         /// <summary>
         /// Voice region ID for the voice channel (automatic when null).

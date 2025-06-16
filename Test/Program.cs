@@ -58,6 +58,9 @@ namespace Test
             const ulong crisDc = 1126185640745246731;
             const ulong familyDc = 1341844969085862021;
             const ulong rlDc = 1257608066975924266;
+            const ulong cacxCordDc = 1381712720935518369;
+
+            DiscordGuild guild = client.GetGuild(1381712720935518369)!;
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

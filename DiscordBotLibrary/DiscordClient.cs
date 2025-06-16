@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using DiscordBotLibrary.EmbedResources;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,6 +26,7 @@ namespace DiscordBotLibrary
                 new EnumMemberConverter<TeamMemberRole>(),
                 new EnumMemberConverter<OAuth2Scope>(),
                 new EnumMemberConverter<Language>(),
+                new EnumMemberConverter<EmbedType>(),
                 new ActivityButtonsConverter(),
                 new SnowflakeConverter(),
             }
@@ -32,9 +34,9 @@ namespace DiscordBotLibrary
         internal static DiscordClientConfig ClientConfig { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
+        internal static HttpClient HttpClient { get; private set; } = default!;
 
         private VoiceChannelHandler? _voiceChannelHandler;
-        private readonly HttpClient _httpClient;
 
         #endregion
 
@@ -56,6 +58,8 @@ namespace DiscordBotLibrary
         public event Action<DiscordClient, Channel>? OnChannelCreated;
         public event Action<DiscordClient, Channel>? OnChannelDeleted;
         public event Action<DiscordClient, Channel>? OnChannelUpdated;
+
+        public event Action<DiscordClient, ChannelPins>? OnChannelPinsUpdate;
         #endregion
         public event Action<DiscordClient, ReadyEventArgs>? OnReady;   
 
@@ -69,11 +73,13 @@ namespace DiscordBotLibrary
             ClientConfig = clientConfig;
             Logger = new Logger(ClientConfig.LogLevel);
 
-            _httpClient = new HttpClient
+            HttpClient = new HttpClient
             {
                 BaseAddress = new Uri($"https://discord.com/api/v{ClientConfig.Version}/"),
             };
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
+            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CacxCord (https://github.com/Cristiano3120/DiscordBotLibrary , v1.0)");
+            HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             ServiceCollection services = new();
             services.AddSingleton(this);
@@ -97,8 +103,8 @@ namespace DiscordBotLibrary
                 {
                     Logger.LogError(ex);
                 };
-
-                await ShardHandler.Start(_httpClient);
+                
+                await ShardHandler.Start(HttpClient);
                 return Logger;
             }
             catch (Exception ex)
@@ -392,6 +398,9 @@ namespace DiscordBotLibrary
 
         internal void InvokeOnChannelUpdated(Channel channel)
             => OnChannelUpdated?.Invoke(this, channel);
+
+        internal void InvokeOnChannelPinsUpdate(ChannelPins channelPins)
+            => OnChannelPinsUpdate?.Invoke(this, channelPins);
         #endregion
 
         #region GetMethods

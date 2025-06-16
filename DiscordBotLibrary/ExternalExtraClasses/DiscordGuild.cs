@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using DiscordBotLibrary.MessageResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -175,6 +176,8 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public event Action<DiscordGuild, Presence>? OnPresenceUpdated;
 
         #region ChannelEvents
+        public event Action<DiscordGuild, ChannelPins>? OnChannelPinsUpdated;
+
         public event Action<DiscordGuild, Channel>? OnChannelCreated;
         public event Action<DiscordGuild, Channel>? OnChannelUpdated;
         public event Action<DiscordGuild, Channel>? OnChannelDeleted;
@@ -384,6 +387,26 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             
             int index = Channels.FindIndex(x => x.Id == channel.Id);
             Channels[index] = channel;
+        }
+
+        internal async Task<ChannelPins> UpdateChannelPinsAsync(ChannelPinsUpdate channelPinsUpdate)
+        {
+            string channelEndpoint = $"channels/{channelPinsUpdate.ChannelId}/pins";
+            string jsonStr = await DiscordClient.HttpClient.GetStringAsync(channelEndpoint);
+
+            Channel channel = GetChannel(channelPinsUpdate.ChannelId)!;
+            channel.LastPinTimestamp = channelPinsUpdate.LastPinTimestamp;
+
+            Message[] pinnedMessages = JsonSerializer.Deserialize<Message[]>(jsonStr, DiscordClient.JsonSerializerOptions)!;
+
+            ChannelPins channelPins = new()
+            {
+                Channel = channel,
+                PinnedMessages = pinnedMessages
+            };
+
+            OnChannelPinsUpdated?.Invoke(this, channelPins);
+            return channelPins;
         }
 
         #endregion

@@ -22,4 +22,7 @@ global using DiscordBotLibrary.Exceptions;
 global using DiscordBotLibrary.RequestSoundboardResources;
 global using DiscordBotLibrary.GuildResources;
 global using System.Text.Json;
+global using DiscordBotLibrary.MessageResources;
+global using DiscordBotLibrary.InteractionResources;
+global using DiscordBotLibrary.PollResources;
 

@@ -89,7 +89,7 @@ namespace DiscordBotLibrary.Sharding
                 switch (opCode)
                 {
                     case OpCode.Dispatch:
-                        _lastSequenceNumber = HandleDiscordPayload.HandleDispatch(this, message);
+                        _lastSequenceNumber = await HandleDiscordPayload.HandleDispatch(this, message);
                         break;
                     case OpCode.Hello:
                         DiscordClient.Logger.LogInfo("Received Hello message.");
@@ -114,7 +114,7 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal void InvokeEvent(Event events, JsonElement jsonElement)
+        internal async Task InvokeEvent(Event events, JsonElement jsonElement)
         {
             try
             {
@@ -149,6 +149,9 @@ namespace DiscordBotLibrary.Sharding
                         break;
                     case Event.CHANNEL_UPDATE:
                         HandleDiscordPayload.HandleChannelUpdateEvent(jsonElement);
+                        break;
+                    case Event.CHANNEL_PINS_UPDATE:
+                        await HandleDiscordPayload.HandleChannelPinsUpdateEvent(jsonElement);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");

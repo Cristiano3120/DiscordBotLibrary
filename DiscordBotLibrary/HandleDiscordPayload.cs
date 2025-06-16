@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Net.WebSockets;
-using System.Runtime.ConstrainedExecution;
-using System.Text.Json;
-using DiscordBotLibrary.RequestSoundboardResources;
+﻿using System.Net.WebSockets;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,10 +6,10 @@ namespace DiscordBotLibrary
 {
     internal static class HandleDiscordPayload
     {
-        internal static int HandleDispatch(Shard shard, JsonElement jsonElement)
+        internal static async Task<int> HandleDispatch(Shard shard, JsonElement jsonElement)
         {
             Event events = jsonElement.GetEvent();
-            shard.InvokeEvent(events, jsonElement);
+            await shard.InvokeEvent(events, jsonElement);
 
             return jsonElement.GetSequenceNumber();
         }
@@ -176,6 +172,8 @@ namespace DiscordBotLibrary
             client.InvokeOnVoiceStateUpdate(voiceState);
         }
 
+        #region HandleChannelEvents
+
         internal static void HandleChannelCreateEvent(JsonElement jsonElement)
         {
             Channel channel = jsonElement.Deserialize<Channel>();
@@ -202,5 +200,19 @@ namespace DiscordBotLibrary
             client.GetGuild(channel.GuildId!.Value)?.UpdateChannel(channel);
             client.InvokeOnChannelUpdated(channel);
         }
+
+        internal static async Task HandleChannelPinsUpdateEvent(JsonElement jsonElement)
+        {
+            ChannelPinsUpdate channelPinsUpdate = jsonElement.Deserialize<ChannelPinsUpdate>();
+            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+
+            if (channelPinsUpdate.GuildId is ulong guildId)
+            {
+                ChannelPins channelPins = await client.GetGuild(guildId)!.UpdateChannelPinsAsync(channelPinsUpdate);
+                client.InvokeOnChannelPinsUpdate(channelPins);
+            }
+        }
+
+        #endregion
     }
 }
