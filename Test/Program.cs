@@ -3,6 +3,7 @@ using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
+using DiscordBotLibrary.ChannelResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Test
@@ -60,7 +61,7 @@ namespace Test
             const ulong rlDc = 1257608066975924266;
             const ulong cacxCordDc = 1381712720935518369;
 
-            DiscordGuild guild = client.GetGuild(1381712720935518369)!;
+            DiscordGuild guild = client.GetGuild(familyDc)!;
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

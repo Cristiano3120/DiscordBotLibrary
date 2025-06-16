@@ -241,5 +241,12 @@
         /// Only holds an valid count if the channel is of type voice channel.
         /// </summary>
         public int? CountOfUsersInVc => VoiceStates?.Count;
+
+        public async Task<Message[]?> GetPinnedMessages()
+        {
+            string channelEndpoint = $"channels/{Id}/pins";
+            string jsonStr = await DiscordClient.HttpClient.GetStringAsync(channelEndpoint);
+            return JsonSerializer.Deserialize<Message[]>(jsonStr, DiscordClient.JsonSerializerOptions)!;
+        }
     }
 }

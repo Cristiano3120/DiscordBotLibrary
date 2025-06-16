@@ -404,14 +404,29 @@ namespace DiscordBotLibrary
         #endregion
 
         #region GetMethods
+
+        /// <summary>
+        /// If this method returns null one of the params is invalid
+        /// </summary>
         public DiscordGuild? GetGuild(ulong guildId)
             => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
                 ? guild
                 : null;
 
+        /// <summary>
+        /// If this method returns null one of the params is invalid
+        /// </summary>
         public Channel? GetChannel(ulong guildId, ulong channelId)
             => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
                 ? guild.GetChannel(channelId)
+                : null;
+
+        /// <summary>
+        /// If this method returns null one of the params is invalid
+        /// </summary>
+        public async Task<Message[]?> GetPinnedMessages(ulong guildId, ulong channelId)
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? await guild.GetPinnedMessages(channelId)
                 : null;
 
         #endregion

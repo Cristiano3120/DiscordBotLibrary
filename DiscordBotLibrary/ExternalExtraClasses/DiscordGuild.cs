@@ -272,7 +272,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// </summary>
         /// <returns></returns>
         public async Task DisconnectFromVcAsync()
-           =>  await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+           => await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
                 .DisconnectFromVcAsync(Id);
 
         #endregion
@@ -353,7 +353,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
                 if (oldVoiceState is not null)
                 {
                     vc.VoiceStates?.Remove(oldVoiceState);
-                    break;  
+                    break;
                 }
             }
 
@@ -384,21 +384,17 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         {
             DiscordClient.Logger.LogInfo($"Updating channel: {channel.Name} from guild: {Name}");
             OnChannelUpdated?.Invoke(this, channel);
-            
+
             int index = Channels.FindIndex(x => x.Id == channel.Id);
             Channels[index] = channel;
         }
 
         internal async Task<ChannelPins> UpdateChannelPinsAsync(ChannelPinsUpdate channelPinsUpdate)
         {
-            string channelEndpoint = $"channels/{channelPinsUpdate.ChannelId}/pins";
-            string jsonStr = await DiscordClient.HttpClient.GetStringAsync(channelEndpoint);
-
             Channel channel = GetChannel(channelPinsUpdate.ChannelId)!;
             channel.LastPinTimestamp = channelPinsUpdate.LastPinTimestamp;
 
-            Message[] pinnedMessages = JsonSerializer.Deserialize<Message[]>(jsonStr, DiscordClient.JsonSerializerOptions)!;
-
+            Message[] pinnedMessages = await channel.GetPinnedMessages() ?? [];
             ChannelPins channelPins = new()
             {
                 Channel = channel,
@@ -409,7 +405,17 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             return channelPins;
         }
 
+        /// <summary>
+        /// If this method returns null the param is invalid
+        /// </summary>
+        internal async Task<Message[]?> GetPinnedMessages(ulong channelId)
+        {
+            Channel? channel = GetChannel(channelId);
+            return channel is not null
+                ? await channel.GetPinnedMessages()
+                : null;
+        }
+
         #endregion
     }
 }
-    

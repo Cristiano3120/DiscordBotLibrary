@@ -11,6 +11,6 @@
         public ulong ChannelId { get; init; }
 
         [JsonPropertyName("last_pin_timestamp")]
-        public DateTimeOffset LastPinTimestamp { get; init; }
+        public DateTimeOffset? LastPinTimestamp { get; init; }
     }
 }

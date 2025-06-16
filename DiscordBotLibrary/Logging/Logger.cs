@@ -186,9 +186,14 @@ namespace DiscordBotLibrary.Logging
         /// <param name="jsonNode"></param>
         /// <param name="onlyLogThose"></param>
         /// <param name="events"></param>
-        private static void FilterEventData(JsonNode jsonNode, bool onlyLogThoseEvents, params Event[] events)
+        private void FilterEventData(JsonNode jsonNode, bool onlyLogThoseEvents, params Event[] events)
         {
-            Event dispatchEvent = Enum.Parse<Event>(jsonNode["t"]!.ToString()!);
+            if (!Enum.TryParse(jsonNode["t"]!.ToString()!, out Event dispatchEvent))
+            {
+                LogError(new Exception($"Event {jsonNode["t"]} not found in the Event enum"));
+                return;
+            }
+
             if (onlyLogThoseEvents && !events.Contains(dispatchEvent) || !onlyLogThoseEvents && events.Contains(dispatchEvent))
             {
                 jsonNode["d"] = "";
