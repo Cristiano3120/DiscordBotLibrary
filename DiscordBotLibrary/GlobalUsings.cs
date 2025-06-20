@@ -25,4 +25,5 @@ global using System.Text.Json;
 global using DiscordBotLibrary.MessageResources;
 global using DiscordBotLibrary.InteractionResources;
 global using DiscordBotLibrary.PollResources;
+global using DiscordBotLibrary.RestApiLimiterResources;
 

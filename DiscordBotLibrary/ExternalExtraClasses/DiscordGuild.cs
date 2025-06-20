@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using DiscordBotLibrary.MessageResources;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses

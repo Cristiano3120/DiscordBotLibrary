@@ -245,7 +245,8 @@
         public async Task<Message[]?> GetPinnedMessages()
         {
             string channelEndpoint = $"channels/{Id}/pins";
-            string jsonStr = await DiscordClient.HttpClient.GetStringAsync(channelEndpoint);
+            HttpResponseMessage message = await DiscordClient.HttpClient.GetAsync(channelEndpoint);
+            string jsonStr = await message.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<Message[]>(jsonStr, DiscordClient.JsonSerializerOptions)!;
         }
     }

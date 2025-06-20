@@ -34,6 +34,7 @@ namespace DiscordBotLibrary
         internal static DiscordClientConfig ClientConfig { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
+        internal static RestApiLimiter RestApiLimiter { get; private set; } = default!;
         internal static HttpClient HttpClient { get; private set; } = default!;
 
         private VoiceChannelHandler? _voiceChannelHandler;
@@ -61,6 +62,7 @@ namespace DiscordBotLibrary
 
         public event Action<DiscordClient, ChannelPins>? OnChannelPinsUpdate;
         #endregion
+
         public event Action<DiscordClient, ReadyEventArgs>? OnReady;   
 
         #endregion
@@ -80,6 +82,7 @@ namespace DiscordBotLibrary
             HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
             HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CacxCord (https://github.com/Cristiano3120/DiscordBotLibrary , v1.0)");
             HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            RestApiLimiter = new(HttpClient);
 
             ServiceCollection services = new();
             services.AddSingleton(this);
@@ -98,11 +101,6 @@ namespace DiscordBotLibrary
             try
             {
                 Logger.LogInfo("Starting Discord client...");
-
-                AppDomain.CurrentDomain.UnhandledException += (sender, ex) =>
-                {
-                    Logger.LogError(ex);
-                };
                 
                 await ShardHandler.Start(HttpClient);
                 return Logger;
@@ -137,7 +135,7 @@ namespace DiscordBotLibrary
         /// <param name="neededIntents"></param>
         /// <exception cref="MissingIntentException"></exception>
         [DebuggerStepThrough]
-        private void IntentChecker(string methodSignature, params Intents[] neededIntents)
+        private void IntentChecker(CallerInfos callerInfos, params Intents[] neededIntents)
         {
             HashSet<Intents> missingIntents = [];
             foreach (Intents intent in neededIntents)
@@ -150,7 +148,7 @@ namespace DiscordBotLibrary
 
             if (missingIntents.Count > 0)
             {
-                throw new MissingIntentException(neededIntents, missingIntents, methodSignature);
+                throw new MissingIntentException(neededIntents, missingIntents, callerInfos);
             }
         }
 
@@ -226,7 +224,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMembersByIdAsync(ulong guildId, ulong[] userIds, bool presences)", [.. neededIntents]);
+            IntentChecker(CallerInfos.Create(), [.. neededIntents]);
 
             if (userIds.Length == 0)
             {
@@ -291,7 +289,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMemberByIdAsync(ulong guildId, ulong userId, bool presences)", [.. neededIntents]);
+            IntentChecker(CallerInfos.Create(), [.. neededIntents]);
 
             await GetGuildMembersByIdAsync(guildId, [userId], presences, cacheFetchedMembers);
         }
@@ -312,7 +310,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestGuildMembersByPrefixAsync(ulong guildId, string prefix, bool presences, int limit = 0)", [.. neededIntents]);
+            IntentChecker(CallerInfos.Create(), [.. neededIntents]);
 
             if (limit < 1)
                 limit = 1;
@@ -348,7 +346,7 @@ namespace DiscordBotLibrary
             {
                 neededIntents.Add(Intents.GuildPresences);
             }
-            IntentChecker("RequestAllGuildMembersAsync(ulong guildId, bool presences)", [.. neededIntents]);
+            IntentChecker(CallerInfos.Create(), [.. neededIntents]);
 
             RequestGuildMembers requestGuildMembers = new()
             {

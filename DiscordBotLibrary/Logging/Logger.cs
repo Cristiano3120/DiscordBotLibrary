@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Drawing;
+using System.Reflection.Emit;
 using System.Text.Json.Nodes;
-using Microsoft.Extensions.Logging;
+using DiscordBotLibrary.MessageResources;
 
 namespace DiscordBotLibrary.Logging
 {
@@ -127,9 +129,19 @@ namespace DiscordBotLibrary.Logging
             }
 
             Write(ConsoleColor.Red, LogLevel.Error, tag, $"ERROR: {ex.Message}");
+            Write(ConsoleColor.Red, LogLevel.Error, tag, ex.ToString());
 
             if (ex.InnerException is not null)
                 LogError(ex.InnerException);
+        }
+
+        public void LogErrorToFileOnly(Exception ex)
+        {
+            string log = $"[{DateTime.Now}] [{nameof(LogLevel.Error)}]: {ex}";
+            using (StreamWriter streamWriter = new(_pathToLogFile, true))
+            {
+                streamWriter.WriteLine(log);
+            }
         }
 
         public void LogDebug(string message)

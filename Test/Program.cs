@@ -3,8 +3,8 @@ using DiscordBotLibrary.ActivityResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
-using DiscordBotLibrary.ChannelResources;
 using Microsoft.Extensions.DependencyInjection;
+using Channel = DiscordBotLibrary.ChannelResources.Channel;
 
 namespace Test
 {
@@ -30,6 +30,18 @@ namespace Test
             client.OnReady += Client_OnReady;
 
             Logger logger = await client.Start();
+
+            TaskScheduler.UnobservedTaskException += (sender, args) =>
+            {
+                logger.LogErrorToFileOnly(args.Exception);
+                args.SetObserved();
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                Exception ex = (Exception)args.ExceptionObject;
+                logger.LogErrorToFileOnly(ex);
+            };
 
             ServiceCollection services = new();
             services.AddSingleton(logger);
