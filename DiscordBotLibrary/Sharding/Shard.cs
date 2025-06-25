@@ -168,7 +168,7 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
         {
-            string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.JsonSerializerOptions);
+            string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.SendJsonSerializerOptions);
 
             if (isHeartbeat)
             {
@@ -186,9 +186,9 @@ namespace DiscordBotLibrary.Sharding
         {
             try
             {
-                byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
-
                 DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, PayloadType.Sent, _shardId);
+
+                byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
                 await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception ex)
@@ -199,28 +199,24 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task SendIdentifyAsync()
         {
-            DiscordClient.Logger.LogInfo("Sending Identify payload");
+            DiscordClient.Logger.LogInfo("Sending IdentifyData payload");
 
             const string clientId = "DiscordBotLibrary";
             var identifyPayload = new
             {
                 op = OpCode.Identify,
-                d = new
+                d = new IdentifyData()
                 {
-                    intents = DiscordClient.ClientConfig.Intents,
-                    token = DiscordClient.ClientConfig.Token,
-                    properties = new
+                    Intents = DiscordClient.ClientConfig.Intents,
+                    Token = DiscordClient.ClientConfig.Token,
+                    Shard = [_shardId, ShardHandler.TotalShards],
+                    Properties = new Properties()
                     {
-                        os = Environment.OSVersion.Platform.ToString(),
-                        browser = clientId,
-                        device = clientId,
-                    },
-                    shard = new[]
-                    {
-                        _shardId,
-                        ShardHandler.TotalShards
+                        Os = Environment.OSVersion.Platform.ToString(),
+                        Browser = clientId,
+                        Device = clientId,
                     }
-                },
+                }
             };
 
             await SendPayloadWssAsync(identifyPayload);

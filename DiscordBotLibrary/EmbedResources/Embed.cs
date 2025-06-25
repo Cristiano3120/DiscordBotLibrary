@@ -13,6 +13,7 @@
         /// <summary>
         /// Type of the embed (always "rich" for webhook embeds).
         /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public EmbedType? Type { get; init; }
 
         /// <summary>

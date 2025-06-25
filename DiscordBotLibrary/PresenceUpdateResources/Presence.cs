@@ -25,6 +25,7 @@ namespace DiscordBotLibrary.PresenceUpdateResources
         /// Gets the user's current status. 
         /// </summary>
         [JsonPropertyName("status")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public PresenceStatus Status { get; init; }
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace DiscordBotLibrary.TeamResources
         /// Gets the role of the team member.
         /// </summary>
         [JsonPropertyName("role")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public TeamMemberRole Role { get; init; } = default!;
     }
-
 }

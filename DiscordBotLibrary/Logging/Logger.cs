@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Net.Http;
 using System.Reflection.Emit;
 using System.Text.Json.Nodes;
 using DiscordBotLibrary.MessageResources;
@@ -153,15 +154,15 @@ namespace DiscordBotLibrary.Logging
         {
             Console.ForegroundColor = color;
             JsonNode jsonNode = JsonNode.Parse(payload)!;
-            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString());
+            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString(), true);
 
             if (opCode is OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, false, Event.GUILD_CREATE, Event.PRESENCE_UPDATE);
+                FilterEventData(jsonNode, false);
             }
             else
             {
-                FilterOpCode(jsonNode, false, OpCode.PresenceUpdate);
+                FilterOpCode(jsonNode, opCode, false, OpCode.PresenceUpdate);
             }
 
             jsonNode["op"] = opCode.ToString();
@@ -170,6 +171,13 @@ namespace DiscordBotLibrary.Logging
 
             Write(color, LogLevel.Debug, $"{payloadType}[Id: {shardId}]", obj.ToString());
             Console.WriteLine("");
+        }
+
+        internal void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
+        {
+            using JsonDocument jsonDoc = JsonDocument.Parse(content);
+            string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+            DiscordClient.Logger.LogDebug($"[{payloadType}({requestType})]: {prettyJson}");
         }
 
         #region Filter
@@ -200,7 +208,7 @@ namespace DiscordBotLibrary.Logging
         /// <param name="events"></param>
         private void FilterEventData(JsonNode jsonNode, bool onlyLogThoseEvents, params Event[] events)
         {
-            if (!Enum.TryParse(jsonNode["t"]!.ToString()!, out Event dispatchEvent))
+            if (!Enum.TryParse(jsonNode["t"]!.ToString()!, true, out Event dispatchEvent))
             {
                 LogError(new Exception($"Event {jsonNode["t"]} not found in the Event enum"));
                 return;
@@ -212,9 +220,8 @@ namespace DiscordBotLibrary.Logging
             }
         }
 
-        private static void FilterOpCode(JsonNode jsonNode, bool onlyLogThoseEvents, params OpCode[] opCodes)
+        private static void FilterOpCode(JsonNode jsonNode, OpCode opCode, bool onlyLogThoseEvents, params OpCode[] opCodes)
         {
-            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString()!);
             if (onlyLogThoseEvents && !opCodes.Contains(opCode) || !onlyLogThoseEvents && opCodes.Contains(opCode))
             {
                 jsonNode["d"] = "";

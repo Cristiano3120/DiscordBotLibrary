@@ -8,7 +8,7 @@
         /// <summary>
         /// A text channel within a server.
         /// </summary>
-        GuildText = 0,
+        Text = 0,
 
         /// <summary>
         /// A direct message between users.
@@ -18,7 +18,7 @@
         /// <summary>
         /// A voice channel within a server.
         /// </summary>
-        GuildVoice = 2,
+        Voice = 2,
 
         /// <summary>
         /// A direct message between multiple users.
@@ -28,12 +28,12 @@
         /// <summary>
         /// An organizational category that contains up to 50 channels.
         /// </summary>
-        GuildCategory = 4,
+        Category = 4,
 
         /// <summary>
         /// A channel that users can follow and crosspost into their own server (formerly news channels).
         /// </summary>
-        GuildAnnouncement = 5,
+        Announcement = 5,
 
         /// <summary>
         /// A temporary sub-channel within a GuildAnnouncement channel.
@@ -53,21 +53,21 @@
         /// <summary>
         /// A voice channel for hosting events with an audience.
         /// </summary>
-        GuildStageVoice = 13,
+        StageVoice = 13,
 
         /// <summary>
         /// The channel in a hub containing the listed servers.
         /// </summary>
-        GuildDirectory = 14,
+        Directory = 14,
 
         /// <summary>
         /// A channel that can only contain threads.
         /// </summary>
-        GuildForum = 15,
+        Forum = 15,
 
         /// <summary>
         /// A channel that can only contain threads, similar to GuildForum channels.
         /// </summary>
-        GuildMedia = 16
+        Media = 16
     }
 }

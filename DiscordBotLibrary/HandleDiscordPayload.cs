@@ -90,7 +90,7 @@ namespace DiscordBotLibrary
         internal static void HandleGuildCreateEvent(JsonElement jsonElement)
         {
             DiscordGuild discordGuild = jsonElement.Deserialize<DiscordGuild>();
-            
+
             DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
             client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
 

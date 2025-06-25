@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DiscordBotLibrary.OverwriteResources
+﻿namespace DiscordBotLibrary.OverwriteResources
 {
     public readonly struct Overwrite
     {

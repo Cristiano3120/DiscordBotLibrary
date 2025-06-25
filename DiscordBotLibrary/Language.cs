@@ -7,100 +7,100 @@ namespace DiscordBotLibrary
     /// </summary>
     public enum Language
     {
-        [EnumMember(Value = "id")]
+        [JsonStringEnumMemberName("id")]
         Indonesian,
 
-        [EnumMember(Value = "da")]
+        [JsonStringEnumMemberName("da")]
         Danish,
 
-        [EnumMember(Value = "de")]
+        [JsonStringEnumMemberName("de")]
         German,
 
-        [EnumMember(Value = "en-GB")]
+        [JsonStringEnumMemberName("en-GB")]
         EnglishUK,
 
-        [EnumMember(Value = "en-US")]
+        [JsonStringEnumMemberName("en-US")]
         EnglishUS,
 
-        [EnumMember(Value = "es-ES")]
+        [JsonStringEnumMemberName("es-ES")]
         Spanish,
 
-        [EnumMember(Value = "es-419")]
+        [JsonStringEnumMemberName("es-419")]
         SpanishLATAM,
 
-        [EnumMember(Value = "fr")]
+        [JsonStringEnumMemberName("fr")]
         French,
 
-        [EnumMember(Value = "hr")]
+        [JsonStringEnumMemberName("hr")]
         Croatian,
 
-        [EnumMember(Value = "it")]
+        [JsonStringEnumMemberName("it")]
         Italian,
 
-        [EnumMember(Value = "lt")]
+        [JsonStringEnumMemberName("lt")]
         Lithuanian,
 
-        [EnumMember(Value = "hu")]
+        [JsonStringEnumMemberName("hu")]
         Hungarian,
 
-        [EnumMember(Value = "nl")]
+        [JsonStringEnumMemberName("nl")]
         Dutch,
 
-        [EnumMember(Value = "no")]
+        [JsonStringEnumMemberName("no")]
         Norwegian,
 
-        [EnumMember(Value = "pl")]
+        [JsonStringEnumMemberName("pl")]
         Polish,
 
-        [EnumMember(Value = "pt-BR")]
+        [JsonStringEnumMemberName("pt-BR")]
         PortugueseBrazilian,
 
-        [EnumMember(Value = "ro")]
+        [JsonStringEnumMemberName("ro")]
         Romanian,
 
-        [EnumMember(Value = "fi")]
+        [JsonStringEnumMemberName("fi")]
         Finnish,
 
-        [EnumMember(Value = "sv-SE")]
+        [JsonStringEnumMemberName("sv-SE")]
         Swedish,
 
-        [EnumMember(Value = "vi")]
+        [JsonStringEnumMemberName("vi")]
         Vietnamese,
 
-        [EnumMember(Value = "tr")]
+        [JsonStringEnumMemberName("tr")]
         Turkish,
 
-        [EnumMember(Value = "cs")]
+        [JsonStringEnumMemberName("cs")]
         Czech,
 
-        [EnumMember(Value = "el")]
+        [JsonStringEnumMemberName("el")]
         Greek,
 
-        [EnumMember(Value = "bg")]
+        [JsonStringEnumMemberName("bg")]
         Bulgarian,
 
-        [EnumMember(Value = "ru")]
+        [JsonStringEnumMemberName("ru")]
         Russian,
 
-        [EnumMember(Value = "uk")]
+        [JsonStringEnumMemberName("uk")]
         Ukrainian,
 
-        [EnumMember(Value = "hi")]
+        [JsonStringEnumMemberName("hi")]
         Hindi,
 
-        [EnumMember(Value = "th")]
+        [JsonStringEnumMemberName("th")]
         Thai,
 
-        [EnumMember(Value = "zh-CN")]
+        [JsonStringEnumMemberName("zh-CN")]
         ChineseChina,
 
-        [EnumMember(Value = "ja")]
+        [JsonStringEnumMemberName("ja")]
         Japanese,
 
-        [EnumMember(Value = "zh-TW")]
+        [JsonStringEnumMemberName("zh-TW")]
         ChineseTaiwan,
 
-        [EnumMember(Value = "ko")]
+        [JsonStringEnumMemberName("ko")]
         Korean
     }
 }

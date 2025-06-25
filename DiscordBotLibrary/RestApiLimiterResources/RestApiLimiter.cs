@@ -92,7 +92,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         }
 
         [DebuggerStepThrough]
-        public async Task<bool> PostAsync<T>(T content, string endpoint, CallerInfos callerInfos)
+        public async Task<TOutput?> PostAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
         {
             SemaphoreSlim semaphoreSlim = default!;
             try
@@ -101,9 +101,9 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                 string formattedEndpoint = FormatEndpoint(endpoint);
 
                 semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                HttpResponseMessage? response = await PostPatchRequestAsync(HttpRequestType.Post, content, endpoint, callerInfos);
+                (HttpResponseMessage? response, TOutput? newObj) = await PostPatchRequestAsync<TInput, TOutput>(HttpRequestType.Post, content, endpoint, callerInfos);
                 if (response is null)
-                    return false;
+                    return default;
 
                 HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
 
@@ -113,7 +113,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                     _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
                 }
 
-                return true;
+                return newObj;
             }
             finally
             {
@@ -121,8 +121,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             }
         }
 
-        [DebuggerStepThrough]
-        public async Task<bool> PatchAsync<T>(T content, string endpoint, CallerInfos callerInfos)
+        public async Task<TOutput?> PatchAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
         {
             SemaphoreSlim semaphoreSlim = default!;
             try
@@ -131,9 +130,9 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                 string formattedEndpoint = FormatEndpoint(endpoint);
 
                 semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                HttpResponseMessage? response = await PostPatchRequestAsync(HttpRequestType.Patch, content, endpoint, callerInfos);
+                (HttpResponseMessage? response, TOutput? newObj) = await PostPatchRequestAsync<TInput, TOutput>(HttpRequestType.Patch, content, endpoint, callerInfos);
                 if (response is null)
-                    return false;
+                    return default;
 
                 HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
 
@@ -143,7 +142,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                     _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
                 }
 
-                return true;
+                return newObj;
             }
             finally
             {
@@ -168,36 +167,49 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                     HttpRequestType.Delete => await _httpClient.DeleteAsync(endpoint),
                     _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Get or HttpRequestType.Delete"),
                 };
+
                 if (response.IsSuccessStatusCode)
                     return response;
 
                 if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
                     return null;
-            }  
+            }
         }
 
-        [DebuggerStepThrough]
-        private async Task<HttpResponseMessage?> PostPatchRequestAsync<T>(HttpRequestType requestType, T content, string endpoint, CallerInfos callerInfos)
+        private async Task<(HttpResponseMessage? responseMessage, TOutput? newObj)> PostPatchRequestAsync<TInput, TOutput>
+            (HttpRequestType requestType, TInput content, string endpoint, CallerInfos callerInfos)
         {
             HttpResponseMessage response;
-            StringContent stringContent = new(JsonSerializer.Serialize(content, DiscordClient.JsonSerializerOptions), Encoding.UTF8, "application/json");
+            StringContent stringContent = new(JsonSerializer.Serialize(content, DiscordClient.ReceiveJsonSerializerOptions), Encoding.UTF8, "application/json");
+
             while (true)
             {
                 response = requestType switch
                 {
-                    HttpRequestType.Patch => await _httpClient.PutAsync(endpoint, stringContent),
+                    HttpRequestType.Patch => await _httpClient.PatchAsync(endpoint, stringContent),
                     HttpRequestType.Post => await _httpClient.PostAsync(endpoint, stringContent),
                     _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Patch or HttpRequestType.Post"),
                 };
 
+                DiscordClient.Logger.LogHttpPayload(PayloadType.Sent, requestType, await stringContent.ReadAsStringAsync());
                 if (response.IsSuccessStatusCode)
                     break;
 
-                if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))               
-                    return null;
+                if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
+                    return (null, default);
             }
 
-            return response;
+            string returnedContent = await response.Content.ReadAsStringAsync();
+            TOutput? newObj = JsonSerializer.Deserialize<TOutput>(returnedContent, DiscordClient.ReceiveJsonSerializerOptions);
+
+            if (newObj is null)
+            {
+                using JsonDocument jsonDoc = JsonDocument.Parse(returnedContent);
+                string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+                throw new ArgumentException($"You expected {typeof(TOutput)} but the Rest API returned something else. Returned content:\n{prettyJson}");
+            }
+
+            return (response, newObj);
         }
 
         #endregion
@@ -211,13 +223,13 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         private async Task<bool> HandleErrorCode(HttpResponseMessage response, CallerInfos callerInfos, string endpoint, int statusCode)
         {
             using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            string prettyJson = JsonSerializer.Serialize(doc.RootElement, DiscordClient.JsonSerializerOptions);
+            string prettyJson = JsonSerializer.Serialize(doc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
             DiscordClient.Logger.LogError(prettyJson);
 
             switch (statusCode)
             {
                 case 400:
-                    DiscordClient.Logger.LogError($"The data u sent is invalid in some form" +
+                    DiscordClient.Logger.LogError($"The data you sent is invalid in some form" +
                         $"[file {callerInfos.FilePath}, in {callerInfos.CallerName}(), at line: {callerInfos.LineNum}");
                     return false;
                 case 403:

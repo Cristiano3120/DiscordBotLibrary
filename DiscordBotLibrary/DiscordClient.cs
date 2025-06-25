@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Headers;
-using DiscordBotLibrary.EmbedResources;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,23 +13,37 @@ namespace DiscordBotLibrary
     public sealed class DiscordClient
     {
         #region Internal/Private fields
-        internal static ServiceProvider ServiceProvider { get; private set; } = default!;
-        internal static JsonSerializerOptions JsonSerializerOptions { get; private set; } = new()
+
+        #region JsonSerializer
+        internal static JsonSerializerOptions ReceiveJsonSerializerOptions { get; private set; } = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             IncludeFields = true,
             WriteIndented = true,
             Converters =
             {
-                new EnumMemberConverter<PresenceStatus>(),
-                new EnumMemberConverter<TeamMemberRole>(),
+                new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower),
                 new EnumMemberConverter<OAuth2Scope>(),
-                new EnumMemberConverter<Language>(),
-                new EnumMemberConverter<EmbedType>(),
                 new ActivityButtonsConverter(),
                 new SnowflakeConverter(),
             }
         };
+
+        internal static JsonSerializerOptions SendJsonSerializerOptions { get; private set; } = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            IncludeFields = true,
+            WriteIndented = true,
+            Converters =
+            {
+                new ActivityButtonsConverter(),
+                new SnowflakeConverter(),
+            }
+        };
+
+        #endregion
+
+        internal static ServiceProvider ServiceProvider { get; private set; } = default!;
         internal static DiscordClientConfig ClientConfig { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
@@ -167,6 +180,13 @@ namespace DiscordBotLibrary
             };
 
             await ShardHandler.SendGlobalWebSocketMessageAsync(payload);
+        }
+
+        public async Task<bool> LeaveGuildAsync(ulong guildId)
+        {
+            Logger.LogInfo($"Left guild: {InternalGuilds[guildId].Name}({guildId})");
+            string endpoint = RestApiEndpoints.GetGuildEndpoint(guildId, ChannelEndpoint.Delete);
+            return await RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
         }
 
         #region VoiceChannelHandling
@@ -422,9 +442,9 @@ namespace DiscordBotLibrary
         /// <summary>
         /// If this method returns null one of the params is invalid
         /// </summary>
-        public async Task<Message[]?> GetPinnedMessages(ulong guildId, ulong channelId)
+        public async Task<Message[]?> GetPinnedMessagesAsync(ulong guildId, ulong channelId)
             => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
-                ? await guild.GetPinnedMessages(channelId)
+                ? await guild.GetPinnedMessagesAsync(channelId)
                 : null;
 
         #endregion

@@ -23,6 +23,7 @@
         /// The user's new status (e.g. "online", "idle", "dnd", "invisible").
         /// </summary>
         [JsonPropertyName("status")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public PresenceStatus Status { get; init; }
 
         /// <summary>

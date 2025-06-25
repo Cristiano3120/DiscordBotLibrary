@@ -10,7 +10,14 @@
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static T Deserialize<T>(this JsonElement jsonElement)
-            => jsonElement.GetProperty("d").Deserialize<T>(DiscordClient.JsonSerializerOptions) 
+        {
+            T t = jsonElement.GetProperty("d").Deserialize<T>(DiscordClient.ReceiveJsonSerializerOptions)
                 ?? throw new Exception("Failed to deserialize[JsonElementExtensions(T Deserialize<T>(this JsonElement jsonElement))]");
+        
+            if (t is DiscordGuild guild)
+                guild.SortVoiceStatesAccordingToChannel();
+
+            return t;   
+        }
     }
 }

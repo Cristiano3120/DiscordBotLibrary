@@ -201,6 +201,7 @@
         /// The preferred locale of a Community guild, used in server discovery and notices from Discord, and sent in interactions. Defaults to "en-US".
         /// </summary>
         [JsonPropertyName("preferred_locale")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Language? PreferredLocale { get; init; }
 
         /// <summary>

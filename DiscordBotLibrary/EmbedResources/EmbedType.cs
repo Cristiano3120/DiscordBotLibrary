@@ -1,28 +1,26 @@
-﻿using System.Runtime.Serialization;
-
-namespace DiscordBotLibrary.EmbedResources
+﻿namespace DiscordBotLibrary.EmbedResources
 {
     public enum EmbedType : byte
     {
-        [EnumMember(Value = "rich")]
+        [JsonStringEnumMemberName("rich")]
         Rich,
 
-        [EnumMember(Value = "image")]
+        [JsonStringEnumMemberName("image")]
         Image,
 
-        [EnumMember(Value = "video")]
+        [JsonStringEnumMemberName("video")]
         Video,
 
-        [EnumMember(Value = "gifv")]
+        [JsonStringEnumMemberName("gifv")]
         Gifv,
 
-        [EnumMember(Value = "article")]
+        [JsonStringEnumMemberName("article")]
         Article,
 
-        [EnumMember(Value = "link")]
+        [JsonStringEnumMemberName("link")]
         Link,
 
-        [EnumMember(Value = "poll_result")]
+        [JsonStringEnumMemberName("poll_result")]
         Poll_result
     }
 }

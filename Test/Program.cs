@@ -1,5 +1,6 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ActivityResources;
+using DiscordBotLibrary.ChannelResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
@@ -70,10 +71,12 @@ namespace Test
 
             const ulong crisDc = 1126185640745246731;
             const ulong familyDc = 1341844969085862021;
-            const ulong rlDc = 1257608066975924266;
             const ulong cacxCordDc = 1381712720935518369;
+            const ulong crisId = 912014865898549378;
 
             DiscordGuild guild = client.GetGuild(familyDc)!;
+            Channel? chillI = await guild.GetChannelAsync(1377955560556855336);
+            Channel? crisChannel = guild.GetChannel(x => x.VoiceStates?.FirstOrDefault(x => x.UserId == crisId) is not null);
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

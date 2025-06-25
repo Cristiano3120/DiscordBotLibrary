@@ -71,6 +71,7 @@
         /// The user's chosen language/locale.
         /// </summary>
         [JsonPropertyName("locale")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Language? Locale { get; init; }
 
         /// <summary>

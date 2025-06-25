@@ -1,0 +1,62 @@
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+{
+    public sealed class VoiceChannelEdit : BaseChannelEdit
+    {
+        /// <summary>
+        /// whether the channel is nsfw
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<bool> Nsfw { get; set; }
+
+        /// <summary>
+        /// Slowmode: How many seconds users must wait before sending another message.
+        /// <para>0, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 21600</para>
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonPropertyName("rate_limit_per_user")]
+        public Optional<int> Slowmode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bitrate value, in kilobits per second (kbps), for the associated channel(8K-384K) depending on the server level.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<int> Bitrate { get; set; }
+
+        /// <summary>
+        /// The user limit of the voice or stage channel
+        /// <para>Max 99 for voice channels and 10,000 for stage channels (0 refers to no limit)</para>
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<int> UserLimit { get; set; }
+
+        [JsonPropertyName("parent_id")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<ulong?> ParentCategory { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<RtcRegion?> RtcRegion
+        { 
+            get; 
+            set 
+            { 
+                if (value.HasValue && value.Value == ChannelResources.RtcRegion.Automatic)
+                {
+                    field = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// the camera video quality mode of the voice channe
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<VideoQualityMode> VideoQualityMode { get; set; }
+
+        internal VoiceChannelEdit(string name)
+        {
+            Name = name;
+        }
+
+        private VoiceChannelEdit() { }
+    }
+}

@@ -26,10 +26,9 @@ namespace DiscordBotLibrary.Json
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             string? key = reader.GetString();
-            if (key != null && _fromValue.TryGetValue(key, out var enumValue))
-                return enumValue;
-
-            throw new JsonException($"Unable to convert \"{key}\" to Enum \"{typeof(T)}\".");
+            return _fromValue.TryGetValue(key!, out T? enumValue)
+                ? enumValue
+                : throw new JsonException($"Unable to convert \"{key}\" to Enum \"{typeof(T)}\".");
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)

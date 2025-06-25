@@ -27,7 +27,7 @@ namespace DiscordBotLibrary.Sharding
             DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
 
             string response = await httpClient.GetStringAsync("https://discord.com/api/v10/gateway/bot");
-            GatewayShardingInfo gatewayShardingInfo = JsonSerializer.Deserialize<GatewayShardingInfo>(response, DiscordClient.JsonSerializerOptions);
+            GatewayShardingInfo gatewayShardingInfo = JsonSerializer.Deserialize<GatewayShardingInfo>(response, DiscordClient.ReceiveJsonSerializerOptions);
 
             TimeSpan waitTime = TimeSpan.FromMilliseconds(gatewayShardingInfo.SessionStartLimit.ResetAfter);
             DateTime resumeTime = DateTime.UtcNow + waitTime;

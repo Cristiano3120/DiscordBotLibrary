@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -39,7 +40,6 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// Gets the voice states of members currently in voice channels.
         /// These states do not include the guild_id key.
         /// </summary>
-        [JsonPropertyName("voice_states")]
         [JsonInclude]
         internal VoiceState[]? VoiceStates { get; set; }
 
@@ -52,7 +52,6 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// <summary>
         /// Gets the channels in the guild.
         /// </summary>
-        [JsonPropertyName("channels")]
         [JsonInclude]
         internal List<Channel> Channels { get; set; } = [];
 
@@ -96,28 +95,28 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// A text channel within a server.
         /// TYPE: <see cref="ChannelType.GuildText"/>
         /// </summary>
-        public Channel[] TextChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildText)];
+        public Channel[] TextChannels => [.. Channels.Where(x => x.Type == ChannelType.Text)];
 
         [JsonIgnore]
         /// <summary>
         /// A voice channel within a server.
         /// TYPE: <see cref="ChannelType.GuildVoice"/>
         /// </summary>
-        public Channel[] VoiceChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildVoice)];
+        public Channel[] VoiceChannels => [.. Channels.Where(x => x.Type == ChannelType.Voice)];
 
         [JsonIgnore]
         /// <summary>
         /// An organizational category that contains up to 50 channels.
         /// TYPE: <see cref="ChannelType.GuildCategory"/>
         /// </summary>
-        public Channel[] Categories => [.. Channels.Where(x => x.Type == ChannelType.GuildCategory)];
+        public Channel[] Categories => [.. Channels.Where(x => x.Type == ChannelType.Category)];
 
         [JsonIgnore]
         /// <summary>
         /// A channel that users can follow and crosspost into their own server.
         /// TYPE: <see cref="ChannelType.GuildAnnouncement"/>
         /// </summary>
-        public Channel[] AnnouncementChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildAnnouncement)];
+        public Channel[] AnnouncementChannels => [.. Channels.Where(x => x.Type == ChannelType.Announcement)];
 
         [JsonIgnore]
         /// <summary>
@@ -145,28 +144,28 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// A voice channel for hosting events with an audience.
         /// TYPE: <see cref="ChannelType.GuildStageVoice"/>
         /// </summary>
-        public Channel[] StageChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildStageVoice)];
+        public Channel[] StageChannels => [.. Channels.Where(x => x.Type == ChannelType.StageVoice)];
 
         [JsonIgnore]
         /// <summary>
         /// The channel in a hub containing the listed servers.
         /// TYPE: <see cref="ChannelType.GuildDirectory"/>
         /// </summary>
-        public Channel[] DirectoryChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildDirectory)];
+        public Channel[] DirectoryChannels => [.. Channels.Where(x => x.Type == ChannelType.Directory)];
 
         [JsonIgnore]
         /// <summary>
         /// A channel that can only contain threads.
         /// TYPE: <see cref="ChannelType.GuildForum"/>
         /// </summary>
-        public Channel[] ForumChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildForum)];
+        public Channel[] ForumChannels => [.. Channels.Where(x => x.Type == ChannelType.Forum)];
 
         [JsonIgnore]
         /// <summary>
         /// A channel that can only contain threads, similar to GuildForum.
         /// TYPE: <see cref="ChannelType.GuildMedia"/>
         /// </summary>
-        public Channel[] MediaChannels => [.. Channels.Where(x => x.Type == ChannelType.GuildMedia)];
+        public Channel[] MediaChannels => [.. Channels.Where(x => x.Type == ChannelType.Media)];
         #endregion
 
         #region Events
@@ -184,12 +183,8 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
         #endregion
 
-        public DiscordGuild()
-        {
-            SortVoiceStatesAccordingToChannel();
-        }
-
-        private void SortVoiceStatesAccordingToChannel()
+        [OnDeserialized]
+        internal void SortVoiceStatesAccordingToChannel()
         {
             if (VoiceStates is null || VoiceStates.Length == 0)
                 return;
@@ -208,7 +203,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         internal bool CheckIfChannelIsVc(ulong channelId)
         {
             Channel? channel = GetChannel(channelId);
-            return channel is not null && channel.Type == ChannelType.GuildVoice;
+            return channel is not null && channel.Type == ChannelType.Voice;
         }
 
         #region GetMethods
@@ -226,8 +221,34 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public GuildMember? GetMember(ulong userId)
             => Members.FirstOrDefault(x => x.User?.Id == userId);
 
+        /// <summary>
+        /// Could return null even tho the channel exists in <c>rare</c> cases if the channel isnt cached.
+        /// I recommend that you call this method <c>first</c> and only after that call the async one if needed
+        /// </summary>
         public Channel? GetChannel(ulong channelId)
             => Channels.FirstOrDefault(x => x.Id == channelId);
+
+        /// <summary>
+        /// Could return null even tho the channel exists in <c>rare</c> cases if the channel isnt cached.
+        /// I recommend that you call this method <c>first</c> and only after that call the async one if needed
+        /// </summary>
+        public Channel? GetChannel(Func<Channel, bool> predicate)
+            => Channels.FirstOrDefault(predicate);
+
+        /// <summary>
+        /// Will make an <c>api request</c> if the channel is not found in the cache
+        /// </summary>
+        public async Task<Channel?> GetChannelAsync(ulong channelId)
+        {
+            Channel? channel = Channels.FirstOrDefault(x => x.Id == 0);
+            if (channel is null)
+            {
+                string endpoint = RestApiEndpoints.GetChannelEndpoint(channelId, ChannelEndpoint.Get);
+                channel = await DiscordClient.RestApiLimiter.GetAsync<Channel>(endpoint, CallerInfos.Create());
+            }
+
+            return channel;
+        } 
 
         #endregion
 
@@ -241,7 +262,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public async Task ConnectToVcAsync(ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
             Channel? channel = GetChannel(channelId);
-            if (channel is null || channel.Type != ChannelType.GuildVoice)
+            if (channel is null || channel.Type != ChannelType.Voice)
             {
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }
@@ -257,7 +278,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         [DebuggerStepThrough]
         public async Task ConnectToVcAsync(Channel channel, bool selfDeaf = false, bool selfMute = false)
         {
-            if (channel.Type != ChannelType.GuildVoice || channel.GuildId != Id)
+            if (channel.Type != ChannelType.Voice || channel.GuildId != Id)
             {
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }
@@ -393,7 +414,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             Channel channel = GetChannel(channelPinsUpdate.ChannelId)!;
             channel.LastPinTimestamp = channelPinsUpdate.LastPinTimestamp;
 
-            Message[] pinnedMessages = await channel.GetPinnedMessages() ?? [];
+            Message[] pinnedMessages = await channel.GetPinnedMessagesAsync() ?? [];
             ChannelPins channelPins = new()
             {
                 Channel = channel,
@@ -407,11 +428,11 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// <summary>
         /// If this method returns null the param is invalid
         /// </summary>
-        internal async Task<Message[]?> GetPinnedMessages(ulong channelId)
+        internal async Task<Message[]?> GetPinnedMessagesAsync(ulong channelId)
         {
             Channel? channel = GetChannel(channelId);
             return channel is not null
-                ? await channel.GetPinnedMessages()
+                ? await channel.GetPinnedMessagesAsync()
                 : null;
         }
 
