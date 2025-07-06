@@ -1,6 +1,5 @@
 ﻿using System.Buffers.Text;
-using System.Security;
-using System.Xml.Linq;
+using System.Net.Http.Headers;
 using DiscordBotLibrary.ChannelResources.ChannelEditResources;
 
 namespace DiscordBotLibrary.ChannelResources
@@ -10,6 +9,8 @@ namespace DiscordBotLibrary.ChannelResources
     /// </summary>
     public sealed record Channel
     {
+        #region Properties
+
         /// <summary>
         /// TYPE: Snowflake  
         /// The ID of this channel.
@@ -257,6 +258,8 @@ namespace DiscordBotLibrary.ChannelResources
         /// </summary>
         public int? CountOfUsersInVc => VoiceStates?.Count;
 
+        #endregion
+
         /// <summary>
         /// <c>Null</c> if the request was invalid and <c>Message[]</c> otherwhise
         /// </summary>
@@ -285,13 +288,15 @@ namespace DiscordBotLibrary.ChannelResources
         /// </summary>
         /// <param name="channel"></param>
         /// <returns><c>Null</c> if the request was unsuccesful</returns>
-        public async Task<Channel?> ModifyAsync(Channel channel)
+        private async Task<Channel?> ModifyAsync(Action<InternalChannelEdit> channelEditAction)
         {
-            string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Modify);
-            return await DiscordClient.RestApiLimiter.PatchAsync<Channel, Channel>(channel, endpoint, CallerInfos.Create());
+            InternalChannelEdit channelEdit = new(Name!);
+            channelEditAction(channelEdit);
+
+            return await ModifyChannelAsyncHelper(channelEdit);
         }
 
-        #region ModifySpecific
+        #region ModifySpecificType
 
         /// <summary>
         /// <para><c>UNSAFE: This method wont check if the set propertys are acceptable</c></para>
@@ -460,6 +465,11 @@ namespace DiscordBotLibrary.ChannelResources
 
         /// <summary>
         /// <c>SAFE: This method validates input before sending it</c>
+        /// 
+        /// <para>
+        /// You can only modify the name of a channel 2 times per 10 minutes. 
+        /// This method will look out for that.
+        /// </para>
         /// </summary>
         /// <param name="name"></param>
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
@@ -471,7 +481,7 @@ namespace DiscordBotLibrary.ChannelResources
                 return null;
             }
 
-            return await ModifyAsync(this with { Name = name });
+            return await ModifyAsync(x => x.Name = name);
         }
 
         /// <summary>
@@ -482,9 +492,10 @@ namespace DiscordBotLibrary.ChannelResources
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyIconAsync(string icon)
         {
-            if (!Base64.IsValid(icon) || string.IsNullOrEmpty(icon))
+            if (!Base64.IsValid(icon) || string.IsNullOrEmpty(icon) || Type is not ChannelType.GroupDM)
             {
-                LogInvalidInput("The icon is not encoded in base64 or is empty", CallerInfos.Create());
+                LogInvalidInput("TOnly the Icon of a group Dm can be changed. Icon can´t be empty. " +
+                    "Icon has to be encoded in base64", CallerInfos.Create());
                 return null;
             }
 
@@ -498,14 +509,104 @@ namespace DiscordBotLibrary.ChannelResources
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyIconAsync(byte[] iconBytes)
         {
-            if (iconBytes.Length == 0)
+            if (iconBytes.Length == 0 || Type is not ChannelType.GroupDM)
             {
-                LogInvalidInput("Icon can´t be empty", CallerInfos.Create());
+                LogInvalidInput("Only the Icon of a group Dm can be changed. Icon can´t be empty.", CallerInfos.Create());
                 return null;
             }
 
             string base64Icon = Convert.ToBase64String(iconBytes);
             return await ModifyGroupDmAsync(x => x.Icon = base64Icon);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// </summary>
+        /// <param name="icon"></param>
+        /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyChannelTypeAsync(ChannelType type)
+        {
+            if (type is not ChannelType.Text or ChannelType.Announcement)
+            {
+                LogInvalidInput($"The type {type} is not supported for this method. " +
+                    $"Only {ChannelType.Text} and {ChannelType.Announcement} are supported", CallerInfos.Create());
+                return null;
+            }
+
+            return await ModifyTextChannelAsync(x => x.Type = type);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// </summary>
+        /// <param name="icon"></param>
+        /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyPositionAsync(int position)
+        {
+            if (position < 0)
+            {
+                LogInvalidInput($"The position {position} is not valid. It has to be greater than or equal to 0", CallerInfos.Create());
+                return null;
+            }
+
+            return await ModifyAsync(x => x.Position = position);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// Supports <c>markdown</c> formatting. This property can only be changed twice per 10 minutes.
+        /// </para>
+        /// <para>
+        /// This method modifies the topic of a channel.
+        /// This only works for channels of type <see cref="ChannelType.Text"/>, <see cref="ChannelType.Announcement"/>,
+        /// <see cref="ChannelType.Forum"/> and <see cref="ChannelType.Media"/>.
+        /// <para>
+        /// 
+        /// </para>
+        /// 
+        /// Topic can be between 0 and 1024 characters long for channels 
+        /// of type <see cref="ChannelType.Text"/> or <see cref="ChannelType.Announcement"/>.
+        /// </para>
+        ///
+        /// <para>
+        /// Topic can be between 0 and 4096 characters long for channels 
+        /// of type <see cref="ChannelType.Forum"/> or <see cref="ChannelType.Media"/>.
+        /// </para>
+        /// 
+        /// Set it to <c>0</c> to remove the topic.
+        /// </summary>
+        /// <param name="icon"></param>
+        /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyTopicAsync(string topic)
+        {
+            DiscordClient.Logger.LogInfo($"Changing the topic of the {Type}channel: {Name} to {topic}");
+
+            int length = topic.Length;
+            if (length > 4096)
+            {
+                LogInvalidInput($"The length of the param {nameof(topic)} must be ≤ 4096 (or ≤ 1024 for certain types)."
+                    , CallerInfos.Create());
+                return null;
+            }
+
+            bool isValidType = Type is ChannelType.Text or ChannelType.Announcement or ChannelType.Forum or ChannelType.Media;
+            if (!isValidType)
+            {
+                LogInvalidInput($"This {Type} is not supported for this method. Look at the method docu for more info"
+                    , CallerInfos.Create());
+                return null;
+            }
+
+            bool isTextOrAnnouncement = Type is ChannelType.Text or ChannelType.Announcement;
+            if (isTextOrAnnouncement && length > 1024)
+            {
+                LogInvalidInput($"This {Type} only supports a topic of up to 1024 chars. Look at the method docu for more info"
+                    , CallerInfos.Create());
+                return null;
+            }
+
+            return await ModifyAsync(x => x.Topic = topic);
         }
 
         private static void LogInvalidInput(string msg, CallerInfos callerInfos)

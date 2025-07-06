@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json
 {
     internal class UnixDateTimeConverter : JsonConverter<DateTime?>
     {

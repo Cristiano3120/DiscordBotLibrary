@@ -1,6 +1,6 @@
 ﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
-    public sealed class ThreadChannelEdit
+    public class ThreadChannelEdit
     {
         public string Name { get; set; }
 
@@ -8,7 +8,7 @@
         /// whether the thread is archived
         /// </summary>
         [JsonPropertyName("archived")]
-        public Optional<bool> Archived { get; se    ; }
+        public Optional<bool> Archived { get; set; }
 
         /// <summary>
         /// the thread will stop showing in the channel list after auto_archive_duration minutes of inactivity, 

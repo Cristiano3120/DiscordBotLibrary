@@ -1,8 +1,6 @@
-﻿using System.Text.Json;
-
-namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json
 {
-    public class ActivityButtonsConverter : JsonConverter<ActivityButton[]>
+    public class ActivityButtonConverter : JsonConverter<ActivityButton[]>
     {
         public override ActivityButton[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

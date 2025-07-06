@@ -180,7 +180,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             (HttpRequestType requestType, TInput content, string endpoint, CallerInfos callerInfos)
         {
             HttpResponseMessage response;
-            StringContent stringContent = new(JsonSerializer.Serialize(content, DiscordClient.ReceiveJsonSerializerOptions), Encoding.UTF8, "application/json");
+            StringContent stringContent = new(JsonSerializer.Serialize(content, DiscordClient.SendJsonSerializerOptions), Encoding.UTF8, "application/json");
 
             while (true)
             {
@@ -191,7 +191,15 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                     _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Patch or HttpRequestType.Post"),
                 };
 
+                using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                string prettyJson = JsonSerializer.Serialize(doc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+                HttpRateLimitInfo httpRateLimitInfo = GetRateLimitInfo(response.Headers);
+
+                DiscordClient.Logger.LogDebug($"[Request]: {FormatEndpoint(endpoint)} [{httpRateLimitInfo.BucketId}] " +
+                    $"[{requestType}] [{(int)response.StatusCode}] [{response.ReasonPhrase}] [Retry-after: {httpRateLimitInfo.RetryAfter}]");
                 DiscordClient.Logger.LogHttpPayload(PayloadType.Sent, requestType, await stringContent.ReadAsStringAsync());
+                DiscordClient.Logger.LogError($"[Response]: {prettyJson}");
+                
                 if (response.IsSuccessStatusCode)
                     break;
 
@@ -222,10 +230,6 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         [DebuggerStepThrough]
         private async Task<bool> HandleErrorCode(HttpResponseMessage response, CallerInfos callerInfos, string endpoint, int statusCode)
         {
-            using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            string prettyJson = JsonSerializer.Serialize(doc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
-            DiscordClient.Logger.LogError(prettyJson);
-
             switch (statusCode)
             {
                 case 400:

@@ -1,6 +1,5 @@
 ﻿namespace DiscordBotLibrary
 {
-    [JsonConverter(typeof(OptionalConverter))]
     public readonly struct Optional<T>
     {
         public bool HasValue { get; }

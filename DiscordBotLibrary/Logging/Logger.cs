@@ -158,11 +158,11 @@ namespace DiscordBotLibrary.Logging
 
             if (opCode is OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, false);
+                FilterEventData(jsonNode, true);
             }
             else
             {
-                FilterOpCode(jsonNode, opCode, false, OpCode.PresenceUpdate);
+                FilterOpCode(jsonNode, opCode, true);
             }
 
             jsonNode["op"] = opCode.ToString();

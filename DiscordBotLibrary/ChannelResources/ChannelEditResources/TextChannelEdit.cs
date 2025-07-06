@@ -2,7 +2,6 @@
 {
     public sealed class TextChannelEdit : BaseChannelEdit
     {
-
         /// <summary>
         /// <c> CAN ONLY BE <see cref="ChannelType.Announcement"/></c>
         /// </summary>

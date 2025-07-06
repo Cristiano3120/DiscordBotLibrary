@@ -1,6 +1,5 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ActivityResources;
-using DiscordBotLibrary.ChannelResources;
 using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
@@ -77,6 +76,10 @@ namespace Test
             DiscordGuild guild = client.GetGuild(familyDc)!;
             Channel? chillI = await guild.GetChannelAsync(1377955560556855336);
             Channel? crisChannel = guild.GetChannel(x => x.VoiceStates?.FirstOrDefault(x => x.UserId == crisId) is not null);
+        
+        
+            Channel? chat = guild.GetChannel(x => x.Name == "chat");
+            await chat.ModifyNameAsync("Test.");
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

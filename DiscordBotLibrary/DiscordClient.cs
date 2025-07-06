@@ -24,7 +24,7 @@ namespace DiscordBotLibrary
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower),
                 new EnumMemberConverter<OAuth2Scope>(),
-                new ActivityButtonsConverter(),
+                new ActivityButtonConverter(),
                 new SnowflakeConverter(),
             }
         };
@@ -36,8 +36,9 @@ namespace DiscordBotLibrary
             WriteIndented = true,
             Converters =
             {
-                new ActivityButtonsConverter(),
+                new ActivityButtonConverter(),
                 new SnowflakeConverter(),
+                new OptionalConverter(),
             }
         };
 
