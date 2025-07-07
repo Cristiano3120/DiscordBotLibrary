@@ -1,23 +1,22 @@
 ﻿using System.Net.WebSockets;
 using DiscordBotLibrary.Sharding;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary
 {
     internal static class HandleDiscordPayload
     {
-        internal static async Task<int> HandleDispatch(Shard shard, JsonElement jsonElement)
+        internal static async Task<int> HandleDispatch(Shard shard, JToken jToken)
         {
-            Event events = jsonElement.GetEvent();
-            await shard.InvokeEvent(events, jsonElement);
+            Event events = jToken.GetEvent();
+            await shard.InvokeEvent(events, jToken);
 
-            return jsonElement.GetSequenceNumber();
+            return jToken.GetSequenceNumber();
         }
 
-        internal static async Task HandleHelloEventAsync(JsonElement jsonElement, Shard shard,
+        internal static async Task HandleHelloEventAsync(JToken jToken, Shard shard,
             ResumeConnInfos resumeConnInfos, int? lastSequenceNumber)
         {
-            int heartbeatInterval = jsonElement.GetProperty("d").GetProperty("heartbeat_interval").GetInt32();
+            int heartbeatInterval = jToken.GetProperty("d").GetProperty("heartbeat_interval").Value<int>();
             _ = shard.SendHeartbeatsAsync(heartbeatInterval);
 
             if (resumeConnInfos != ResumeConnInfos.EmptyConnInfos)
@@ -28,7 +27,7 @@ namespace DiscordBotLibrary
                     op = OpCode.Resume,
                     d = new
                     {
-                        token = DiscordClient.ClientConfig.Token,
+                        token = DiscordClient.GetDiscordClient().ClientConfig.Token,
                         session_id = resumeConnInfos.SessionId,
                         seq = lastSequenceNumber
                     }
@@ -60,10 +59,10 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal static async Task HandleSessionInvalidAsync(Shard shard, JsonElement jsonElement,
+        internal static async Task HandleSessionInvalidAsync(Shard shard, JToken jToken,
             ResumeConnInfos resumeConnInfos, ClientWebSocket clientWebSocket)
         {
-            bool canResume = jsonElement.GetProperty("d").GetBoolean();
+            bool canResume = jToken.GetProperty("d").Value<bool>();
 
             if (canResume)
             {
@@ -75,9 +74,9 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal static void HandleReadyEvent(Shard shard, JsonElement jsonElement)
+        internal static void HandleReadyEvent(Shard shard, JToken jToken)
         {
-            ShardReadyEventArgs readyEventArgs = jsonElement.Deserialize<ShardReadyEventArgs>();
+            ShardReadyEventArgs readyEventArgs = jToken.Deserialize<ShardReadyEventArgs>();
 
             ShardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos
@@ -87,36 +86,36 @@ namespace DiscordBotLibrary
             };
         }
 
-        internal static void HandleGuildCreateEvent(JsonElement jsonElement)
+        internal static void HandleGuildCreateEvent(JToken jToken)
         {
-            DiscordGuild discordGuild = jsonElement.Deserialize<DiscordGuild>();
+            DiscordGuild discordGuild = jToken.Deserialize<DiscordGuild>();
 
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
             client.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
 
             client.InvokeOnGuildCreate(discordGuild);
         }
 
-        internal static void HandlePresenceUpdateEvent(JsonElement jsonElement)
+        internal static void HandlePresenceUpdateEvent(JToken jToken)
         {
-            Presence presenceUpdate = jsonElement.Deserialize<Presence>()!;
+            Presence presenceUpdate = jToken.Deserialize<Presence>()!;
 
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
             DiscordGuild guild = client.InternalGuilds[presenceUpdate.GuildId];
 
             guild.UpdatePresence(presenceUpdate);
             client.InvokeOnPresenceUpdate(presenceUpdate);
         }
 
-        internal static void HandleVoiceServerUpdateEvent(JsonElement jsonElement)
+        internal static void HandleVoiceServerUpdateEvent(JToken jToken)
         {
-            VoiceServerUpdate voiceServerUpdate = jsonElement.Deserialize<VoiceServerUpdate>();
-            DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().ReceivedVoiceServerUpdate(voiceServerUpdate);
+            VoiceServerUpdate voiceServerUpdate = jToken.Deserialize<VoiceServerUpdate>();
+            DiscordClient.GetDiscordClient().ReceivedVoiceServerUpdate(voiceServerUpdate);
         }
 
-        internal static void HandleGuildMembersChunkEvent(JsonElement jsonElement, Shard shard)
+        internal static void HandleGuildMembersChunkEvent(JToken jToken, Shard shard)
         {
-            GuildMembersChunk guildMembersChunk = jsonElement.Deserialize<GuildMembersChunk>();
+            GuildMembersChunk guildMembersChunk = jToken.Deserialize<GuildMembersChunk>();
             shard.GuildMemberRequests.TryGetValue(guildMembersChunk.Nonce, out RequestGuildMembersCache? requestGuildMembersCache);
 
             if (requestGuildMembersCache is null)
@@ -142,15 +141,15 @@ namespace DiscordBotLibrary
 
                 if (requestGuildMembersCache.Cache)
                 {
-                    DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+                    DiscordClient.GetDiscordClient()
                         .InternalGuilds[guildMembersChunk.GuildId].AddGuildMembers(requestGuildMembersCache.GuildMembers);              
                 }
             }
         }
 
-        internal static void HandleSoundboardSoundsEvent(JsonElement jsonElement, Shard shard)
+        internal static void HandleSoundboardSoundsEvent(JToken jToken, Shard shard)
         {
-            SoundboardSounds soundboardSounds = jsonElement.Deserialize<SoundboardSounds>();
+            SoundboardSounds soundboardSounds = jToken.Deserialize<SoundboardSounds>();
 
             shard.SoundboardRequests.TryGetValue(soundboardSounds.GuildId, out TaskCompletionSource<SoundboardSound[]>? tsc);
             if (tsc is null)
@@ -160,51 +159,51 @@ namespace DiscordBotLibrary
             shard.SoundboardRequests.Remove(soundboardSounds.GuildId);
         }
 
-        internal static void HandleVoiceStateUpdateEvent(JsonElement jsonElement)
+        internal static void HandleVoiceStateUpdateEvent(JToken jToken)
         {
-            VoiceState voiceState = jsonElement.Deserialize<VoiceState>();
+            VoiceState voiceState = jToken.Deserialize<VoiceState>();
             
             if (!voiceState.GuildId.HasValue)
                 return;
 
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
             client.GetGuild(voiceState.GuildId.Value)?.UpdateVoiceState(voiceState);
             client.InvokeOnVoiceStateUpdate(voiceState);
         }
 
         #region HandleChannelEvents
 
-        internal static void HandleChannelCreateEvent(JsonElement jsonElement)
+        internal static void HandleChannelCreateEvent(JToken jToken)
         {
-            Channel channel = jsonElement.Deserialize<Channel>();
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            Channel channel = jToken.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
 
             client.GetGuild(channel.GuildId!.Value)?.AddChannel(channel);
             client.InvokeOnChannelCreated(channel); 
         }
 
-        internal static void HandleChannelDeleteEvent(JsonElement jsonElement)
+        internal static void HandleChannelDeleteEvent(JToken jToken)
         {
-            Channel channel = jsonElement.Deserialize<Channel>();
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            Channel channel = jToken.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
 
             client.GetGuild(channel.GuildId!.Value)?.DeleteChannel(channel);
             client.InvokeOnChannelDeleted(channel);
         }
 
-        internal static void HandleChannelUpdateEvent(JsonElement jsonElement)
+        internal static void HandleChannelUpdateEvent(JToken jToken)
         {
-            Channel channel = jsonElement.Deserialize<Channel>();
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            Channel channel = jToken.Deserialize<Channel>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
 
             client.GetGuild(channel.GuildId!.Value)?.UpdateChannel(channel);
             client.InvokeOnChannelUpdated(channel);
         }
 
-        internal static async Task HandleChannelPinsUpdateEvent(JsonElement jsonElement)
+        internal static async Task HandleChannelPinsUpdateEvent(JToken jToken)
         {
-            ChannelPinsUpdate channelPinsUpdate = jsonElement.Deserialize<ChannelPinsUpdate>();
-            DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+            ChannelPinsUpdate channelPinsUpdate = jToken.Deserialize<ChannelPinsUpdate>();
+            DiscordClient client = DiscordClient.GetDiscordClient();
 
             if (channelPinsUpdate.GuildId is ulong guildId)
             {

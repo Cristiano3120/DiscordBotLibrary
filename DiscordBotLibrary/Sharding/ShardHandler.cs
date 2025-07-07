@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace DiscordBotLibrary.Sharding
+﻿namespace DiscordBotLibrary.Sharding
 {
     internal static class ShardHandler
     {
@@ -10,24 +8,24 @@ namespace DiscordBotLibrary.Sharding
         private static HashSet<int> _shardIds = new();
         private static Shard[] _shards = [];
 
-        public static async Task Start(HttpClient httpClient)
+        public static async Task Start()
         {
-            await InitAndConnectShardsAsync(httpClient);
+            await InitAndConnectShardsAsync();
         }
 
         #region StartShards
-        private static async Task InitAndConnectShardsAsync(HttpClient httpClient)
+        private static async Task InitAndConnectShardsAsync()
         {
-            GatewayShardingInfo gatewayShardingInfo = await FetchGatewayShardingInfoAsync(httpClient);
+            GatewayShardingInfo gatewayShardingInfo = await FetchGatewayShardingInfoAsync();
             await StartShardsAsync(gatewayShardingInfo);
         }
 
-        private static async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync(HttpClient httpClient)
+        private static async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync()
         {
             DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
 
-            string response = await httpClient.GetStringAsync("https://discord.com/api/v10/gateway/bot");
-            GatewayShardingInfo gatewayShardingInfo = JsonSerializer.Deserialize<GatewayShardingInfo>(response, DiscordClient.ReceiveJsonSerializerOptions);
+            string response = await DiscordClient.GetDiscordClient().RestApiLimiter.GetStringAsync("https://discord.com/api/v10/gateway/bot");
+            GatewayShardingInfo gatewayShardingInfo = JsonConvert.DeserializeObject<GatewayShardingInfo>(response, DiscordClient.ReceiveJsonSerializerOptions);
 
             TimeSpan waitTime = TimeSpan.FromMilliseconds(gatewayShardingInfo.SessionStartLimit.ResetAfter);
             DateTime resumeTime = DateTime.UtcNow + waitTime;
@@ -154,7 +152,7 @@ namespace DiscordBotLibrary.Sharding
 
             if (_shardIds.Count == TotalShards)
             {
-                DiscordClient client = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>();
+                DiscordClient client = DiscordClient.GetDiscordClient();
                 _ = client.ShardsReady(ReadyEventArgs);
                 _shardIds = null!;
             }

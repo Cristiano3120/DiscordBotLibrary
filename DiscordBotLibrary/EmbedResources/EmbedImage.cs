@@ -5,22 +5,22 @@
         /// <summary>
         /// URL of the image.
         /// </summary>
-        [JsonPropertyName("url")]
+        [JsonProperty("url")]
         public string Url { get; init; } = string.Empty;
         /// <summary>
         /// A proxied URL of the image.
         /// </summary>
-        [JsonPropertyName("proxy_url")]
+        [JsonProperty("proxy_url")]
         public string? ProxyUrl { get; init; }
         /// <summary>
         /// Height of the image in pixels.
         /// </summary>
-        [JsonPropertyName("height")]
+        [JsonProperty("height")]
         public int? Height { get; init; }
         /// <summary>
         /// Width of the image in pixels.
         /// </summary>
-        [JsonPropertyName("width")]
+        [JsonProperty("width")]
         public int? Width { get; init; }
     }
 }

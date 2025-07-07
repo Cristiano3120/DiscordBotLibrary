@@ -9,34 +9,34 @@
         /// The unique ID of the tag.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
         /// <summary>
         /// The name of the tag (0-20 characters).
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = default!;
 
         /// <summary>
         /// Whether the tag is moderated and requires MANAGE_THREADS permission to modify.
         /// </summary>
-        [JsonPropertyName("moderated")]
+        [JsonProperty("moderated")]
         public bool Moderated { get; init; }
 
         /// <summary>
         /// The ID of a custom emoji associated with this tag
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("emoji_id")]
+        [JsonProperty("emoji_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The Unicode emoji character associated with this tag
         /// </summary>
-        [JsonPropertyName("emoji_name")]
+        [JsonProperty("emoji_name")]
         public string? EmojiName { get; init; }
     }
 }

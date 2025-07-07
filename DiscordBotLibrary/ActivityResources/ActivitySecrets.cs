@@ -8,19 +8,19 @@
         /// <summary>
         /// unique hash for the given match context
         /// </summary>
-        [JsonPropertyName("join")]
+        [JsonProperty("join")]
         public string? Join { get; init; }
 
         /// <summary>
         /// unique hash for chat invites and Ask to Join
         /// </summary>
-        [JsonPropertyName("spectate")]
+        [JsonProperty("spectate")]
         public string? Spectate { get; init; }
 
         /// <summary>
         /// unique hash for Spectate button
         /// </summary>
-        [JsonPropertyName("match")]
+        [JsonProperty("match")]
         public string? Match { get; init; }
     }
 }

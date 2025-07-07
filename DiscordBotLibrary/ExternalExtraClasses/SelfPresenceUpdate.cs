@@ -8,7 +8,7 @@
         /// <summary>
         /// Timestamp of when the client went idle, or null if not idle.
         /// </summary>
-        [JsonPropertyName("since")]
+        [JsonProperty("since")]
         [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? Since { get; init; }
 
@@ -16,20 +16,19 @@
         /// The activities the user is currently engaged in.
         /// Bots can only set the activity propertys: <c> name, state, type, and url</c>/>
         /// </summary>
-        [JsonPropertyName("activities")]
+        [JsonProperty("activities")]
         public ActivityResources.Activity[] Activities { get; init; } = [];
 
         /// <summary>
         /// The user's new status (e.g. "online", "idle", "dnd", "invisible").
         /// </summary>
-        [JsonPropertyName("status")]
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonProperty("status")]
         public PresenceStatus Status { get; init; }
 
         /// <summary>
         /// Whether the user is currently away from keyboard.
         /// </summary>
-        [JsonPropertyName("afk")]
+        [JsonProperty("afk")]
         public bool Afk { get; init; } = false;
     }
 }

@@ -3,8 +3,9 @@ using System.Text;
 
 namespace DiscordBotLibrary.Sharding
 {
-    internal sealed class Shard(int shardId)
+    internal sealed class Shard(DiscordClient discordClient, int shardId)
     {
+        private readonly DiscordClient _discordClient = discordClient;
         private readonly CancellationTokenSource _cts = new();
         private WsGatewayLimiter _wsGatewayLimiter = default!;
         private ClientWebSocket _webSocket = new();
@@ -17,7 +18,7 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task StartShardAsync()
         {
-            Uri gatewayUri = new($"wss://gateway.discord.gg/?v={DiscordClient.ClientConfig.Version}&encoding=json");
+            Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_discordClient.ClientConfig.Version}&encoding=json");
             await _webSocket.ConnectAsync(gatewayUri, _cts.Token);
 
             _wsGatewayLimiter = new WsGatewayLimiter(this);
@@ -63,7 +64,7 @@ namespace DiscordBotLibrary.Sharding
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
                     DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, PayloadType.Received, _shardId);
 
-                    JsonDocument jsonDocument = JsonDocument.Parse(message);
+                    JToken jsonDocument = JToken.Parse(message);
                     await HandleReceivedMessage(jsonDocument);
 
                     ClearMs(ms);
@@ -79,21 +80,20 @@ namespace DiscordBotLibrary.Sharding
             DiscordClient.Logger.LogDebug($"CloseCode: {_webSocket.CloseStatus}, Reason: {_webSocket.CloseStatusDescription}");
         }
 
-        private async Task HandleReceivedMessage(JsonDocument jsonDocument)
+        private async Task HandleReceivedMessage(JToken jToken)
         {
-            JsonElement message = jsonDocument.RootElement;
-            OpCode opCode = message.GetOpCode();
+            OpCode opCode = jToken.GetOpCode();
 
             try
             {
                 switch (opCode)
                 {
                     case OpCode.Dispatch:
-                        _lastSequenceNumber = await HandleDiscordPayload.HandleDispatch(this, message);
+                        _lastSequenceNumber = await HandleDiscordPayload.HandleDispatch(this, jToken);
                         break;
                     case OpCode.Hello:
                         DiscordClient.Logger.LogInfo("Received Hello message.");
-                        await HandleDiscordPayload.HandleHelloEventAsync(message, this, ResumeConnInfos, _lastSequenceNumber);
+                        await HandleDiscordPayload.HandleHelloEventAsync(jToken, this, ResumeConnInfos, _lastSequenceNumber);
                         break;
                     case OpCode.HeartbeatAck:
                         DiscordClient.Logger.LogDebug("Heartbeat acknowledged.");
@@ -104,7 +104,7 @@ namespace DiscordBotLibrary.Sharding
                         break;
                     case OpCode.InvalidSession:
                         DiscordClient.Logger.LogWarning("Invalid session.");
-                        await HandleDiscordPayload.HandleSessionInvalidAsync(this, message, ResumeConnInfos, _webSocket);
+                        await HandleDiscordPayload.HandleSessionInvalidAsync(this, jToken, ResumeConnInfos, _webSocket);
                         break;
                 }
             }
@@ -114,44 +114,44 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal async Task InvokeEvent(Event events, JsonElement jsonElement)
+        internal async Task InvokeEvent(Event events, JToken jToken)
         {
             try
             {
                 switch (events)
                 {
                     case Event.READY:
-                        HandleDiscordPayload.HandleReadyEvent(this, jsonElement);
+                        HandleDiscordPayload.HandleReadyEvent(this, jToken);
                         break;
                     case Event.GUILD_CREATE:
-                        HandleDiscordPayload.HandleGuildCreateEvent(jsonElement);
+                        HandleDiscordPayload.HandleGuildCreateEvent(jToken);
                         break;
                     case Event.PRESENCE_UPDATE:
-                        HandleDiscordPayload.HandlePresenceUpdateEvent(jsonElement);
+                        HandleDiscordPayload.HandlePresenceUpdateEvent(jToken);
                         break;
                     case Event.VOICE_SERVER_UPDATE:
-                        HandleDiscordPayload.HandleVoiceServerUpdateEvent(jsonElement);
+                        HandleDiscordPayload.HandleVoiceServerUpdateEvent(jToken);
                         break;
                     case Event.GUILD_MEMBERS_CHUNK:
-                        HandleDiscordPayload.HandleGuildMembersChunkEvent(jsonElement, this);
+                        HandleDiscordPayload.HandleGuildMembersChunkEvent(jToken, this);
                         break;
                     case Event.SOUNDBOARD_SOUNDS:
-                        HandleDiscordPayload.HandleSoundboardSoundsEvent(jsonElement, this);
+                        HandleDiscordPayload.HandleSoundboardSoundsEvent(jToken, this);
                         break;
                     case Event.VOICE_STATE_UPDATE:
-                        HandleDiscordPayload.HandleVoiceStateUpdateEvent(jsonElement);
+                        HandleDiscordPayload.HandleVoiceStateUpdateEvent(jToken);
                         break;
                     case Event.CHANNEL_CREATE:
-                        HandleDiscordPayload.HandleChannelCreateEvent(jsonElement);
+                        HandleDiscordPayload.HandleChannelCreateEvent(jToken);
                         break;
                     case Event.CHANNEL_DELETE:
-                        HandleDiscordPayload.HandleChannelDeleteEvent(jsonElement);
+                        HandleDiscordPayload.HandleChannelDeleteEvent(jToken);
                         break;
                     case Event.CHANNEL_UPDATE:
-                        HandleDiscordPayload.HandleChannelUpdateEvent(jsonElement);
+                        HandleDiscordPayload.HandleChannelUpdateEvent(jToken);
                         break;
                     case Event.CHANNEL_PINS_UPDATE:
-                        await HandleDiscordPayload.HandleChannelPinsUpdateEvent(jsonElement);
+                        await HandleDiscordPayload.HandleChannelPinsUpdateEvent(jToken);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
@@ -168,7 +168,7 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
         {
-            string jsonStr = JsonSerializer.Serialize(payload, DiscordClient.SendJsonSerializerOptions);
+            string jsonStr = JsonConvert.SerializeObject(payload, DiscordClient.SendJsonSerializerSettings);
 
             if (isHeartbeat)
             {
@@ -207,8 +207,8 @@ namespace DiscordBotLibrary.Sharding
                 op = OpCode.Identify,
                 d = new IdentifyData()
                 {
-                    Intents = DiscordClient.ClientConfig.Intents,
-                    Token = DiscordClient.ClientConfig.Token,
+                    Intents = _discordClient.ClientConfig.Intents,
+                    Token = _discordClient.ClientConfig.Token,
                     Shard = [_shardId, ShardHandler.TotalShards],
                     Properties = new Properties()
                     {

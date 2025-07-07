@@ -5,18 +5,19 @@ namespace DiscordBotLibrary.PresenceUpdateResources
     /// <summary>
     /// Represents the user's current presence status.
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum PresenceStatus : byte
     {
-        [JsonStringEnumMemberName("online")]
+        [EnumMember(Value = "online")]
         Online,
 
-        [JsonStringEnumMemberName("idle")]
+        [EnumMember(Value = "idle")]
         Idle,
 
-        [JsonStringEnumMemberName("dnd")]
+        [EnumMember(Value = "dnd")]
         DoNotDisturb,
 
-        [JsonStringEnumMemberName("offline")]
+        [EnumMember(Value = "offline")]
         Offline
     }
 }

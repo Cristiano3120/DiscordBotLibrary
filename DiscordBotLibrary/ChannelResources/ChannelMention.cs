@@ -4,19 +4,19 @@ namespace DiscordBotLibrary.ChannelResources
 {
     public record ChannelMention
     {
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public ulong Id { get; init; }
 
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         public ulong GuildId { get; init; }
 
-        [JsonPropertyName("type")]
+        [JsonProperty("type")]
         public ChannelType Type { get; init; }
 
         /// <summary>
         /// Channel name
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = default!;
     }
 }

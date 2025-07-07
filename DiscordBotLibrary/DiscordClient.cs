@@ -1,8 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net.Http.Headers;
+using DiscordBotLibrary.ChannelResources.ChannelEnums;
 using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
 
 namespace DiscordBotLibrary
 {
@@ -15,15 +16,20 @@ namespace DiscordBotLibrary
         #region Internal/Private fields
 
         #region JsonSerializer
-        internal static JsonSerializerOptions ReceiveJsonSerializerOptions { get; private set; } = new()
+        internal static JsonSerializerSettings ReceiveJsonSerializerOptions { get; private set; } = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            IncludeFields = true,
-            WriteIndented = true,
+            Formatting = Formatting.Indented,
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy
+                {
+                    ProcessDictionaryKeys = true,
+                    OverrideSpecifiedNames = false
+                }
+            },
             Converters =
             {
-                new JsonStringEnumConverter(),
-                new EnumMemberConverter<OAuth2Scope>(),
+                new StringEnumConverter(),
                 new ActivityButtonConverter(),
                 new SnowflakeConverter(),
                 new SnowflakeArrayConverter(),
@@ -31,28 +37,33 @@ namespace DiscordBotLibrary
             }
         };
 
-        internal static JsonSerializerOptions SendJsonSerializerOptions { get; private set; } = new()
+        internal static JsonSerializerSettings SendJsonSerializerSettings { get; } = new JsonSerializerSettings
         {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            IncludeFields = true,
-            WriteIndented = true,
+            Formatting = Formatting.Indented,
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy
+                {
+                    ProcessDictionaryKeys = true,
+                    OverrideSpecifiedNames = false
+                }
+            },
             Converters =
             {
                 new ActivityButtonConverter(),
                 new SnowflakeConverter(),
                 new OptionalConverter(),
                 new OverwriteConverter(),
-            }
+            },
         };
 
         #endregion
 
         internal static ServiceProvider ServiceProvider { get; private set; } = default!;
-        internal static DiscordClientConfig ClientConfig { get; private set; } = default!;
+        internal DiscordClientConfig ClientConfig { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
-        internal static RestApiLimiter RestApiLimiter { get; private set; } = default!;
-        internal static HttpClient HttpClient { get; private set; } = default!;
+        internal RestApiLimiter RestApiLimiter { get; private set; } = default!;
 
         private VoiceChannelHandler? _voiceChannelHandler;
 
@@ -80,7 +91,7 @@ namespace DiscordBotLibrary
         public event Action<DiscordClient, ChannelPins>? OnChannelPinsUpdate;
         #endregion
 
-        public event Action<DiscordClient, ReadyEventArgs>? OnReady;   
+        public event Action<DiscordClient, ReadyEventArgs>? OnReady;
 
         #endregion
 
@@ -91,15 +102,7 @@ namespace DiscordBotLibrary
         {
             ClientConfig = clientConfig;
             Logger = new Logger(ClientConfig.LogLevel);
-
-            HttpClient = new HttpClient
-            {
-                BaseAddress = new Uri($"https://discord.com/api/v{ClientConfig.Version}/"),
-            };
-            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", ClientConfig.Token);
-            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CacxCord (https://github.com/Cristiano3120/DiscordBotLibrary , v1.0)");
-            HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            RestApiLimiter = new(HttpClient);
+            RestApiLimiter = new(this);
 
             ServiceCollection services = new();
             services.AddSingleton(this);
@@ -118,8 +121,8 @@ namespace DiscordBotLibrary
             try
             {
                 Logger.LogInfo("Starting Discord client...");
-                
-                await ShardHandler.Start(HttpClient);
+
+                await ShardHandler.Start();
                 return Logger;
             }
             catch (Exception ex)
@@ -207,7 +210,7 @@ namespace DiscordBotLibrary
                 throw new ArgumentException($"No guild found with that guild id", nameof(guildId));
             }
 
-            if (!discordGuild.CheckIfChannelIsVc(channelId))
+            if (discordGuild.GetChannel(channelId)?.Type is not ChannelType.Voice)
             {
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }

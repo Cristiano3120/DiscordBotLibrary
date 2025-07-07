@@ -5,13 +5,13 @@
         /// <summary>
         /// Count of super reactions
         /// </summary>
-        [JsonPropertyName("burst")]
+        [JsonProperty("burst")]
         public int Burst { get; init; }
 
         /// <summary>
         /// Count of normal reactions
         /// </summary>
-        [JsonPropertyName("normal")]
+        [JsonProperty("normal")]
         public int Normal { get; init; }
     }
 }

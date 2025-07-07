@@ -8,14 +8,14 @@
         /// <summary>
         /// Gets the Unix timestamp (in milliseconds) when the activity started.
         /// </summary>
-        [JsonPropertyName("start")]
+        [JsonProperty("start")]
         [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? Start { get; init; }
 
         /// <summary>
         /// Gets the Unix timestamp (in milliseconds) when the activity ends.
         /// </summary>
-        [JsonPropertyName("end")]
+        [JsonProperty("end")]
         [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? End { get; init; }
     }

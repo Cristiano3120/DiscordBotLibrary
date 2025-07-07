@@ -1,39 +1,43 @@
 ﻿namespace DiscordBotLibrary.Json
 {
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using System;
+
     internal sealed class OverwriteConverter : JsonConverter<Overwrite>
     {
-        public override Overwrite Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override Overwrite ReadJson(JsonReader reader, Type objectType, Overwrite existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            using JsonDocument document = JsonDocument.ParseValue(ref reader);
-            JsonElement root = document.RootElement;
+            JObject obj = JObject.Load(reader);
 
-            if (!ulong.TryParse(root.GetProperty("allow").GetString(), out ulong allowBits))
-            {
-                allowBits = 0;
-            }
-
-            if (!ulong.TryParse(root.GetProperty("deny").GetString(), out ulong denyBits))
-            {
-                denyBits = 0;
-            }
+            ulong allowBits = ulong.TryParse((string?)obj["allow"], out ulong a) ? a : 0;
+            ulong denyBits = ulong.TryParse((string?)obj["deny"], out ulong d) ? d : 0;
 
             return new Overwrite
             {
-                Id = ulong.Parse(root.GetProperty("id").GetString()!),
-                Type = (OverwriteType)root.GetProperty("type").GetInt32(),
+                Id = ulong.Parse((string?)obj["id"] ?? "0"),
+                Type = (OverwriteType)((int?)obj["type"] ?? 0),
                 Allow = (DiscordPermissions)allowBits,
                 Deny = (DiscordPermissions)denyBits
             };
         }
 
-        public override void Write(Utf8JsonWriter writer, Overwrite value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, Overwrite value, JsonSerializer serializer)
         {
             writer.WriteStartObject();
-            writer.WriteString("id", value.Id.ToString());
-            writer.WriteNumber("type", (byte)value.Type);
-            writer.WriteString("allow", ((ulong)value.Allow).ToString());
-            writer.WriteString("deny", ((ulong)value.Deny).ToString());
+            writer.WritePropertyName("id");
+            writer.WriteValue(value.Id.ToString());
+
+            writer.WritePropertyName("type");
+            writer.WriteValue((byte)value.Type);
+
+            writer.WritePropertyName("allow");
+            writer.WriteValue(((ulong)value.Allow).ToString());
+
+            writer.WritePropertyName("deny");
+            writer.WriteValue(((ulong)value.Deny).ToString());
             writer.WriteEndObject();
         }
     }
+
 }

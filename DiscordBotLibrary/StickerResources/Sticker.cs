@@ -12,7 +12,7 @@ namespace DiscordBotLibrary.StickerResources
         /// The ID of the sticker.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
@@ -20,68 +20,68 @@ namespace DiscordBotLibrary.StickerResources
         /// For standard stickers, the ID of the pack this sticker belongs to.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("pack_id")]
+        [JsonProperty("pack_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? PackId { get; init; }
 
         /// <summary>
         /// The name of the sticker.
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// The description of the sticker (if any).
         /// </summary>
-        [JsonPropertyName("description")]
+        [JsonProperty("description")]
         public string? Description { get; init; }
 
         /// <summary>
         /// Autocomplete/suggestion tags for the sticker (max 200 characters).
         /// Comma-separated string.
         /// </summary>
-        [JsonPropertyName("tags")]
+        [JsonProperty("tags")]
         public string Tags { get; init; } = string.Empty;
 
         /// <summary>
         /// The type of the sticker.
         /// See <see href="https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-types">Sticker Types</see>.
         /// </summary>
-        [JsonPropertyName("type")]
+        [JsonProperty("type")]
         public StickerType Type { get; init; } = default!;
 
         /// <summary>
         /// The format type of the sticker.
         /// See <see href="https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-format-types">Sticker Format Types</see>.
         /// </summary>
-        [JsonPropertyName("format_type")]
+        [JsonProperty("format_type")]
         public StickerFormatType FormatType { get; init; } = default!;
 
         /// <summary>
         /// Whether this guild sticker can currently be used.
         /// Might be false if the server lost boost level.
         /// </summary>
-        [JsonPropertyName("available")]
+        [JsonProperty("available")]
         public bool Available { get; init; }
 
         /// <summary>
         /// The ID of the guild this sticker belongs to (if any).
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? GuildId { get; init; }
 
         /// <summary>
         /// The user who uploaded the guild sticker (only for guild stickers).
         /// </summary>
-        [JsonPropertyName("user")]
+        [JsonProperty("user")]
         public User? User { get; init; }
 
         /// <summary>
         /// The sort order of the standard sticker within its pack (if applicable).
         /// </summary>
-        [JsonPropertyName("sort_value")]
+        [JsonProperty("sort_value")]
         public int? SortValue { get; init; }
     }
 

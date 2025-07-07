@@ -2,22 +2,30 @@
 {
     internal class UnixDateTimeConverter : JsonConverter<DateTime?>
     {
-        public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            => reader.TryGetInt64(out long unixMilliseconds)
-                ? DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds).UtcDateTime
-                : null;
-        
+        public override DateTime? ReadJson(JsonReader reader, Type objectType, DateTime? existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null)
+                return null;
 
-        public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+            if (reader.TokenType == JsonToken.Integer)
+            {
+                long unixMilliseconds = Convert.ToInt64(reader.Value);
+                return DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds).UtcDateTime;
+            }
+
+            throw new JsonSerializationException($"Unexpected token type: {reader.TokenType}");
+        }
+
+        public override void WriteJson(JsonWriter writer, DateTime? value, JsonSerializer serializer)
         {
             if (value == null)
             {
-                writer.WriteNullValue();
+                writer.WriteNull();
                 return;
             }
 
             long unixMilliseconds = new DateTimeOffset(value.Value).ToUnixTimeMilliseconds();
-            writer.WriteNumberValue(unixMilliseconds);
+            writer.WriteValue(unixMilliseconds);
         }
     }
 }

@@ -9,14 +9,14 @@
         /// TYPE: Snowflake
         /// ID of the unavailable guild.
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
         /// <summary>
         /// True if the guild is unavailable.
         /// </summary>
-        [JsonPropertyName("unavailable")]
+        [JsonProperty("unavailable")]
         public bool Unavailable { get; init; }
     }
 }

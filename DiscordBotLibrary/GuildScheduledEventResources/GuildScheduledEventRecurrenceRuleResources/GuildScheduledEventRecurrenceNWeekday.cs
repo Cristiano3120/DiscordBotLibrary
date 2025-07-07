@@ -10,13 +10,13 @@ namespace DiscordBotLibrary.GuildScheduledEventResources.GuildScheduledEventRecu
         /// <summary>
         /// The week to reoccur on. 1 - 5
         /// </summary>
-        [JsonPropertyName("n")]
+        [JsonProperty("n")]
         public int N { get; init; }
 
         /// <summary>
         /// The day within the week to reoccur on
         /// </summary>
-        [JsonPropertyName("day")]
+        [JsonProperty("day")]
         public GuildScheduledEventRecurrenceWeekday Day { get; init; }
     }
 }

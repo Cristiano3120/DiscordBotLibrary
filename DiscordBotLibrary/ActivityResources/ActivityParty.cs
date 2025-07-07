@@ -8,14 +8,14 @@
         /// <summary>
         /// ID of the party
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string? Id { get; init; }
 
         /// <summary>
         /// Used to show the party's current and maximum size
         /// Contains two integers: [current size, max size]
         /// </summary>
-        [JsonPropertyName("size")]
+        [JsonProperty("size")]
         public int[]? Size { get; init; }
     }
 }

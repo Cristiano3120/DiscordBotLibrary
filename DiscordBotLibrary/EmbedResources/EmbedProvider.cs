@@ -2,10 +2,10 @@
 {
     public record EmbedProvider
     {
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string? Name { get; init; }
 
-        [JsonPropertyName("url")]
+        [JsonProperty("url")]
         public string? Url { get; init; }
     }
 }

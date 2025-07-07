@@ -1,46 +1,51 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
+﻿using System.Runtime.Serialization;
+using Newtonsoft.Json.Converters;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// The possible server locations a <see cref="Channel"/> of type <see cref="ChannelType.Voice"/> can have
     /// </summary>
+
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum RtcRegion : byte
     {
         Automatic,
 
-        [JsonStringEnumMemberName("us-west")]
+        [EnumMember(Value = "us-west")]
         UsWest,
 
-        [JsonStringEnumMemberName("us-east")]
+        [EnumMember(Value = "us-east")]
         UsEast,
 
-        [JsonStringEnumMemberName("us-central")]
+        [EnumMember(Value = "us-central")]
         UsCentral,
 
-        [JsonStringEnumMemberName("us-south")]
+        [EnumMember(Value = "us-south")]
         UsSouth,
 
-        [JsonStringEnumMemberName("singapore")]
+        [EnumMember(Value = "singapore")]
         Singapore,
 
-        [JsonStringEnumMemberName("japan")]
+        [EnumMember(Value = "japan")]
         Japan,
 
-        [JsonStringEnumMemberName("hongkong")]
+        [EnumMember(Value = "hongkong")]
         HongKong,
 
-        [JsonStringEnumMemberName("brazil")]
+        [EnumMember(Value = "brazil")]
         Brazil,
 
-        [JsonStringEnumMemberName("sydney")]
+        [EnumMember(Value = "sydney")]
         Sydney,
 
-        [JsonStringEnumMemberName("southafrica")]
+        [EnumMember(Value = "southafrica")]
         SouthAfrica,
 
-        [JsonStringEnumMemberName("india")]
+        [EnumMember(Value = "india")]
         India,
 
-        [JsonStringEnumMemberName("rotterdam")]
+        [EnumMember(Value = "rotterdam")]
         Rotterdam
     }
 }

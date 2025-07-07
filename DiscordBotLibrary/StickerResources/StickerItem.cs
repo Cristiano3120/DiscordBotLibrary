@@ -2,14 +2,14 @@
 {
     public record StickerItem
     {
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong StickerId { get; init; }
 
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = string.Empty;
 
-        [JsonPropertyName("format_type")]
+        [JsonProperty("format_type")]
         public StickerType FormatType { get; init; }
     }
 }

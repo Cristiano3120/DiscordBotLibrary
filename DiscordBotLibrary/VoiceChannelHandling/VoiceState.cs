@@ -8,85 +8,85 @@
         /// <summary>
         /// the guild id this voice state is for
         /// </summary>
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? GuildId { get; init; }
 
         /// <summary>
         /// the channel id this user is connected to
         /// </summary>
-        [JsonPropertyName("channel_id")]
+        [JsonProperty("channel_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? ChannelId { get; init; }
 
         /// <summary>
         /// the user id this voice state is for
         /// </summary>
-        [JsonPropertyName("user_id")]
+        [JsonProperty("user_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong UserId { get; init; }
 
         /// <summary>
         /// the guild member this voice state is for
         /// </summary>
-        [JsonPropertyName("member")]
+        [JsonProperty("member")]
         public GuildMember? Member { get; init; }
 
         /// <summary>
         /// the session id for this voice state
         /// </summary>
-        [JsonPropertyName("session_id")]
+        [JsonProperty("session_id")]
         public string SessionId { get; init; } = default!;
 
         /// <summary>
         /// whether this user is deafened by the server
         /// </summary>
-        [JsonPropertyName("deaf")]
+        [JsonProperty("deaf")]
         public bool Deaf { get; init; }
 
         /// <summary>
         /// whether this user is muted by the server
         /// </summary>
-        [JsonPropertyName("mute")]
+        [JsonProperty("mute")]
         public bool Mute { get; init; }
 
         /// <summary>
         /// whether this user is locally deafened
         /// </summary>
-        [JsonPropertyName("self_deaf")]
+        [JsonProperty("self_deaf")]
         public bool SelfDeaf { get; init; }
 
         /// <summary>
         /// whether this user is locally muted
         /// </summary>
-        [JsonPropertyName("self_mute")]
+        [JsonProperty("self_mute")]
         public bool SelfMute { get; init; }
 
         /// <summary>
         /// whether this user is streaming using "Go Live"
         /// </summary>
-        [JsonPropertyName("self_stream")]
+        [JsonProperty("self_stream")]
         public bool? SelfStream { get; init; }
 
         /// <summary>
         /// whether this user's camera is enabled
         /// </summary>
-        [JsonPropertyName("self_video")]
+        [JsonProperty("self_video")]
         public bool SelfVideo { get; init; }
 
         /// <summary>
         /// whether this user's permission to speak is denied
         /// </summary>
-        [JsonPropertyName("suppress")]
+        [JsonProperty("suppress")]
         public bool Suppress { get; init; }
 
-        [JsonPropertyName("discoverable")]
+        [JsonProperty("discoverable")]
         public bool Discoverable { get; init; }
 
         /// <summary>
         /// the time at which the user requested to speak
         /// </summary>
-        [JsonPropertyName("request_to_speak_timestamp")]
+        [JsonProperty("request_to_speak_timestamp")]
         public DateTimeOffset? RequestToSpeakTimestamp { get; init; }
     }
 }

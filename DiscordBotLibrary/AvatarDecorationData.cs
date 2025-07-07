@@ -5,10 +5,10 @@
     /// </summary>
     public readonly struct AvatarDecorationData
     {
-        [JsonPropertyName("asset")]
+        [JsonProperty("asset")]
         public string Asset { get; init; }
 
-        [JsonPropertyName("sku_id")]
+        [JsonProperty("sku_id")]
         public string? SkuId { get; init; }
     }
 }

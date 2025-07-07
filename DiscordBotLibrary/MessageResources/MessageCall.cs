@@ -5,14 +5,14 @@
         /// <summary>
         /// array of user object ids that participated in the call
         /// </summary>
-        [JsonPropertyName("participants")]
+        [JsonProperty("participants")]
         [JsonConverter(typeof(SnowflakeArrayConverter))]
         public ulong[] Participants { get; init; } = [];
 
         /// <summary>
         /// time when call ended
         /// </summary>
-        [JsonPropertyName("ended_timestamp")]
+        [JsonProperty("ended_timestamp")]
         public DateTimeOffset? EndedTimestamp { get; init; }
     }
 }

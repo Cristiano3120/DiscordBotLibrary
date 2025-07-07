@@ -16,75 +16,65 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// <summary>
         /// Gets the date and time when this guild was joined.
         /// </summary>
-        [JsonPropertyName("joined_at")]
         public DateTime JoinedAt { get; init; }
 
         /// <summary>
         /// Gets a value indicating whether this is considered a large guild.
         /// </summary>
-        [JsonPropertyName("large")]
         public bool Large { get; init; }
 
         /// <summary>
         /// Gets a value indicating whether this guild is unavailable due to an outage.
         /// </summary>
-        [JsonPropertyName("unavailable")]
         public bool? Unavailable { get; init; }
 
         /// <summary>
         /// Gets the total number of members in this guild.
         /// </summary>
-        [JsonPropertyName("member_count")]
         public int MemberCount { get; init; }
 
         /// <summary>
         /// Gets the voice states of members currently in voice channels.
         /// These states do not include the guild_id key.
         /// </summary>
-        [JsonInclude]
+        [JsonProperty]
         internal VoiceState[]? VoiceStates { get; set; }
 
         /// <summary>
         /// Gets the users currently in the guild.
         /// </summary>
-        [JsonPropertyName("members")]
         public List<GuildMember> Members { get; init; } = [];
 
         /// <summary>
         /// Gets the channels in the guild.
         /// </summary>
-        [JsonInclude]
+        [JsonProperty]
         internal List<Channel> Channels { get; set; } = [];
 
         /// <summary>
         /// Gets all active threads in the guild that the current user has permission to view.
         /// </summary>
-        [JsonPropertyName("threads")]
         public Channel[] Threads { get; init; } = [];
 
         /// <summary>
         /// Gets the presence updates of the members in the guild.
         /// Will only include non-offline members if the size is greater than the large threshold.
         /// </summary>
-        [JsonPropertyName("presences")]
         public List<Presence> Presences { get; init; } = [];
 
         /// <summary>
         /// Gets the stage instances in the guild.
         /// </summary>
-        [JsonPropertyName("stage_instances")]
         public StageInstance[] StageInstances { get; init; } = [];
 
         /// <summary>
         /// Gets the scheduled events in the guild.
         /// </summary>
-        [JsonPropertyName("guild_scheduled_events")]
         public GuildScheduledEvent[] GuildScheduledEvents { get; init; } = [];
 
         /// <summary>
         /// Gets the soundboard sounds in the guild.
         /// </summary>
-        [JsonPropertyName("soundboard_sounds")]
         public SoundboardSound[] SoundboardSounds { get; internal set; } = [];
 
         #endregion
@@ -184,11 +174,20 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
         #endregion
 
-        internal void SortVoiceStatesAccordingToChannel()
+        #region OnDeserialized
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext context)
+        {
+            SortVoiceStatesAccordingToChannel();
+            SetChannelsGuildId();
+        }
+
+        private void SortVoiceStatesAccordingToChannel()
         {
             if (VoiceStates is null || VoiceStates.Length == 0)
                 return;
-
+            
             Dictionary<ulong, Channel> channels = Channels.ToDictionary(c => c.Id, c => c);
             foreach (VoiceState voiceState in VoiceStates)
             {
@@ -200,7 +199,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             VoiceStates = null;
         }
 
-        internal void SetChannelsGuildId()
+        private void SetChannelsGuildId()
         {
             foreach (Channel channel in Channels)
             {
@@ -208,11 +207,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             }
         }
 
-        internal bool CheckIfChannelIsVc(ulong channelId)
-        {
-            Channel? channel = GetChannel(channelId);
-            return channel is not null && channel.Type == ChannelType.Voice;
-        }
+        #endregion
 
         #region GetMethods
 
@@ -220,7 +215,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         {
             if (SoundboardSounds is null || SoundboardSounds.Length > 0)
             {
-                SoundboardSounds = await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().GetSoundboardSoundsAsync(Id);
+                SoundboardSounds = await DiscordClient.GetDiscordClient().GetSoundboardSoundsAsync(Id);
             }
 
             return SoundboardSounds;
@@ -252,7 +247,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             if (channel is null)
             {
                 string endpoint = RestApiEndpoints.GetChannelEndpoint(channelId, ChannelEndpoint.Get);
-                channel = await DiscordClient.RestApiLimiter.GetAsync<Channel>(endpoint, CallerInfos.Create());
+                channel = await DiscordClient.GetDiscordClient().RestApiLimiter.GetAsync<Channel>(endpoint, CallerInfos.Create());
             }
 
             return channel;
@@ -275,7 +270,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }
 
-            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+            await DiscordClient.GetDiscordClient()
                 .ConnectToVcAsync(Id, channelId, selfDeaf, selfMute);
         }
 
@@ -291,7 +286,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }
 
-            await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+            await DiscordClient.GetDiscordClient()
                 .ConnectToVcAsync(Id, channel.Id, selfDeaf, selfMute);
         }
 
@@ -300,7 +295,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// </summary>
         /// <returns></returns>
         public async Task DisconnectFromVcAsync()
-           => await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
+           => await DiscordClient.GetDiscordClient()
                 .DisconnectFromVcAsync(Id);
 
         /// <summary>

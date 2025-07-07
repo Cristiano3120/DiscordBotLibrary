@@ -2,13 +2,13 @@
 {
     public record EmbedField
     {
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = string.Empty;
 
-        [JsonPropertyName("value")]
+        [JsonProperty("value")]
         public string Value { get; init; } = string.Empty;
 
-        [JsonPropertyName("inline")]
+        [JsonProperty("inline")]
         public bool? Inline { get; init; }
     }
 }

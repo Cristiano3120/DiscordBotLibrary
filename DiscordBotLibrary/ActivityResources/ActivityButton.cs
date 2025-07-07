@@ -5,10 +5,10 @@
     /// </summary>
     public readonly struct ActivityButton
     {
-        [JsonPropertyName("label")]
+        [JsonProperty("label")]
         public string? Label { get; init; }
 
-        [JsonPropertyName("url")]
+        [JsonProperty("url")]
         public string? Url { get; init; }
     }
 }

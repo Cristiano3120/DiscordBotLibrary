@@ -2,24 +2,36 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using DiscordBotLibrary.MessageResources;
 
 namespace DiscordBotLibrary.RestApiLimiterResources
 {
-    internal sealed partial class RestApiLimiter(HttpClient httpClient)
+    internal sealed partial class RestApiLimiter
     {
         private readonly ConcurrentDictionary<string, string> _routeToBucketId = new();
         private readonly ConcurrentDictionary<string, HttpRateLimitInfo> _rateLimitInfo = new();
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _routeLocks = new();
 
-        private readonly HttpClient _httpClient = httpClient;
-        private TimeSpan _globalTimeout = TimeSpan.Zero;
+        private readonly DiscordClient _discordClient;
+        private readonly HttpClient _httpClient;
+        
         private bool IsGlobalTimeout => _globalTimeout != TimeSpan.Zero;
+        private TimeSpan _globalTimeout = TimeSpan.Zero;
+
+        public RestApiLimiter(DiscordClient discordClient)
+        {
+            _discordClient = discordClient;
+
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri($"https://discord.com/api/v{_discordClient.ClientConfig.Version}/"),
+            };
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", _discordClient.ClientConfig.Token);
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CacxCord (https://github.com/Cristiano3120/DiscordBotLibrary , v1.0)");
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
 
         #region External methods
 
@@ -45,7 +57,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                 }
 
                 string json = await response.Content.ReadAsStringAsync();
-                T? result = JsonSerializer.Deserialize<T>(json, DiscordClient.ReceiveJsonSerializerOptions);
+                T? result = JsonConvert.DeserializeObject<T>(json, DiscordClient.ReceiveJsonSerializerOptions);
 
                 return result ?? throw new InvalidOperationException(
                     $"Deserialization returned null. Response: {json} (expected: {typeof(T)})"
@@ -179,7 +191,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             (HttpRequestType requestType, TInput content, string endpoint, CallerInfos callerInfos)
         {
             HttpResponseMessage response;
-            StringContent stringContent = new(JsonSerializer.Serialize(content, DiscordClient.SendJsonSerializerOptions), Encoding.UTF8, "application/json");
+            StringContent stringContent = new(JsonConvert.SerializeObject(content, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json");
 
             while (true)
             {
@@ -190,8 +202,10 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                     _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Patch or HttpRequestType.Post"),
                 };
 
-                using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                string prettyJson = JsonSerializer.Serialize(doc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+                string jsonString = await response.Content.ReadAsStringAsync();
+                JToken jsonToken = JToken.Parse(jsonString);
+                string prettyJson = jsonToken.ToString(Formatting.Indented);
+
                 HttpRateLimitInfo httpRateLimitInfo = GetRateLimitInfo(response.Headers);
 
                 DiscordClient.Logger.LogDebug($"[Request]: {FormatEndpoint(endpoint)} [{httpRateLimitInfo.BucketId}] " +
@@ -207,12 +221,12 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             }
 
             string returnedContent = await response.Content.ReadAsStringAsync();
-            TOutput? newObj = JsonSerializer.Deserialize<TOutput>(returnedContent, DiscordClient.ReceiveJsonSerializerOptions);
+            TOutput? newObj = JsonConvert.DeserializeObject<TOutput>(returnedContent, DiscordClient.SendJsonSerializerSettings);
 
             if (newObj is null)
             {
-                using JsonDocument jsonDoc = JsonDocument.Parse(returnedContent);
-                string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+                JToken jToken = JToken.Parse(returnedContent);
+                string prettyJson = jToken.ToString(Formatting.Indented);
                 throw new ArgumentException($"You expected {typeof(TOutput)} but the Rest API returned something else. Returned content:\n{prettyJson}");
             }
 
@@ -313,17 +327,27 @@ namespace DiscordBotLibrary.RestApiLimiterResources
 
         private static bool CheckIfGlobal(string content, out TimeSpan timeToWait)
         {
-            using JsonDocument doc = JsonDocument.Parse(content);
-            JsonElement root = doc.RootElement;
+            JToken jToken = JToken.Parse(content);
             timeToWait = TimeSpan.Zero;
 
-            if (root.TryGetProperty("global", out JsonElement global) && global.GetBoolean())
+            if (jToken.TryGetProperty("global", out JToken? global) && global.Type == JTokenType.Boolean && global.Value<bool>())
             {
-                if (root.TryGetProperty("retry_after", out JsonElement retry))
+                if (jToken.TryGetProperty("retry_after", out JToken? retry))
                 {
-                    double seconds = retry.ValueKind == JsonValueKind.Number
-                        ? retry.GetDouble()
-                        : double.Parse(retry.GetString()!, CultureInfo.InvariantCulture);
+                    double seconds;
+
+                    if (retry.Type == JTokenType.Integer || retry.Type == JTokenType.Float)
+                    {
+                        seconds = retry.Value<double>();
+                    }
+                    else if (retry.Type == JTokenType.String)
+                    {
+                        seconds = double.Parse(retry.Value<string>()!, CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        throw new Exception("Unexpected token type for 'retry_after'");
+                    }
 
                     timeToWait = TimeSpan.FromSeconds(seconds);
                 }
@@ -371,6 +395,9 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         }
 
         #endregion
+
+        internal async Task<string> GetStringAsync(string endpoint)
+            => await _httpClient.GetStringAsync(endpoint);
 
         [GeneratedRegex(@"\d{16,19}", RegexOptions.Compiled)]
         private static partial Regex GenerateIdRegex();

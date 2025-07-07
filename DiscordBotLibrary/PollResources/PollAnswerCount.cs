@@ -5,19 +5,19 @@
         /// <summary>
         /// The answer_id
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public int Id { get; init; }
 
         /// <summary>
         /// The number of votes for this answer
         /// </summary>
-        [JsonPropertyName("count")]
+        [JsonProperty("count")]
         public int Count { get; init; }
 
         /// <summary>
         /// Whether the current user voted for this answer
         /// </summary>
-        [JsonPropertyName("me_voted")]
+        [JsonProperty("me_voted")]
         public bool MeVoted { get; init; }
     }
 }

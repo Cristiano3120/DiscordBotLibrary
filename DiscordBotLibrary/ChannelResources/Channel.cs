@@ -28,7 +28,7 @@ namespace DiscordBotLibrary.ChannelResources
         /// TYPE: Snowflake  
         /// The ID of the guild (may be missing for some channel objects received over gateway guild dispatches).
         /// </summary>
-        [JsonInclude]
+        [JsonProperty]
         public ulong? GuildId { get; internal set; }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace DiscordBotLibrary.ChannelResources
         /// <para>0, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 21600</para>
         /// <para><c>Null</c> on some channel types</para>
         /// </summary>
-        [JsonPropertyName("rate_limit_per_user")]
+        [JsonProperty("rate_limit_per_user")]
         public Slowmode? Slowmode { get; init; }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace DiscordBotLibrary.ChannelResources
         [JsonIgnore]
         public RtcRegion RtcRegion => InternalRtcRegion ?? RtcRegion.Automatic;
 
-        [JsonPropertyName("rtc_region")]
+        [JsonProperty("rtc_region")]
         public RtcRegion? InternalRtcRegion { get; init; }
 
         /// <summary>
@@ -163,8 +163,7 @@ namespace DiscordBotLibrary.ChannelResources
         /// </summary>
         public AutoArchiveDuration? DefaultAutoArchiveDuration { get; init; }
 
-        [JsonPropertyName("permissions")]
-        [JsonInclude]
+        [JsonProperty("permissions")]
         internal ulong? InternalPermissions { get; init; }
 
         /// <summary>
@@ -408,7 +407,7 @@ namespace DiscordBotLibrary.ChannelResources
         private async Task<Channel?> ModifyChannelAsyncHelper<T>(T channelEdit)
         {
             string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Modify);
-            return await DiscordClient.RestApiLimiter.PatchAsync<T, Channel>(channelEdit, endpoint, CallerInfos.Create());
+            return await DiscordClient.GetDiscordClient().RestApiLimiter.PatchAsync<T, Channel>(channelEdit, endpoint, CallerInfos.Create());
         }
 
         #endregion
@@ -692,7 +691,7 @@ namespace DiscordBotLibrary.ChannelResources
 
             if (Type is ChannelType.Voice)
             {
-                Guild guild = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().GetGuild(GuildId!.Value)!;
+                Guild guild = DiscordClient.GetDiscordClient().GetGuild(GuildId!.Value)!;
 
                 bitrate = guild.PremiumTier switch
                 {
@@ -768,9 +767,9 @@ namespace DiscordBotLibrary.ChannelResources
         }
 
         private bool CheckPermissions()
-            => !Permissions.HasValue || Permissions.Value.HasFlag(DiscordPermissions.ManageChannels);
+            => true;
+            //=> !Permissions.HasValue || Permissions.Value.HasFlag(DiscordPermissions.ManageChannels);
         
-
         #endregion
 
         #endregion
@@ -790,7 +789,7 @@ namespace DiscordBotLibrary.ChannelResources
         public async Task<Message[]?> GetPinnedMessagesAsync()
         {
             string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Pins);
-            return await DiscordClient.RestApiLimiter.GetAsync<Message[]>(endpoint, CallerInfos.Create());
+            return await DiscordClient.GetDiscordClient().RestApiLimiter.GetAsync<Message[]>(endpoint, CallerInfos.Create());
         }
 
         /// <summary>
@@ -799,7 +798,7 @@ namespace DiscordBotLibrary.ChannelResources
         public async Task<bool> DeleteAsync()
         {
             string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Delete);
-            return await DiscordClient.RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
+            return await DiscordClient.GetDiscordClient().RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
         }
     }
 }

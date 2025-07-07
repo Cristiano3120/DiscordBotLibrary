@@ -1,29 +1,37 @@
-﻿namespace DiscordBotLibrary.Json
-{
-    internal class OptionalConverter : JsonConverterFactory
-    {
-        public override bool CanConvert(Type typeToConvert)
-            => typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Optional<>);
+﻿using Newtonsoft.Json.Linq;
+using System.Reflection;
 
-        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+namespace DiscordBotLibrary.Json
+{
+    internal class OptionalConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+            => objectType.IsGenericType && objectType.GetGenericTypeDefinition() == typeof(Optional<>);
+
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            Type innerType = typeToConvert.GetGenericArguments()[0];
-            Type converterType = typeof(OptionalInnerConverter<>).MakeGenericType(innerType);
-            return (JsonConverter)Activator.CreateInstance(converterType)!;
+            Type valueType = objectType.GetGenericArguments()[0];
+            JToken token = JToken.Load(reader);
+            object? value = token.ToObject(valueType, serializer);
+
+            Type optionalType = typeof(Optional<>).MakeGenericType(valueType);
+            return Activator.CreateInstance(optionalType, value);
         }
 
-        private class OptionalInnerConverter<T> : JsonConverter<Optional<T>>
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            public override Optional<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            {
-                T value = JsonSerializer.Deserialize<T>(ref reader, options)!;
-                return new Optional<T>(value);
-            }
+            if (value == null)
+                return;
 
-            public override void Write(Utf8JsonWriter writer, Optional<T> value, JsonSerializerOptions options)
+            Type valueType = value.GetType();
+            PropertyInfo hasValueProp = valueType.GetProperty("HasValue")!;
+            bool hasValue = (bool)hasValueProp.GetValue(value)!;
+
+            if (hasValue)
             {
-                if (value.HasValue)
-                    JsonSerializer.Serialize(writer, value.Value, options);
+                PropertyInfo valueProp = valueType.GetProperty("Value")!;
+                object? innerValue = valueProp.GetValue(value);
+                serializer.Serialize(writer, innerValue);
             }
         }
     }

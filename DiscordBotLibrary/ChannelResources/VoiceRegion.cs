@@ -5,31 +5,31 @@
         /// <summary>
         /// unique ID for the region
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string Id { get; init; }
 
         /// <summary>
         /// name of the region
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; }
 
         /// <summary>
         /// true for a single server that is closest to the current user's client
         /// </summary>
-        [JsonPropertyName("optimal")]
+        [JsonProperty("optimal")]
         public bool Optimal { get; init; }
 
         /// <summary>
         /// whether this is a deprecated voice region (avoid switching to these)
         /// </summary>
-        [JsonPropertyName("deprecated")]
+        [JsonProperty("deprecated")]
         public bool Deprecated { get; init; }
 
         /// <summary>
         /// whether this is a custom voice region (used for events/etc)
         /// </summary>
-        [JsonPropertyName("custom")]
+        [JsonProperty("custom")]
         public bool Custom { get; init; }
     }
 }

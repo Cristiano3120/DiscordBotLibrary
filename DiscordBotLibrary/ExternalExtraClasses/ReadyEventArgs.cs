@@ -8,19 +8,19 @@
         /// <summary>
         /// Information about the connected user including email.
         /// </summary>
-        [JsonPropertyName("user")]
+        [JsonProperty("user")]
         public User? DiscordUser { get; init; }
 
         /// <summary>
         /// Guilds the user is in (sent as UnavailableGuild objects).
         /// </summary>
-        [JsonPropertyName("guilds")]
+        [JsonProperty("guilds")]
         public UnavailableGuild[] Guilds { get; set; } = [];
 
         /// <summary>
         /// Contains infos about the application
         /// </summary>
-        [JsonPropertyName("application")]
+        [JsonProperty("application")]
         public Application? Application { get; init; }
     }
 }

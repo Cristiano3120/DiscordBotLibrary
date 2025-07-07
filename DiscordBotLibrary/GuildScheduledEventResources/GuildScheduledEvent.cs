@@ -9,108 +9,108 @@
         /// Gets the ID of the scheduled event.
         /// TYPE: Snoflake
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string Id { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the ID of the guild to which the scheduled event belongs.
         /// TYPE: Snoflake
         /// </summary>
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         public string GuildId { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the ID of the channel where the scheduled event will be hosted, or null if the entity type is EXTERNAL.
         /// TYPE: Snoflake
         /// </summary>
-        [JsonPropertyName("channel_id")]
+        [JsonProperty("channel_id")]
         public string? ChannelId { get; init; }
 
         /// <summary>
         /// Gets the ID of the user who created the scheduled event. May be null for events created before October 25th, 2021.
         /// TYPE: Snoflake
         /// </summary>
-        [JsonPropertyName("creator_id")]
+        [JsonProperty("creator_id")]
         public string? CreatorId { get; init; }
 
         /// <summary>
         /// Gets the name of the scheduled event (1-100 characters).
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets the description of the scheduled event (1-1000 characters), or null if none is set.
         /// </summary>
-        [JsonPropertyName("description")]
+        [JsonProperty("description")]
         public string? Description { get; init; }
 
         /// <summary>
         /// Gets the time the scheduled event will start.
         /// </summary>
-        [JsonPropertyName("scheduled_start_time")]
+        [JsonProperty("scheduled_start_time")]
         public DateTimeOffset ScheduledStartTime { get; init; }
 
         /// <summary>
         /// Gets the time the scheduled event will end. Required if the entity type is EXTERNAL.
         /// </summary>
-        [JsonPropertyName("scheduled_end_time")]
+        [JsonProperty("scheduled_end_time")]
         public DateTimeOffset? ScheduledEndTime { get; init; }
 
         /// <summary>
         /// Gets the privacy level of the scheduled event.
         /// </summary>
-        [JsonPropertyName("privacy_level")]
+        [JsonProperty("privacy_level")]
         public GuildScheduledEventPrivacyLevel PrivacyLevel { get; init; }
 
         /// <summary>
         /// Gets the status of the scheduled event.
         /// </summary>
-        [JsonPropertyName("status")]
+        [JsonProperty("status")]
         public GuildScheduledEventStatus Status { get; init; }
 
         /// <summary>
         /// Gets the type of the scheduled event.
         /// </summary>
-        [JsonPropertyName("entity_type")]
+        [JsonProperty("entity_type")]
         public GuildScheduledEventEntityType EntityType { get; init; }
 
         /// <summary>
         /// Gets the ID of the entity associated with the scheduled event, or null if none.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("entity_id")]
+        [JsonProperty("entity_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? EntityId { get; init; }
 
         /// <summary>
         /// Gets additional metadata for the scheduled event, or null if none.
         /// </summary>
-        [JsonPropertyName("entity_metadata")]
+        [JsonProperty("entity_metadata")]
         public GuildScheduledEventEntityMetadata? EntityMetadata { get; init; }
 
         /// <summary>
         /// Gets the user who created the scheduled event. Will be null for events created before October 25th, 2021.
         /// </summary>
-        [JsonPropertyName("creator")]
+        [JsonProperty("creator")]
         public User? Creator { get; init; }
 
         /// <summary>
         /// Gets the number of users subscribed to the scheduled event.
         /// </summary>
-        [JsonPropertyName("user_count")]
+        [JsonProperty("user_count")]
         public int? UserCount { get; init; }
 
         /// <summary>
         /// Gets the cover image hash of the scheduled event, or null if not set.
         /// </summary>
-        [JsonPropertyName("image")]
+        [JsonProperty("image")]
         public string? Image { get; init; }
 
         /// <summary>
         /// Gets the recurrence rule for the event, if it is recurring.
         /// </summary>
-        [JsonPropertyName("recurrence_rule")]
+        [JsonProperty("recurrence_rule")]
         public GuildScheduledEventRecurrenceRule? RecurrenceRule { get; init; }
     }
 }

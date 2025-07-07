@@ -2,25 +2,25 @@
 {
     public record Reaction
     {
-        [JsonPropertyName("count")]
+        [JsonProperty("count")]
         public int Count { get; init; }
 
-        [JsonPropertyName("count_details")]
+        [JsonProperty("count_details")]
         public ReactionCountDetails CountDetails { get; init; } = default!;
 
         /// <summary>
         /// Whether the current user reacted using this emoji
         /// </summary>
-        [JsonPropertyName("me")]
+        [JsonProperty("me")]
         public bool Me { get; init; }
 
-        [JsonPropertyName("me_burst")]
+        [JsonProperty("me_burst")]
         public bool MeBurst { get; init; }
 
         /// <summary>
         /// Partial emoji object for the reaction
         /// </summary>
-        [JsonPropertyName("emoji")]
+        [JsonProperty("emoji")]
         public Emoji Emoji { get; init; } = default!;
 
         /// <summary>

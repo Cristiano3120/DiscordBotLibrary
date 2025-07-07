@@ -5,7 +5,7 @@
         /// <summary>
         /// The text of the field
         /// </summary>
-        [JsonPropertyName("text")]
+        [JsonProperty("text")]
         public string? Text { get; init; }
 
         /// <summary>
@@ -13,7 +13,7 @@
         /// When creating a poll answer with an emoji, 
         /// one only needs to send either the id (custom emoji) or name (default emoji) as the only field.
         /// </summary>
-        [JsonPropertyName("emoji")]
+        [JsonProperty("emoji")]
         public Emoji? Emoji { get; init; }
     }
 }

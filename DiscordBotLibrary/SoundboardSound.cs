@@ -10,14 +10,14 @@ namespace DiscordBotLibrary
         /// <summary>
         /// The name of this sound
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// The id of this sound
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("sound_id")]
+        [JsonProperty("sound_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong SoundId { get; init; }
 
@@ -25,41 +25,41 @@ namespace DiscordBotLibrary
         /// The volume of this sound.
         /// Range from 0.0 to 1.0.
         /// </summary>
-        [JsonPropertyName("volume")]
+        [JsonProperty("volume")]
         public double Volume { get; init; }
 
         /// <summary>
         /// The id of this sound's custom emoji
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("emoji_id")]
+        [JsonProperty("emoji_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The unicode character of this sound's standard emoji
         /// </summary>
-        [JsonPropertyName("emoji_name")]
+        [JsonProperty("emoji_name")]
         public string? EmojiName { get; init; }
 
         /// <summary>
         /// The id of the guild this sound is in
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? GuildId { get; init; }
 
         /// <summary>
         /// Whether this sound can be used, may be false due to loss of Server Boosts
         /// </summary>
-        [JsonPropertyName("available")]
+        [JsonProperty("available")]
         public bool Available { get; init; }
 
         /// <summary>
         /// The id of the user who created this sound
         /// </summary>
-        [JsonPropertyName("user")]
+        [JsonProperty("user")]
         public User? User { get; init; }
     }
 }

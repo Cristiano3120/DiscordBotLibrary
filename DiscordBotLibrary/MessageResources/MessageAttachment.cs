@@ -5,86 +5,86 @@
         /// <summary>
         /// attachment id
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
         /// <summary>
         /// name of file attached
         /// </summary>
-        [JsonPropertyName("filename")]
+        [JsonProperty("filename")]
         public string Filename { get; init; } = default!;
 
         /// <summary>
         /// the title of the file
         /// </summary>
-        [JsonPropertyName("title")]
+        [JsonProperty("title")]
         public string? Title { get; init; }
 
         /// <summary>
         /// description for the file (max 1024 characters)
         /// </summary>
-        [JsonPropertyName("description")]
+        [JsonProperty("description")]
         public string? Description { get; init; }
 
         /// <summary>
         /// the attachment's media type
         /// </summary>
-        [JsonPropertyName("content_type")]
+        [JsonProperty("content_type")]
         public string? ContentType { get; init; }
 
         /// <summary>
         /// size of file in bytes
         /// </summary>
-        [JsonPropertyName("size")]
+        [JsonProperty("size")]
         public int Size { get; init; }
 
         /// <summary>
         /// source url of file
         /// </summary>
-        [JsonPropertyName("url")]
+        [JsonProperty("url")]
         public string Url { get; init; } = default!;
 
         /// <summary>
         /// a proxied url of file
         /// </summary>
-        [JsonPropertyName("proxy_url")]
+        [JsonProperty("proxy_url")]
         public string ProxyUrl { get; init; } = default!;
 
         /// <summary>
         /// height of file (if image)
         /// </summary>
-        [JsonPropertyName("height")]
+        [JsonProperty("height")]
         public int? Height { get; init; }
 
         /// <summary>
         /// width of file (if image)
         /// </summary>
-        [JsonPropertyName("width")]
+        [JsonProperty("width")]
         public int? Width { get; init; }
 
         /// <summary>
         /// whether this attachment is ephemeral
         /// </summary>
-        [JsonPropertyName("ephemeral")]
+        [JsonProperty("ephemeral")]
         public bool? Ephemeral { get; init; }
 
         /// <summary>
         /// the duration of the audio file (currently for voice messages)
         /// </summary>
-        [JsonPropertyName("duration_secs")]
+        [JsonProperty("duration_secs")]
         public float? DurationSecs { get; init; }
 
         /// <summary>
         /// base64 encoded bytearray representing a sampled waveform (currently for voice messages)
         /// </summary>
-        [JsonPropertyName("waveform")]
+        [JsonProperty("waveform")]
         public string? Waveform { get; init; }
 
         /// <summary>
         /// attachment flags combined as a bitfield
         /// </summary>
-        [JsonPropertyName("flags")]
+        [JsonProperty("flags")]
         public MessageAttachmentFlags? Flags { get; init; }
     }
 }

@@ -1,58 +1,69 @@
-﻿namespace DiscordBotLibrary.Json
+﻿using Newtonsoft.Json.Linq;
+
+namespace DiscordBotLibrary.Json
 {
     public class ActivityButtonConverter : JsonConverter<ActivityButton[]>
     {
-        public override ActivityButton[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override ActivityButton[]? ReadJson(JsonReader reader, Type objectType, ActivityButton[]? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            List<ActivityButton> result = [];
+            if (reader.TokenType != JsonToken.StartArray)
+                throw new JsonSerializationException("Expected start of array for ActivityButton[].");
 
-            while (reader.Read())
+            var result = new List<ActivityButton>();
+
+            JArray array = JArray.Load(reader);
+
+            foreach (JToken item in array)
             {
-                if (reader.TokenType == JsonTokenType.EndArray)
-                    break;
-
-                if (reader.TokenType == JsonTokenType.String)
+                switch (item.Type)
                 {
-                    string? label = reader.GetString();
-                    result.Add(new ActivityButton { Label = label, Url = null });
-                }
-                else if (reader.TokenType == JsonTokenType.StartObject)
-                {
-                    using JsonDocument doc = JsonDocument.ParseValue(ref reader);
-                    {
-                        JsonElement root = doc.RootElement;
+                    case JTokenType.String:
+                        result.Add(new ActivityButton
+                        {
+                            Label = item.ToString(),
+                            Url = null
+                        });
+                        break;
 
-                        string? label = root.TryGetProperty("label", out JsonElement l)
-                            ? l.GetString()
-                            : null;
+                    case JTokenType.Object:
+                        var label = item["label"]?.ToString();
+                        var url = item["url"]?.ToString();
 
-                        string? url = root.TryGetProperty("url", out JsonElement u)
-                            ? u.GetString()
-                            : null;
+                        if (label == null)
+                            throw new JsonSerializationException("Missing 'label' in ActivityButton object.");
 
-                        result.Add(new ActivityButton { Label = label, Url = url });
-                    }  
+                        result.Add(new ActivityButton
+                        {
+                            Label = label,
+                            Url = url
+                        });
+                        break;
+
+                    default:
+                        throw new JsonSerializationException($"Unexpected token type {item.Type} in ActivityButton array.");
                 }
             }
 
-            return [.. result];
+            return result.ToArray();
         }
 
-        public override void Write(Utf8JsonWriter writer, ActivityButton[] value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, ActivityButton[]? value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
 
-            foreach (ActivityButton button in value)
+            foreach (ActivityButton button in value ?? [])
             {
-                if (button.Url is null)
+                if (button.Url == null)
                 {
-                    writer.WriteStringValue(button.Label);
+                    writer.WriteValue(button.Label);
                 }
                 else
                 {
                     writer.WriteStartObject();
-                    writer.WriteString("label", button.Label);
-                    writer.WriteString("url", button.Url);
+                    writer.WritePropertyName("label");
+                    writer.WriteValue(button.Label);
+                    writer.WritePropertyName("url");
+                    writer.WriteValue(button.Url);
                     writer.WriteEndObject();
                 }
             }

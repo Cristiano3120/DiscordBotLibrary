@@ -10,14 +10,13 @@
         /// <summary>
         /// the position of the channel in the left-hand listing (channels with the same position are sorted by id)	
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Optional<uint> Position { get; set; }
 
         /// <summary>
         /// channel or category-specific permissions
         /// </summary>
-        [JsonPropertyName("permission_overwrites")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty("permission_overwrites", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Optional<Overwrite> PermissionOverwrites { get; set; }
 
         internal BaseChannelEdit() { }

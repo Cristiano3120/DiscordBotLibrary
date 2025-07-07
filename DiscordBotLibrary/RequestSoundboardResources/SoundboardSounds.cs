@@ -6,13 +6,13 @@
         /// TYPE: Snowflake  
         /// ID of the guild
         /// </summary>
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         public ulong GuildId { get; set; }
 
         /// <summary>
         /// The guild's soundboard sounds
         /// </summary>
-        [JsonPropertyName("soundboard_sounds")]
+        [JsonProperty("soundboard_sounds")]
         public SoundboardSound[] SoundboardSoundsArr { get; set; } = [];
     }
 }

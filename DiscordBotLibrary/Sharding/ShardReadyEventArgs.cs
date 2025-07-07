@@ -8,44 +8,44 @@
         /// <summary>
         /// API version.
         /// </summary>
-        [JsonPropertyName("v")]
+        [JsonProperty("v")]
         public int Version { get; init; }
 
         /// <summary>
         /// Information about the connected user including email.
         /// </summary>
-        [JsonPropertyName("user")]
+        [JsonProperty("user")]
         public User? DiscordUser { get; init; }
 
         /// <summary>
         /// Guilds the user is in (sent as UnavailableGuild objects).
         /// </summary>
-        [JsonPropertyName("guilds")]
+        [JsonProperty("guilds")]
         public UnavailableGuild[] Guilds { get; init; } = [];
 
         /// <summary>
         /// Used for resuming connections.
         /// </summary>
-        [JsonPropertyName("session_id")]
+        [JsonProperty("session_id")]
         public string SessionId { get; init; } = string.Empty;
 
         /// <summary>
         /// Gateway URL for resuming connections.
         /// </summary>
-        [JsonPropertyName("resume_gateway_url")]
+        [JsonProperty("resume_gateway_url")]
         public string ResumeGatewayUri { get; init; } = string.Empty;
 
         /// <summary>
         /// Shard information associated with this session, if applicable.
         /// Format: [shard_id, num_shards]
         /// </summary>
-        [JsonPropertyName("shard")]
+        [JsonProperty("shard")]
         public int[]? Shard { get; init; }
 
         /// <summary>
         /// Contains infos about the application
         /// </summary>
-        [JsonPropertyName("application")]
+        [JsonProperty("application")]
         public Application? Application { get; init; }
     }
 

@@ -2,14 +2,14 @@
 {
     internal sealed class VoiceServerUpdate
     {
-        [JsonPropertyName("token")]
+        [JsonProperty("token")]
         public string Token  { get; init; } = string.Empty;
 
         [JsonConverter(typeof(SnowflakeConverter))]
-        [JsonPropertyName("guild_id")]
+        [JsonProperty("guild_id")]
         public ulong GuildId { get; init; }
 
-        [JsonPropertyName("endpoint")]
+        [JsonProperty("endpoint")]
         public string Endpoint { get; init; } = string.Empty;
     }
 }

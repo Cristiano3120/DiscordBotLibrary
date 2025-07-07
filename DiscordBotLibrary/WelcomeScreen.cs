@@ -8,14 +8,14 @@
         /// <summary>
         /// The server description shown in the welcome screen
         /// </summary>
-        [JsonPropertyName("description")]
+        [JsonProperty("description")]
         public string? Description { get; init; }
 
 
         /// <summary>
         /// The channels shown in the welcome screen, up to 5
         /// </summary>
-        [JsonPropertyName("welcome_channels")]
+        [JsonProperty("welcome_channels")]
         public WelcomeScreenChannel[] WelcomeChannels { get; init; }
     }
 }

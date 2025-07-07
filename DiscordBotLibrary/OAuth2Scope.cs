@@ -5,6 +5,7 @@ namespace DiscordBotLibrary
     /// <summary>
     /// OAuth2 scopes supported by Discord.
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum OAuth2Scope : byte
     {
         [EnumMember(Value = "activities.read")]

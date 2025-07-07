@@ -2,28 +2,28 @@
 {
     public class MessageInteraction
     {
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public ulong Id { get; init; }
 
-        [JsonPropertyName("type")]
+        [JsonProperty("type")]
         public InteractionType Type { get; init; }
 
         /// <summary>
         /// Name of the application command, including subcommands and subcommand groups
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; } = default!;
 
         /// <summary>
         /// User who invoked the interaction
         /// </summary>
-        [JsonPropertyName("user")]
+        [JsonProperty("user")]
         public User User { get; init; } = default!;
 
         /// <summary>
         /// Partial Member who invoked the interaction in the guild
         /// </summary>
-        [JsonPropertyName("member")]
+        [JsonProperty("member")]
         public GuildMember? Member { get; init; }
     }
 }

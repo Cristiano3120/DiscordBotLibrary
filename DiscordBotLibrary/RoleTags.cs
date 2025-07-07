@@ -10,7 +10,7 @@
         /// The ID of the bot this role belongs to, if any.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("bot_id")]
+        [JsonProperty("bot_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? BotId { get; init; }
 
@@ -18,7 +18,7 @@
         /// The ID of the integration this role belongs to, if any.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("integration_id")]
+        [JsonProperty("integration_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? IntegrationId { get; init; }
 
@@ -26,27 +26,27 @@
         /// Whether this role is the guild's premium subscriber (Booster) role.
         /// This field is only present and set to null if true, and absent if false.
         /// </summary>
-        [JsonPropertyName("premium_subscriber")]
+        [JsonProperty("premium_subscriber")]
         public object? PremiumSubscriber { get; init; }
 
         /// <summary>
         /// The ID of this role's subscription SKU and listing, if any.
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("subscription_listing_id")]
+        [JsonProperty("subscription_listing_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? SubscriptionListingId { get; init; }
 
         /// <summary>
         /// Whether this role is available for purchase. This field is only present and set to null if true.
         /// </summary>
-        [JsonPropertyName("available_for_purchase")]
+        [JsonProperty("available_for_purchase")]
         public object? AvailableForPurchase { get; init; }
 
         /// <summary>
         /// Whether this role is associated with guild connections. Present and set to null if true.
         /// </summary>
-        [JsonPropertyName("guild_connections")]
+        [JsonProperty("guild_connections")]
         public object? GuildConnections { get; init; }
 
         /// <summary>

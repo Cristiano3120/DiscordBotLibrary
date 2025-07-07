@@ -8,19 +8,19 @@
         /// <summary>
         /// Name of the emoji
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string Name { get; init; }
 
         /// <summary>
         /// ID of the emoji (optional)
         /// </summary>
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string? Id { get; init; }
 
         /// <summary>
         /// Whether the emoji is animated (optional)
         /// </summary>
-        [JsonPropertyName("animated")]
+        [JsonProperty("animated")]
         public bool? Animated { get; init; }
     }
 

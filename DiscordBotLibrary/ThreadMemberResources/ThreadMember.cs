@@ -5,19 +5,19 @@ namespace DiscordBotLibrary.ThreadMemberResources
 {
     public readonly struct ThreadMember
     {
-        [JsonPropertyName("id")]
+        [JsonProperty("id")]
         public string? ThreadId { get; init; }
 
-        [JsonPropertyName("user_id")]
+        [JsonProperty("user_id")]
         public string? UserId { get; init; }
 
-        [JsonPropertyName("join_timestamp")]
+        [JsonProperty("join_timestamp")]
         public DateTime JoinTimestamp { get; init; }
 
-        [JsonPropertyName("flags")]
+        [JsonProperty("flags")]
         public ThreadMemberFlags Flags { get; init; }
 
-        [JsonPropertyName("member")]
+        [JsonProperty("member")]
         public GuildMember? Member { get; init; }
     }
 }

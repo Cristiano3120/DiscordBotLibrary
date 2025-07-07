@@ -9,14 +9,14 @@
         /// The id of a guild's custom emoji
         /// TYPE: Snowflake
         /// </summary>
-        [JsonPropertyName("emoji_id")]
+        [JsonProperty("emoji_id")]
         [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? EmojiId { get; init; }
 
         /// <summary>
         /// The unicode character of the emoji
         /// </summary>
-        [JsonPropertyName("emoji_name")]
+        [JsonProperty("emoji_name")]
         public string? EmojiName { get; init; }
     }
 }

@@ -2,53 +2,58 @@
 {
     internal class SnowflakeDictConverter<TKey, TValue> : JsonConverter<Dictionary<TKey, TValue>> where TKey : notnull
     {
-        public override Dictionary<TKey, TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override Dictionary<TKey, TValue>? ReadJson(JsonReader reader, Type objectType, Dictionary<TKey, TValue>? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
+            if (reader.TokenType != JsonToken.StartObject)
+                throw new JsonSerializationException("Expected StartObject");
+
             Dictionary<TKey, TValue> dict = new();
-            bool valueIsUlong = typeof(TValue) == typeof(ulong);
+            JObject obj = JObject.Load(reader);
+
             bool keyIsUlong = typeof(TKey) == typeof(ulong);
+            bool valueIsUlong = typeof(TValue) == typeof(ulong);
 
-            if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
-
-            while (reader.Read())
+            foreach (JProperty property in obj.Properties())
             {
-                if (reader.TokenType == JsonTokenType.EndObject)
-                    return dict;
-
-                string keyString = reader.GetString()!;
-                reader.Read();
-
-                object key = keyIsUlong 
-                    ? ulong.Parse(keyString) 
-                    : JsonSerializer.Deserialize<TKey>(JsonDocument.Parse($"\"{keyString}\"").RootElement.GetRawText(), options)!;
-                
-                object value = valueIsUlong 
-                    ? reader.GetUInt64() 
-                    : JsonSerializer.Deserialize<TValue>(ref reader, options)!;
-
-                dict.Add((TKey)key, (TValue)value);
+                TKey key = keyIsUlong
+                    ? (TKey)(object)ulong.Parse(property.Name)
+                    : serializer.Deserialize<TKey>(new JTokenReader(JValue.CreateString(property.Name)))!;
+                TValue value = valueIsUlong ? (TValue)(object)property.Value.Value<ulong>() : property.Value.ToObject<TValue>(serializer)!;
+                dict.Add(key, value);
             }
 
-            throw new JsonException("Invalid JSON for dictionary.");
+            return dict;
         }
 
-        public override void Write(Utf8JsonWriter writer, Dictionary<TKey, TValue> value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, Dictionary<TKey, TValue>? value, JsonSerializer serializer)
         {
-            bool keyIsUlong = typeof(TKey) == typeof(ulong);
-            bool valueIsUlong = typeof(TValue) == typeof(ulong);
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
 
             writer.WriteStartObject();
 
-            foreach (KeyValuePair<TKey, TValue> kv in value)
+            bool keyIsUlong = typeof(TKey) == typeof(ulong);
+            bool valueIsUlong = typeof(TValue) == typeof(ulong);
+
+            foreach (KeyValuePair<TKey, TValue> kvp in value)
             {
-                string keyStr = keyIsUlong ? kv.Key!.ToString()! : JsonSerializer.Serialize(kv.Key, options).Trim('"');
+                string keyStr = keyIsUlong
+                    ? kvp.Key!.ToString()!
+                    : JToken.FromObject(kvp.Key, serializer).ToString(Formatting.None).Trim('"');
+
                 writer.WritePropertyName(keyStr);
 
                 if (valueIsUlong)
-                    writer.WriteNumberValue(Convert.ToUInt64(kv.Value));
+                {
+                    writer.WriteValue(Convert.ToUInt64(kvp.Value));
+                }
                 else
-                    JsonSerializer.Serialize(writer, kv.Value, options);
+                {
+                    serializer.Serialize(writer, kvp.Value);
+                }
             }
 
             writer.WriteEndObject();

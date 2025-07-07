@@ -175,8 +175,8 @@ namespace DiscordBotLibrary.Logging
 
         internal void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
         {
-            using JsonDocument jsonDoc = JsonDocument.Parse(content);
-            string prettyJson = JsonSerializer.Serialize(jsonDoc.RootElement, DiscordClient.ReceiveJsonSerializerOptions);
+            JToken parsedJson = JToken.Parse(content);
+            string prettyJson = parsedJson.ToString(Formatting.Indented);
             DiscordClient.Logger.LogDebug($"[{payloadType}({requestType})]: {prettyJson}");
         }
 

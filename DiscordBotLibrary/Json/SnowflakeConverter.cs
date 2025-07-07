@@ -2,21 +2,18 @@
 {
     public class SnowflakeConverter : JsonConverter<ulong>
     {
-        public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override ulong ReadJson(JsonReader reader, Type objectType, ulong existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            string? snowflakeString = reader.GetString();
+            string? snowflakeString = reader.Value?.ToString();
 
-            if (ulong.TryParse(snowflakeString, out ulong result))
-            {
-                return result;
-            }
-
-            throw new JsonException("Invalid Snowflake format");
+            return ulong.TryParse(snowflakeString, out ulong result) 
+                ? result 
+                : throw new JsonSerializationException("Invalid Snowflake format");
         }
 
-        public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, ulong value, JsonSerializer serializer)
         {
-            writer.WriteStringValue(value.ToString());
+            writer.WriteValue(value.ToString());
         }
     }
 }

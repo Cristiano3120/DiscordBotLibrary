@@ -10,7 +10,7 @@
         /// <summary>
         /// icon: binary as base64 encoded 
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Optional<string> Icon { get; set; }
 
         internal GroupDmEdit(string name)
