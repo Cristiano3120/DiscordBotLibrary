@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     public sealed class ForumChannelEdit : BaseChannelEdit
     {
@@ -17,7 +19,7 @@
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         [JsonPropertyName("rate_limit_per_user")]
-        public Optional<int> Slowmode { get; set; }
+        public Optional<Slowmode> Slowmode { get; set; }
 
         /// <summary>
         /// Adds/removes(set to null) this channel to a category
@@ -32,7 +34,7 @@
         /// </summary>
         [JsonPropertyName("default_auto_archive_duration")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> AutoArchiveDuration { get; set; }
+        public Optional<AutoArchiveDuration> AutoArchiveDuration { get; set; }
 
         /// <summary>
         ///  Currently only REQUIRE_TAG (1 << 4) is supported for this type of channel

@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// Represents the type of a Discord channel.

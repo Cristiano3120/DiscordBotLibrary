@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     /// <summary>
     /// Contains all the properties that could be changed theoretically in a channel edit request.
@@ -34,7 +36,7 @@
         /// </summary>
         [JsonPropertyName("default_auto_archive_duration")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> AutoArchiveDuration { get; set; }
+        public Optional<AutoArchiveDuration> AutoArchiveDuration { get; set; }
 
         /// <summary>
         /// Slowmode: How many seconds users must wait before sending another message.
@@ -42,7 +44,7 @@
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         [JsonPropertyName("rate_limit_per_user")]
-        public Optional<int> Slowmode { get; set; }
+        public Optional<Slowmode> Slowmode { get; set; }
 
         /// <summary>
         ///  Currently only REQUIRE_TAG (1 << 4) is supported for this type of channel
@@ -71,7 +73,7 @@
         /// </summary>
         [JsonPropertyName("default_thread_rate_limit_per_user")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> ThreadRateLimit { get; set; }
+        public Optional<uint> ThreadRateLimit { get; set; }
 
         /// <summary>
         /// the default sort order type used to order posts in GUILD_FORUM and GUILD_MEDIA channels
@@ -94,14 +96,14 @@
         /// Gets or sets the bitrate value, in kilobits per second (kbps), for the associated channel(8K-384K) depending on the server level.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> Bitrate { get; set; }
+        public Optional<uint> Bitrate { get; set; }
 
         /// <summary>
         /// The user limit of the voice or stage channel
         /// <para>Max 99 for voice channels and 10,000 for stage channels (0 refers to no limit)</para>
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> UserLimit { get; set; }
+        public Optional<uint> UserLimit { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<RtcRegion?> RtcRegion
@@ -109,7 +111,7 @@
             get;
             set
             {
-                if (value.HasValue && value.Value == ChannelResources.RtcRegion.Automatic)
+                if (value.HasValue && value.Value == ChannelEnums.RtcRegion.Automatic)
                 {
                     field = null;
                 }

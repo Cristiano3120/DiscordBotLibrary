@@ -74,12 +74,12 @@ namespace Test
             const ulong crisId = 912014865898549378;
 
             DiscordGuild guild = client.GetGuild(familyDc)!;
-            Channel? chillI = await guild.GetChannelAsync(1377955560556855336);
-            Channel? crisChannel = guild.GetChannel(x => x.VoiceStates?.FirstOrDefault(x => x.UserId == crisId) is not null);
-        
-        
+            Channel? chillII = await guild.GetChannelAsync(1341856648842444892);
+            Channel? crisChannel = guild.GetChannelThatUserIsIn(crisId);
+            Channel? channel = guild.GetChannel(x => x.Id == 1391798016301596703);
+            await crisChannel.ModifyBitrateAsync(uint.MaxValue);
+
             Channel? chat = guild.GetChannel(x => x.Name == "chat");
-            await chat.ModifyNameAsync("Test.");
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

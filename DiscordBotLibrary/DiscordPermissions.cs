@@ -2,7 +2,7 @@
 {
 
     [Flags]
-    public enum DiscordPermission : ulong
+    public enum DiscordPermissions : ulong
     {
         None = 0,
         CreateInstantInvite = 1UL << 0,

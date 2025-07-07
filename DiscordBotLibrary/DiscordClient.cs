@@ -22,10 +22,12 @@ namespace DiscordBotLibrary
             WriteIndented = true,
             Converters =
             {
-                new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower),
+                new JsonStringEnumConverter(),
                 new EnumMemberConverter<OAuth2Scope>(),
                 new ActivityButtonConverter(),
                 new SnowflakeConverter(),
+                new SnowflakeArrayConverter(),
+                new OverwriteConverter(),
             }
         };
 
@@ -39,6 +41,7 @@ namespace DiscordBotLibrary
                 new ActivityButtonConverter(),
                 new SnowflakeConverter(),
                 new OptionalConverter(),
+                new OverwriteConverter(),
             }
         };
 
@@ -423,6 +426,9 @@ namespace DiscordBotLibrary
         #endregion
 
         #region GetMethods
+
+        internal static DiscordClient GetDiscordClient()
+            => ServiceProvider.GetRequiredService<DiscordClient>();
 
         /// <summary>
         /// If this method returns null one of the params is invalid

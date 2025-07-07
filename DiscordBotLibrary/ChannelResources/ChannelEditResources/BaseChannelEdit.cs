@@ -11,7 +11,7 @@
         /// the position of the channel in the left-hand listing (channels with the same position are sorted by id)	
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> Position { get; set; }
+        public Optional<uint> Position { get; set; }
 
         /// <summary>
         /// channel or category-specific permissions

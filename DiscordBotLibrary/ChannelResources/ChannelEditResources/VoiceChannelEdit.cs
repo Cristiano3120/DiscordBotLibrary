@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     public sealed class VoiceChannelEdit : BaseChannelEdit
     {
@@ -14,13 +16,13 @@
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         [JsonPropertyName("rate_limit_per_user")]
-        public Optional<int> Slowmode { get; set; }
+        public Optional<Slowmode> Slowmode { get; set; }
 
         /// <summary>
         /// Gets or sets the bitrate value, in kilobits per second (kbps), for the associated channel(8K-384K) depending on the server level.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> Bitrate { get; set; }
+        public Optional<uint> Bitrate { get; set; }
 
         /// <summary>
         /// The user limit of the voice or stage channel
@@ -39,7 +41,7 @@
             get; 
             set 
             { 
-                if (value.HasValue && value.Value == ChannelResources.RtcRegion.Automatic)
+                if (value.HasValue && value.Value == ChannelEnums.RtcRegion.Automatic)
                 {
                     field = null;
                 }

@@ -1,9 +1,8 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// The possible server locations a <see cref="Channel"/> of type <see cref="ChannelType.Voice"/> can have
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum RtcRegion : byte
     {
         Automatic,

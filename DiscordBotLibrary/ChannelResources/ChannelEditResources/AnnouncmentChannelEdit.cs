@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     public sealed class AnnouncmentChannelEdit : BaseChannelEdit
     {
@@ -30,7 +32,7 @@
         /// </summary>
         [JsonPropertyName("default_auto_archive_duration")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public Optional<int> AutoArchiveDuration { get; set; }
+        public Optional<AutoArchiveDuration> AutoArchiveDuration { get; set; }
 
         internal AnnouncmentChannelEdit(string name)
         {

@@ -16,7 +16,8 @@
         public static string GetGuildEndpoint(ulong guildId, ChannelEndpoint channelEndpoint)
             => channelEndpoint switch
             {
-                ChannelEndpoint.Delete => $"users/@me/guilds/{guildId}"
+                ChannelEndpoint.Delete => $"users/@me/guilds/{guildId}",
+                _ => throw new NotImplementedException("Unsupported ChannelEndpoint")
             };
     }
 }

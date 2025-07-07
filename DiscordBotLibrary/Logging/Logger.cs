@@ -158,7 +158,7 @@ namespace DiscordBotLibrary.Logging
 
             if (opCode is OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, true);
+                FilterEventData(jsonNode, true, Event.GUILD_CREATE);
             }
             else
             {

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
+using DiscordBotLibrary.ChannelResources.ChannelEnums;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -183,7 +184,6 @@ namespace DiscordBotLibrary.ExternalExtraClasses
 
         #endregion
 
-        [OnDeserialized]
         internal void SortVoiceStatesAccordingToChannel()
         {
             if (VoiceStates is null || VoiceStates.Length == 0)
@@ -198,6 +198,14 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             }
 
             VoiceStates = null;
+        }
+
+        internal void SetChannelsGuildId()
+        {
+            foreach (Channel channel in Channels)
+            {
+                channel.GuildId = Id;
+            }
         }
 
         internal bool CheckIfChannelIsVc(ulong channelId)
@@ -248,7 +256,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             }
 
             return channel;
-        } 
+        }
 
         #endregion
 
@@ -294,6 +302,46 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         public async Task DisconnectFromVcAsync()
            => await DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>()
                 .DisconnectFromVcAsync(Id);
+
+        /// <summary>
+        /// Only works on channels that a part of a guild.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public Channel? GetChannelThatUserIsIn(ulong userId)
+        {
+            foreach (Channel channel in VoiceChannels)
+            {
+                if (channel.VoiceStates is null)
+                    continue;
+
+                foreach (VoiceState voiceState in channel.VoiceStates)
+                {
+                    if (voiceState.UserId == userId)
+                        return channel;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the voice state of the specified user in this guild.
+        /// </summary>
+        public VoiceState? GetVoiceState(ulong userId)
+        {
+            foreach (Channel channel in VoiceChannels)
+            {
+                if (channel.VoiceStates is null)
+                    continue;
+
+                VoiceState? voiceState = channel.VoiceStates.FirstOrDefault(x => x.UserId == userId);
+                if (voiceState is not null)
+                    return voiceState;
+            }
+
+            return null;
+        }
 
         #endregion
 

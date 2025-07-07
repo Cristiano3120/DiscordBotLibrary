@@ -203,7 +203,7 @@ namespace DiscordBotLibrary.MessageResources
         /// A generally increasing integer (there may be gaps or duplicates) that represents the approximate position of the message in a thread, it can be used to estimate the relative position of the message in a thread in company with total_message_sent on parent thread
         /// </summary>
         [JsonPropertyName("position")]
-        public int? Position { get; init; }
+        public uint? Position { get; init; }
 
         /// <summary>
         /// data of the role subscription purchase or renewal that prompted this ROLE_SUBSCRIPTION_PURCHASE message

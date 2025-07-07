@@ -15,6 +15,6 @@
         /// Permissions to request for the bot role.
         /// </summary>
         [JsonPropertyName("permissions")]
-        public DiscordPermission Permissions { get; init; }
+        public DiscordPermissions Permissions { get; init; }
     }
 }

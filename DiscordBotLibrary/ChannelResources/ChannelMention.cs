@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources
 {
     public record ChannelMention
     {

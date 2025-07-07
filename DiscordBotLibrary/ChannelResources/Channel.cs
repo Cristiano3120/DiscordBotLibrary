@@ -1,6 +1,8 @@
 ﻿using System.Buffers.Text;
-using System.Net.Http.Headers;
 using DiscordBotLibrary.ChannelResources.ChannelEditResources;
+using DiscordBotLibrary.ChannelResources.ChannelEnums;
+using DiscordBotLibrary.GuildResources;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ChannelResources
 {
@@ -15,41 +17,34 @@ namespace DiscordBotLibrary.ChannelResources
         /// TYPE: Snowflake  
         /// The ID of this channel.
         /// </summary>
-        [JsonPropertyName("id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
         /// <summary>
         /// The type of channel.
         /// </summary>
-        [JsonPropertyName("type")]
         public ChannelType Type { get; init; }
 
         /// <summary>
         /// TYPE: Snowflake  
         /// The ID of the guild (may be missing for some channel objects received over gateway guild dispatches).
         /// </summary>
-        [JsonPropertyName("guild_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
-        public ulong? GuildId { get; init; }
+        [JsonInclude]
+        public ulong? GuildId { get; internal set; }
 
         /// <summary>
         /// Sorting position of the channel (channels with the same position are sorted by ID).
         /// </summary>
-        [JsonPropertyName("position")]
-        public int? Position { get; init; }
+        public uint? Position { get; init; }
 
         /// <summary>
         /// Explicit permission overwrites for members and roles.
         /// </summary>
-        [JsonPropertyName("permission_overwrites")]
         public Overwrite[]? PermissionOverwrites { get; init; }
 
         /// <summary>
         /// The name of the channel (1–100 characters).
         /// <para><c>Null</c> when <see cref="Type"/> == <see cref="ChannelType.DM"/></para>
         /// </summary>
-        [JsonPropertyName("name")]
         public string? Name { get; init; }
 
         /// <summary>
@@ -57,75 +52,63 @@ namespace DiscordBotLibrary.ChannelResources
         /// For GUILD_FORUM and GUILD_MEDIA: 0–4096 characters.  
         /// For others: 0–1024 characters.
         /// </summary>
-        [JsonPropertyName("topic")]
         public string? Topic { get; init; }
 
         /// <summary>
         /// Whether the channel is NSFW.
         /// </summary>
-        [JsonPropertyName("nsfw")]
         public bool? Nsfw { get; init; }
 
         /// <summary>
         /// TYPE: Snowflake  
         /// The ID of the last message sent in this channel or thread.
         /// </summary>
-        [JsonPropertyName("last_message_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? LastMessageId { get; init; }
 
         /// <summary>
         /// The bitrate (in bits) of the voice channel.
         /// Can be beetwen 8k and 256k(384K on a hihgly boosted server)
         /// </summary>
-        [JsonPropertyName("bitrate")]
-        public int? Bitrate { get; init; }
+        public uint? Bitrate { get; init; }
 
         /// <summary>
         /// The user limit of the voice channel.
         /// </summary>
-        [JsonPropertyName("user_limit")]
-        public int? UserLimit { get; init; }
+        public uint? UserLimit { get; init; }
 
         /// <summary>
         /// Slowmode: How many seconds users must wait before sending another message.
         /// <para>0, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 21600</para>
+        /// <para><c>Null</c> on some channel types</para>
         /// </summary>
         [JsonPropertyName("rate_limit_per_user")]
-        public int? Slowmode { get; init; }
+        public Slowmode? Slowmode { get; init; }
 
         /// <summary>
         /// The recipients of the DM (only present for DM/group DM channels).
         /// </summary>
-        [JsonPropertyName("recipients")]
-        public List<User>? Recipients { get; init; }
+        public User[]? Recipients { get; init; }
 
         /// <summary>
         /// Icon hash of the group DM.
         /// </summary>
-        [JsonPropertyName("icon")]
         public string? Icon { get; init; }
 
         /// <summary>
         /// TYPE: Snowflake  
         /// ID of the creator of the group DM or thread.
         /// </summary>
-        [JsonPropertyName("owner_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? OwnerId { get; init; }
 
         /// <summary>
         /// TYPE: Snowflake  
         /// Application ID of the group DM creator if bot-created.
         /// </summary>
-        [JsonPropertyName("application_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? ApplicationId { get; init; }
 
         /// <summary>
         /// Whether the channel is managed by an application via the gdm.join OAuth2 scope.
         /// </summary>
-        [JsonPropertyName("managed")]
         public bool? Managed { get; init; }
 
         /// <summary>
@@ -133,14 +116,11 @@ namespace DiscordBotLibrary.ChannelResources
         /// For guild channels: ID of the parent category.  
         /// For threads: ID of the text channel this thread was created in.
         /// </summary>
-        [JsonPropertyName("parent_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? ParentId { get; init; }
 
         /// <summary>
         /// ISO8601 timestamp of when the last pinned message was pinned.
         /// </summary>
-        [JsonPropertyName("last_pin_timestamp")]
         public DateTimeOffset? LastPinTimestamp { get; internal set; }
 
         /// <summary>
@@ -150,100 +130,91 @@ namespace DiscordBotLibrary.ChannelResources
         public RtcRegion RtcRegion => InternalRtcRegion ?? RtcRegion.Automatic;
 
         [JsonPropertyName("rtc_region")]
-        [JsonConverter(typeof(JsonStringEnumConverter))]
         public RtcRegion? InternalRtcRegion { get; init; }
 
         /// <summary>
         /// The camera video quality mode of the voice channel.
         /// </summary>
-        [JsonPropertyName("video_quality_mode")]
         public VideoQualityMode? VideoQualityMode { get; init; }
 
         /// <summary>
         /// Number of messages (excluding initial or deleted) in a thread.
         /// </summary>
-        [JsonPropertyName("message_count")]
-        public int? MessageCount { get; init; }
+        public uint? MessageCount { get; init; }
 
         /// <summary>
         /// Approximate count of users in a thread (stops at 50).
         /// </summary>
-        [JsonPropertyName("member_count")]
-        public int? MemberCount { get; init; }
+        public uint? MemberCount { get; init; }
 
         /// <summary>
         /// Thread-specific metadata.
         /// </summary>
-        [JsonPropertyName("thread_metadata")]
         public ThreadMetadata? ThreadMetadata { get; init; }
 
         /// <summary>
         /// Thread member object for the current user, if joined.
         /// </summary>
-        [JsonPropertyName("member")]
         public ThreadMember? Member { get; init; }
 
         /// <summary>
         /// Default auto-archive duration (in minutes) for newly created threads.
         /// <para>Values: 60, 1440, 4320, 10080</para>
         /// </summary>
-        [JsonPropertyName("default_auto_archive_duration")]
-        public int? DefaultAutoArchiveDuration { get; init; }
+        public AutoArchiveDuration? DefaultAutoArchiveDuration { get; init; }
+
+        [JsonPropertyName("permissions")]
+        [JsonInclude]
+        internal ulong? InternalPermissions { get; init; }
 
         /// <summary>
-        /// Computed permissions for the invoking user, only included in interactions.
+        /// Permissions that the invoking user has, only included in interactions.
         /// </summary>
-        [JsonPropertyName("permissions")]
-        public string? Permissions { get; init; }
+        [JsonIgnore]
+        public DiscordPermissions? Permissions
+            => InternalPermissions.HasValue
+                ? (DiscordPermissions)InternalPermissions.Value
+                : DiscordPermissions.None;
 
         /// <summary>
         /// Bitfield of channel flags.
         /// </summary>
-        [JsonPropertyName("flags")]
         public ChannelFlags? Flags { get; init; }
 
         /// <summary>
         /// Number of messages ever sent in a thread.
         /// </summary>
-        [JsonPropertyName("total_message_sent")]
-        public int? TotalMessageSent { get; init; }
+        public uint? TotalMessageSent { get; init; }
 
         /// <summary>
         /// Tags that can be used in GUILD_FORUM or GUILD_MEDIA channels.
         /// </summary>
-        [JsonPropertyName("available_tags")]
-        public List<ForumTag>? AvailableTags { get; init; }
+        public ForumTag[]? AvailableTags { get; init; }
 
         /// <summary>
         /// IDs of the tags applied to a thread in GUILD_FORUM or GUILD_MEDIA.
         /// </summary>
-        [JsonPropertyName("applied_tags")]
-        [JsonConverter(typeof(SnowflakeArrayConverter))]
         public ulong[]? AppliedTags { get; init; }
 
         /// <summary>
         /// The emoji shown on the “add reaction” button in GUILD_FORUM or GUILD_MEDIA threads.
         /// </summary>
-        [JsonPropertyName("default_reaction_emoji")]
         public DefaultReaction? DefaultReactionEmoji { get; init; }
 
         /// <summary>
-        /// Default duration (in seconds) that the clients will use for rate limiting thread creation
+        /// The time (in seconds) which the user has to wait before creating a new thread in GUILD_FORUM or GUILD_MEDIA.
         /// <para>0, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 21600</para>
         /// </summary>
-        [JsonPropertyName("default_thread_rate_limit_per_user")]
-        public int? DefaultThreadRateLimitPerUser { get; init; }
+        public Slowmode? DefaultThreadRateLimitPerUser { get; init; }
 
         /// <summary>
         /// Default sort order for posts in GUILD_FORUM or GUILD_MEDIA.
         /// </summary>
-        [JsonPropertyName("default_sort_order")]
         public SortOrderType? DefaultSortOrder { get; init; }
 
         /// <summary>
         /// Default forum layout view used in GUILD_FORUM.
         /// </summary>
-        [JsonPropertyName("default_forum_layout")]
         public ForumLayoutType? DefaultForumLayout { get; init; }
 
         /// <summary>
@@ -259,25 +230,6 @@ namespace DiscordBotLibrary.ChannelResources
         public int? CountOfUsersInVc => VoiceStates?.Count;
 
         #endregion
-
-        /// <summary>
-        /// <c>Null</c> if the request was invalid and <c>Message[]</c> otherwhise
-        /// </summary>
-        /// <returns></returns>
-        public async Task<Message[]?> GetPinnedMessagesAsync()
-        {
-            string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Pins);
-            return await DiscordClient.RestApiLimiter.GetAsync<Message[]>(endpoint, CallerInfos.Create());
-        }
-
-        /// <summary>
-        /// Deletes this channel permanently. <c>True</c> if the deletion was succesful.
-        /// </summary>
-        public async Task<bool> DeleteAsync()
-        {
-            string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Delete);
-            return await DiscordClient.RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
-        }
 
         #region ModifyChannel
         /// <summary>
@@ -475,6 +427,12 @@ namespace DiscordBotLibrary.ChannelResources
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyNameAsync(string name)
         {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
             if (name.Length is < 1 or > 100)
             {
                 LogInvalidInput($"The length of the param {nameof(name)} has to be greater than 1 and less than 100", CallerInfos.Create());
@@ -492,9 +450,15 @@ namespace DiscordBotLibrary.ChannelResources
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyIconAsync(string icon)
         {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
             if (!Base64.IsValid(icon) || string.IsNullOrEmpty(icon) || Type is not ChannelType.GroupDM)
             {
-                LogInvalidInput("TOnly the Icon of a group Dm can be changed. Icon can´t be empty. " +
+                LogInvalidInput("Only the Icon of a group Dm can be changed. Icon can´t be empty. " +
                     "Icon has to be encoded in base64", CallerInfos.Create());
                 return null;
             }
@@ -504,11 +468,20 @@ namespace DiscordBotLibrary.ChannelResources
 
         /// <summary>
         /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// 
+        /// </para>
         /// </summary>
         /// <param name="icon"></param>
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyIconAsync(byte[] iconBytes)
         {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
             if (iconBytes.Length == 0 || Type is not ChannelType.GroupDM)
             {
                 LogInvalidInput("Only the Icon of a group Dm can be changed. Icon can´t be empty.", CallerInfos.Create());
@@ -521,15 +494,37 @@ namespace DiscordBotLibrary.ChannelResources
 
         /// <summary>
         /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// <c>This method can only be used on channels of type <see cref="ChannelType.Announcement"/> 
+        /// and <see cref="ChannelType.Text"/></c>
+        /// </para>
         /// </summary>
         /// <param name="icon"></param>
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyChannelTypeAsync(ChannelType type)
         {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
+
             if (type is not ChannelType.Text or ChannelType.Announcement)
             {
                 LogInvalidInput($"The type {type} is not supported for this method. " +
                     $"Only {ChannelType.Text} and {ChannelType.Announcement} are supported", CallerInfos.Create());
+                return null;
+            }
+
+            DiscordGuild? guild = DiscordClient.GetDiscordClient().GetGuild(GuildId!.Value);
+            if (guild is null)
+                return null;
+
+            if (!guild.Features.Contains(GuildFeature.News))
+            {
+                LogInvalidInput($"The guild {guild.Name} does not support the {ChannelType.Announcement} type. " +
+                    $"This is only supported on guilds with the {GuildFeature.News} feature", CallerInfos.Create());
                 return null;
             }
 
@@ -538,14 +533,14 @@ namespace DiscordBotLibrary.ChannelResources
 
         /// <summary>
         /// <c>SAFE: This method validates input before sending it</c>
+        /// <c>If the number is higher than </c>
         /// </summary>
-        /// <param name="icon"></param>
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
-        public async Task<Channel?> ModifyPositionAsync(int position)
+        public async Task<Channel?> ModifyPositionAsync(uint position)
         {
-            if (position < 0)
+            if (!CheckPermissions())
             {
-                LogInvalidInput($"The position {position} is not valid. It has to be greater than or equal to 0", CallerInfos.Create());
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
                 return null;
             }
 
@@ -576,11 +571,14 @@ namespace DiscordBotLibrary.ChannelResources
         /// 
         /// Set it to <c>0</c> to remove the topic.
         /// </summary>
-        /// <param name="icon"></param>
         /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
         public async Task<Channel?> ModifyTopicAsync(string topic)
         {
-            DiscordClient.Logger.LogInfo($"Changing the topic of the {Type}channel: {Name} to {topic}");
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
 
             int length = topic.Length;
             if (length > 4096)
@@ -609,14 +607,199 @@ namespace DiscordBotLibrary.ChannelResources
             return await ModifyAsync(x => x.Topic = topic);
         }
 
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// <c>This method can only NOT be used on channels of type thread and dm channels</c>
+        /// </para>
+        /// </summary>
+        /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyNsfwAsync(bool nsfw)
+        {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
+            if (Type is not ChannelType.Text or ChannelType.Voice or ChannelType.Announcement 
+                or ChannelType.StageVoice or ChannelType.Forum or ChannelType.Media)
+            {
+                LogInvalidInput($"Can´t use this method on this channel cause it´s of type {Type}." +
+                    $"Look at the method docu to see what types can modify this property", CallerInfos.Create());
+                return null;
+            }
+
+            return await ModifyAsync(x => x.Nsfw = nsfw);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// <c>This method can only NOT be used on channels of type thread, dm channels and Announcement</c>
+        /// </para>
+        /// </summary>
+        /// <returns>Null if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifySlowmodeAsync(Slowmode slowmode)
+        {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
+            if (Type is not ChannelType.Text or ChannelType.Voice or ChannelType.StageVoice 
+                or ChannelType.Forum or ChannelType.Media)
+            {
+                LogInvalidInput($"Can´t use this method on this channel cause it´s of type {Type}." +
+                   $"Look at the method docu to see what types can modify this property", CallerInfos.Create());
+                return null;
+            }
+
+            return await ModifyAsync(x => x.Slowmode = slowmode);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// <c>This method only works on channels of type <see cref="ChannelType.Voice"/> or <see cref="ChannelType.StageVoice"/></c>
+        /// </para>
+        /// 
+        /// Bitrate can be between <c>8000</c> and <c>256000</c> bits per second (<c>384000</c> on a highly boosted server).
+        /// If you set it to <c>0</c> it will be set to the default value of <c>64000</c>. Setting it below <c>8000</c> 
+        /// will set it to <c>8000</c>. Setting it above the <c>maximum</c> will set it to the maximum value for the server.
+        /// </summary>
+        /// <returns><c>Null</c> if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyBitrateAsync(uint bitrate)
+        {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
+            if (Type is not ChannelType.Voice or ChannelType.StageVoice)
+            {
+                LogInvalidInput($"Can't use this method on this channel because it is of type {Type}. " +
+                    $"Only Voice and StageVoice are supported.", CallerInfos.Create());
+                return null;
+            }
+
+            const uint MIN_BITRATE = 8000;
+
+            if (bitrate < MIN_BITRATE)
+                bitrate = MIN_BITRATE;
+
+            if (Type is ChannelType.Voice)
+            {
+                Guild guild = DiscordClient.ServiceProvider.GetRequiredService<DiscordClient>().GetGuild(GuildId!.Value)!;
+
+                bitrate = guild.PremiumTier switch
+                {
+                    PremiumTier.None => Math.Min(bitrate, 96000),
+                    PremiumTier.Tier1 => Math.Min(bitrate, 128000),
+                    PremiumTier.Tier2 => Math.Min(bitrate, 256000),
+                    PremiumTier.Tier3 => Math.Min(bitrate, 384000),
+                    _ => bitrate
+                };
+            }
+            else
+            {
+                bitrate = Math.Min(bitrate, 64000);
+            }
+
+            return await ModifyAsync(x => x.Bitrate = bitrate);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// <c>This method only works on channels of type <see cref="ChannelType.Voice"/> or <see cref="ChannelType.StageVoice"/></c>
+        /// </para>
+        /// Set it to <c>0</c> to remove the user limit.
+        /// 
+        /// <para>For <see cref="ChannelType.StageVoice"/> channels the max limit is <c>10_000</c></para>
+        /// For <see cref="ChannelType.Voice"/> channels the max limit is <c>99</c>.
+        /// </summary>
+        /// <returns><c>Null</c> if the input was invalid and an Error log that gives detailed infos</returns>
+        public async Task<Channel?> ModifyUserLimitAsync(uint userLimit)
+        {
+            if (!CheckPermissions())
+            {
+                LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+                return null;
+            }
+
+            if (Type is not ChannelType.Voice and not ChannelType.StageVoice)
+            {
+                LogInvalidInput($"Can't use this method on this channel because it is of type {Type}. " +
+                    $"Only Voice and StageVoice are supported.", CallerInfos.Create());
+                return null;
+            }
+
+            userLimit = Type switch
+            {
+                ChannelType.Voice => Math.Min(userLimit, 99),
+                ChannelType.StageVoice => Math.Min(userLimit, 10_000),
+                _ => userLimit
+            };
+
+            return await ModifyAsync(x => x.UserLimit = userLimit);
+        }
+
+        /// <summary>
+        /// <c>SAFE: This method validates input before sending it</c>
+        /// <para>
+        /// </summary>
+        /// <returns><c>Null</c> if the input was invalid and an Error log that gives detailed infos</returns>
+        //public async Task<Channel?> ModifyPermissionOverwritesAsync(IEnumerable<Overwrite> overwrites)
+        //{
+        //    if (!CheckPermissions())
+        //    {
+        //        LogInvalidInput("You need the ManageChannels permission to use this method", CallerInfos.Create());
+        //        return null;
+        //    }
+        //}
+
         private static void LogInvalidInput(string msg, CallerInfos callerInfos)
         {
             DiscordClient.Logger.LogError($"[{callerInfos.CallerName}]: " +
                 $"{msg}");
         }
 
+        private bool CheckPermissions()
+            => !Permissions.HasValue || Permissions.Value.HasFlag(DiscordPermissions.ManageChannels);
+        
+
         #endregion
 
         #endregion
+
+        /// <summary>
+        /// Gets information about voice relevant data of a user in this channel.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public VoiceState? GetVoiceState(ulong userId)
+            => VoiceStates?.FirstOrDefault(x => x.UserId == userId);
+
+        /// <summary>
+        /// <c>Null</c> if the request was invalid and <c>Message[]</c> otherwhise
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Message[]?> GetPinnedMessagesAsync()
+        {
+            string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Pins);
+            return await DiscordClient.RestApiLimiter.GetAsync<Message[]>(endpoint, CallerInfos.Create());
+        }
+
+        /// <summary>
+        /// Deletes this channel permanently. <c>True</c> if the deletion was succesful.
+        /// </summary>
+        public async Task<bool> DeleteAsync()
+        {
+            string endpoint = RestApiEndpoints.GetChannelEndpoint(Id, ChannelEndpoint.Delete);
+            return await DiscordClient.RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
+        }
     }
 }

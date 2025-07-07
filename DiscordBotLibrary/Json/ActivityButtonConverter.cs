@@ -22,11 +22,11 @@
                     {
                         JsonElement root = doc.RootElement;
 
-                        string? label = root.TryGetProperty("label", out var l)
+                        string? label = root.TryGetProperty("label", out JsonElement l)
                             ? l.GetString()
                             : null;
 
-                        string? url = root.TryGetProperty("url", out var u)
+                        string? url = root.TryGetProperty("url", out JsonElement u)
                             ? u.GetString()
                             : null;
 

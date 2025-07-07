@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// Represents the sort order for forum posts in a Discord channel.

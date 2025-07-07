@@ -12,10 +12,13 @@
         public static T Deserialize<T>(this JsonElement jsonElement)
         {
             T t = jsonElement.GetProperty("d").Deserialize<T>(DiscordClient.ReceiveJsonSerializerOptions)
-                ?? throw new Exception("Failed to deserialize[JsonElementExtensions(T Deserialize<T>(this JsonElement jsonElement))]");
+                ?? throw new Exception($"Failed to deserialize[{CallerInfos.Create().CallerName}]");
         
             if (t is DiscordGuild guild)
+            {
                 guild.SortVoiceStatesAccordingToChannel();
+                guild.SetChannelsGuildId();
+            }
 
             return t;   
         }

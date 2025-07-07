@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// Represents the layout type of a forum channel.

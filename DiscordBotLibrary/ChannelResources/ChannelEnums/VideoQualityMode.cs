@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEnums
 {
     /// <summary>
     /// Represents the video quality mode of a <see cref="Channel"/>.

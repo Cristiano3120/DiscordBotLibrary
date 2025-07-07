@@ -46,7 +46,7 @@
         /// Roles with the same position are sorted by ID.
         /// </summary>
         [JsonPropertyName("position")]
-        public int Position { get; init; }
+        public uint Position { get; init; }
 
         /// <summary>
         /// Gets the permission bit set for this role.

@@ -23,7 +23,6 @@ namespace DiscordBotLibrary.RestApiLimiterResources
 
         #region External methods
 
-        [DebuggerStepThrough]
         public async Task<T?> GetAsync<T>(string endpoint, CallerInfos callerInfos)
         {
             SemaphoreSlim semaphoreSlim = default!;
@@ -46,7 +45,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
                 }
 
                 string json = await response.Content.ReadAsStringAsync();
-                T? result = JsonSerializer.Deserialize<T>(json);
+                T? result = JsonSerializer.Deserialize<T>(json, DiscordClient.ReceiveJsonSerializerOptions);
 
                 return result ?? throw new InvalidOperationException(
                     $"Deserialization returned null. Response: {json} (expected: {typeof(T)})"

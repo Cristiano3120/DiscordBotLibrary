@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json
 {
     public class SnowflakeConverter : JsonConverter<ulong>
     {
@@ -8,7 +6,7 @@ namespace DiscordBotLibrary.Json
         {
             string? snowflakeString = reader.GetString();
 
-            if (ulong.TryParse(snowflakeString, out var result))
+            if (ulong.TryParse(snowflakeString, out ulong result))
             {
                 return result;
             }

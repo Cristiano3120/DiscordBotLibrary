@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.GuildResources
+﻿using Newtonsoft.Json.Converters;
+
+namespace DiscordBotLibrary.GuildResources
 {
     public class Guild
     {
@@ -122,8 +124,8 @@
         /// <summary>
         /// Enabled guild features.
         /// </summary>
-        [JsonPropertyName("features")]
-        public List<string> Features { get; init; } = [];
+        [JsonConverter(typeof(StringEnumConverter))]
+        public GuildFeature[] Features { get; init; } = [];
 
         /// <summary>
         /// The required MFA level for the guild.

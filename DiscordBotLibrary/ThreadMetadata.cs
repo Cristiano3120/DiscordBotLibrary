@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents metadata associated with a Discord thread.
@@ -16,7 +18,7 @@
         /// Can be 60, 1440, 4320, or 10080.
         /// </summary>
         [JsonPropertyName("auto_archive_duration")]
-        public int AutoArchiveDuration { get; init; }
+        public AutoArchiveDuration AutoArchiveDuration { get; init; }
 
         /// <summary>
         /// ISO8601 timestamp of when the thread's archive status was last changed.

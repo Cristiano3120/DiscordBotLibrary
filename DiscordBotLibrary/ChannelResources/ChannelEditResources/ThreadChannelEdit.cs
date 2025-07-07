@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
+
+namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     public class ThreadChannelEdit
     {
@@ -8,6 +10,7 @@
         /// whether the thread is archived
         /// </summary>
         [JsonPropertyName("archived")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<bool> Archived { get; set; }
 
         /// <summary>
@@ -15,18 +18,21 @@
         /// <para>can be set to: 60, 1440, 4320, 10080</para>
         /// </summary>
         [JsonPropertyName("auto_archive_duration")]
-        public int AutoArchiveDuration { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<AutoArchiveDuration> AutoArchiveDuration { get; set; }
 
         /// <summary>
         /// whether the thread is locked; when a thread is locked, only users with MANAGE_THREADS can unarchive it
         /// </summary>
         [JsonPropertyName("locked")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<bool> Locked { get; set; }
 
         /// <summary>
         /// whether non-moderators can add other non-moderators to a thread; only available on private threads
         /// </summary>
         [JsonPropertyName("invitable")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<bool> Invitable { get; set; }
 
         /// <summary>
@@ -35,19 +41,20 @@
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         [JsonPropertyName("rate_limit_per_user")]
-        public Optional<int> Slowmode { get; set; }
+        public Optional<Slowmode> Slowmode { get; set; }
 
         /// <summary>
         /// channel flags combined as a bitfield; PINNED can only be set for threads in forum and media channels
         /// </summary>
         [JsonPropertyName("flags")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<ChannelFlags> Flags { get; set; }
 
         /// <summary>
         /// the IDs of the set of tags that have been applied to a thread in a GUILD_FORUM or a GUILD_MEDIA channel; limited to 5
         /// </summary>
         [JsonPropertyName("applied_tags")]
-        [JsonConverter(typeof(SnowflakeArrayConverter))]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<ulong[]> AppliedTags { get; set; }
 
         internal ThreadChannelEdit(string name)
