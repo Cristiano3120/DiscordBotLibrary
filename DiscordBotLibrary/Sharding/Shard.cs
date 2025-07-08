@@ -1,14 +1,18 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
+using DiscordBotLibrary.WssPayloadStructures.Identify;
 
 namespace DiscordBotLibrary.Sharding
 {
-    internal sealed class Shard(DiscordClient discordClient, int shardId)
+    internal sealed class Shard(DiscordClientConfig discordClientConfig, HandleDiscordPayload handleDiscordPayload, int shardId)
     {
-        private readonly DiscordClient _discordClient = discordClient;
+        private readonly HandleDiscordPayload _handleDiscordPayload = handleDiscordPayload;
+        private readonly DiscordClientConfig _clientConfig = discordClientConfig;
+
         private readonly CancellationTokenSource _cts = new();
         private WsGatewayLimiter _wsGatewayLimiter = default!;
         private ClientWebSocket _webSocket = new();
+
         private readonly int _shardId = shardId;
         private int? _lastSequenceNumber;
 
@@ -18,7 +22,7 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task StartShardAsync()
         {
-            Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_discordClient.ClientConfig.Version}&encoding=json");
+            Uri gatewayUri = new($"wss://gateway.discord.gg/?v={_clientConfig.Version}&encoding=json");
             await _webSocket.ConnectAsync(gatewayUri, _cts.Token);
 
             _wsGatewayLimiter = new WsGatewayLimiter(this);
@@ -93,7 +97,16 @@ namespace DiscordBotLibrary.Sharding
                         break;
                     case OpCode.Hello:
                         DiscordClient.Logger.LogInfo("Received Hello message.");
-                        await HandleDiscordPayload.HandleHelloEventAsync(jToken, this, ResumeConnInfos, _lastSequenceNumber);
+                        HelloEventParams helloEventParams = new()
+                        {
+                            JToken = jToken,
+                            Shard = this,
+                            ResumeConnInfos = ResumeConnInfos,
+                            LastSequenceNumber = _lastSequenceNumber,
+                            Token = _clientConfig.Token,
+                            ShardCount = DiscordClient.GetDiscordClient().GetTotalShardCount(),
+                        };
+                        await HandleDiscordPayload.HandleHelloEventAsync(helloEventParams);
                         break;
                     case OpCode.HeartbeatAck:
                         DiscordClient.Logger.LogDebug("Heartbeat acknowledged.");
@@ -121,37 +134,37 @@ namespace DiscordBotLibrary.Sharding
                 switch (events)
                 {
                     case Event.READY:
-                        HandleDiscordPayload.HandleReadyEvent(this, jToken);
+                        _handleDiscordPayload.HandleReadyEvent(this, jToken);
                         break;
                     case Event.GUILD_CREATE:
-                        HandleDiscordPayload.HandleGuildCreateEvent(jToken);
+                        _handleDiscordPayload.HandleGuildCreateEvent(jToken);
                         break;
                     case Event.PRESENCE_UPDATE:
-                        HandleDiscordPayload.HandlePresenceUpdateEvent(jToken);
+                        _handleDiscordPayload.HandlePresenceUpdateEvent(jToken);
                         break;
                     case Event.VOICE_SERVER_UPDATE:
-                        HandleDiscordPayload.HandleVoiceServerUpdateEvent(jToken);
+                        _handleDiscordPayload.HandleVoiceServerUpdateEvent(jToken);
                         break;
                     case Event.GUILD_MEMBERS_CHUNK:
-                        HandleDiscordPayload.HandleGuildMembersChunkEvent(jToken, this);
+                        _handleDiscordPayload.HandleGuildMembersChunkEvent(jToken, this);
                         break;
                     case Event.SOUNDBOARD_SOUNDS:
                         HandleDiscordPayload.HandleSoundboardSoundsEvent(jToken, this);
                         break;
                     case Event.VOICE_STATE_UPDATE:
-                        HandleDiscordPayload.HandleVoiceStateUpdateEvent(jToken);
+                        _handleDiscordPayload.HandleVoiceStateUpdateEvent(jToken);
                         break;
                     case Event.CHANNEL_CREATE:
-                        HandleDiscordPayload.HandleChannelCreateEvent(jToken);
+                        _handleDiscordPayload.HandleChannelCreateEvent(jToken);
                         break;
                     case Event.CHANNEL_DELETE:
-                        HandleDiscordPayload.HandleChannelDeleteEvent(jToken);
+                        _handleDiscordPayload.HandleChannelDeleteEvent(jToken);
                         break;
                     case Event.CHANNEL_UPDATE:
-                        HandleDiscordPayload.HandleChannelUpdateEvent(jToken);
+                        _handleDiscordPayload.HandleChannelUpdateEvent(jToken);
                         break;
                     case Event.CHANNEL_PINS_UPDATE:
-                        await HandleDiscordPayload.HandleChannelPinsUpdateEvent(jToken);
+                        await _handleDiscordPayload.HandleChannelPinsUpdateEvent(jToken);
                         break;
                     default:
                         DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
@@ -166,7 +179,7 @@ namespace DiscordBotLibrary.Sharding
 
         #region Send
 
-        internal async Task SendPayloadWssAsync(object payload, bool isHeartbeat = false)
+        internal async Task SendPayloadWssAsync<T>(Payload<T> payload, bool isHeartbeat = false)
         {
             string jsonStr = JsonConvert.SerializeObject(payload, DiscordClient.SendJsonSerializerSettings);
 
@@ -197,29 +210,26 @@ namespace DiscordBotLibrary.Sharding
             }
         }
 
-        internal async Task SendIdentifyAsync()
+        internal async Task SendIdentifyAsync(int shardCount)
         {
-            DiscordClient.Logger.LogInfo("Sending IdentifyData payload");
+            DiscordClient.Logger.LogInfo("Sending IdentifyPayload payload");
 
             const string clientId = "DiscordBotLibrary";
-            var identifyPayload = new
+            IdentifyPayload identifyPayload = new()
             {
-                op = OpCode.Identify,
-                d = new IdentifyData()
+                Intents = _clientConfig.Intents,
+                Token = _clientConfig.Token,
+                Shard = [_shardId, shardCount],
+                Properties = new Properties()
                 {
-                    Intents = _discordClient.ClientConfig.Intents,
-                    Token = _discordClient.ClientConfig.Token,
-                    Shard = [_shardId, ShardHandler.TotalShards],
-                    Properties = new Properties()
-                    {
-                        Os = Environment.OSVersion.Platform.ToString(),
-                        Browser = clientId,
-                        Device = clientId,
-                    }
+                    Os = Environment.OSVersion.Platform.ToString(),
+                    Browser = clientId,
+                    Device = clientId,
                 }
             };
+            Payload<IdentifyPayload> payload = new(OpCode.Identify, identifyPayload);
 
-            await SendPayloadWssAsync(identifyPayload);
+            await SendPayloadWssAsync(payload);
         }
 
         internal async Task SendHeartbeatsAsync(int interval)
@@ -227,13 +237,10 @@ namespace DiscordBotLibrary.Sharding
             while (_webSocket.State == WebSocketState.Open)
             {
                 DiscordClient.Logger.LogDebug($"Sending heartbeat. Sequence: {_lastSequenceNumber}");
-                var heartbeatPayload = new
-                {
-                    op = OpCode.Heartbeat,
-                    d = _lastSequenceNumber
-                };
 
-                await SendPayloadWssAsync(heartbeatPayload);
+                Payload<int?> payload = new(OpCode.Heartbeat, _lastSequenceNumber);
+                await SendPayloadWssAsync(payload);
+
                 await Task.Delay(interval);
             }
         }
@@ -242,12 +249,7 @@ namespace DiscordBotLibrary.Sharding
         {
             GuildMemberRequests.Add(requestGuildMembersCache.RequestGuildMembers.Nonce, requestGuildMembersCache);
 
-            var payload = new
-            {
-                op = OpCode.RequestGuildMembers,
-                d = requestGuildMembersCache.RequestGuildMembers
-            };
-
+            Payload<RequestGuildMembers> payload = new(OpCode.RequestGuildMembers, requestGuildMembersCache.RequestGuildMembers);
             await SendPayloadWssAsync(payload);
         }
 
@@ -258,15 +260,10 @@ namespace DiscordBotLibrary.Sharding
                 SoundboardRequests.Add(guildId, tcs);
             }
 
-            var payload = new
-            {
-                op = OpCode.RequestSoundboardSounds,
-                d = new
-                {
-                    guild_ids = requestSoundoardSounds.GuildIds.Select(x => x.ToString()).ToArray(),
-                }
-            };
-            
+            string[] guildIds = [.. requestSoundoardSounds.GuildIds.Select(x => x.ToString())];
+            RequestSoundboardSoundsPayload requestSoundboardSoundsPayload = new(guildIds);
+            Payload<RequestSoundboardSoundsPayload> payload = new(OpCode.RequestSoundboardSounds, requestSoundboardSoundsPayload);
+
             await SendPayloadWssAsync(payload);
         }
 

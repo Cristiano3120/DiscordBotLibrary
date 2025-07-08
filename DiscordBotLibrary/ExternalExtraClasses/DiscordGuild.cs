@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
 using DiscordBotLibrary.ChannelResources.ChannelEnums;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
 {

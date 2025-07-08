@@ -158,11 +158,11 @@ namespace DiscordBotLibrary.Logging
 
             if (opCode is OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, true, Event.GUILD_CREATE);
+                FilterEventData(jsonNode, LogRules.None);
             }
             else
             {
-                FilterOpCode(jsonNode, opCode, true);
+                FilterOpCode(jsonNode, opCode, LogRules.None);
             }
 
             jsonNode["op"] = opCode.ToString();
@@ -173,7 +173,7 @@ namespace DiscordBotLibrary.Logging
             Console.WriteLine("");
         }
 
-        internal void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
+        internal static void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
         {
             JToken parsedJson = JToken.Parse(content);
             string prettyJson = parsedJson.ToString(Formatting.Indented);
@@ -206,23 +206,35 @@ namespace DiscordBotLibrary.Logging
         /// <param name="jsonNode"></param>
         /// <param name="onlyLogThose"></param>
         /// <param name="events"></param>
-        private void FilterEventData(JsonNode jsonNode, bool onlyLogThoseEvents, params Event[] events)
+        private void FilterEventData(JsonNode jsonNode, LogRules logRules, params Event[] events)
         {
+            if (logRules is LogRules.None)
+            {
+                jsonNode["d"] = "";
+                return;
+            }
+
             if (!Enum.TryParse(jsonNode["t"]!.ToString()!, true, out Event dispatchEvent))
             {
                 LogError(new Exception($"Event {jsonNode["t"]} not found in the Event enum"));
                 return;
             }
 
-            if (onlyLogThoseEvents && !events.Contains(dispatchEvent) || !onlyLogThoseEvents && events.Contains(dispatchEvent))
+            if (logRules is LogRules.OnlyThose && !events.Contains(dispatchEvent) || logRules is LogRules.OnlyTheOthers && events.Contains(dispatchEvent))
             {
                 jsonNode["d"] = "";
             }
         }
 
-        private static void FilterOpCode(JsonNode jsonNode, OpCode opCode, bool onlyLogThoseEvents, params OpCode[] opCodes)
+        private static void FilterOpCode(JsonNode jsonNode, OpCode opCode, LogRules logRules, params OpCode[] opCodes)
         {
-            if (onlyLogThoseEvents && !opCodes.Contains(opCode) || !onlyLogThoseEvents && opCodes.Contains(opCode))
+            if (logRules is LogRules.None)
+            {
+                jsonNode["d"] = "";
+                return;
+            }
+
+            if (logRules is LogRules.OnlyThose && !opCodes.Contains(opCode) || logRules is LogRules.OnlyTheOthers && opCodes.Contains(opCode))
             {
                 jsonNode["d"] = "";
             }

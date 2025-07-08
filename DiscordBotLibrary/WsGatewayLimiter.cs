@@ -56,7 +56,7 @@ namespace DiscordBotLibrary
             {
                 CleanupOldTimestamps();
 
-                while (_timestamps.Count < _maxMessages && _messageQueue.TryDequeue(out var payload))
+                while (_timestamps.Count < _maxMessages && _messageQueue.TryDequeue(out string? payload))
                 {
                     await _shard.SendPayloadWssAsync(payload);
                     _timestamps.Enqueue(DateTime.UtcNow);

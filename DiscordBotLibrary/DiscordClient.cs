@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using DiscordBotLibrary.ChannelResources.ChannelEnums;
-using DiscordBotLibrary.Sharding;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
 
@@ -59,21 +58,21 @@ namespace DiscordBotLibrary
 
         #endregion
 
-        internal static ServiceProvider ServiceProvider { get; private set; } = default!;
-        internal DiscordClientConfig ClientConfig { get; private set; } = default!;
-        internal static Logger Logger { get; private set; } = default!;
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
         internal RestApiLimiter RestApiLimiter { get; private set; } = default!;
+        internal static Logger Logger { get; private set; } = default!;
 
-        private VoiceChannelHandler? _voiceChannelHandler;
+        private static ServiceProvider _serviceProvider = default!;
+        private readonly VoiceChannelHandler _voiceChannelHandler;
+        private readonly DiscordClientConfig _clientConfig;
+        private readonly ShardHandler _shardHandler;
 
         #endregion
 
         #region External fields
         public IReadOnlyDictionary<ulong, DiscordGuild> Guilds => InternalGuilds;
         public IReadOnlyDictionary<ulong, VoiceChannelConn> VoiceConnections
-            => _voiceChannelHandler?.VoiceConnections.ToDictionary(kvp => kvp.Key, kvp => (VoiceChannelConn)kvp.Value)
-            ?? [];
+            => _voiceChannelHandler.GetVoiceConns();
 
         #endregion
 
@@ -100,13 +99,15 @@ namespace DiscordBotLibrary
 
         public DiscordClient(DiscordClientConfig clientConfig)
         {
-            ClientConfig = clientConfig;
-            Logger = new Logger(ClientConfig.LogLevel);
-            RestApiLimiter = new(this);
+            _clientConfig = clientConfig;
+            Logger = new Logger(clientConfig.LogLevel);
+            _shardHandler = new();
+            _voiceChannelHandler = new VoiceChannelHandler(_shardHandler);
+            RestApiLimiter = new(_clientConfig);
 
             ServiceCollection services = new();
             services.AddSingleton(this);
-            ServiceProvider = services.BuildServiceProvider();
+            _serviceProvider = services.BuildServiceProvider();
         }
 
         #endregion
@@ -116,13 +117,13 @@ namespace DiscordBotLibrary
         /// It will try to connect to the Discord Gateway and start all processes that are needed to operate the bot
         /// </summary>
         /// <returns>An Logger that is recommended to use</returns>
-        public async Task<Logger> Start()
+        public async Task<Logger> StartAsync()
         {
             try
             {
                 Logger.LogInfo("Starting Discord client...");
 
-                await ShardHandler.Start();
+                await _shardHandler.StartAsync(_clientConfig);
                 return Logger;
             }
             catch (Exception ex)
@@ -145,7 +146,7 @@ namespace DiscordBotLibrary
             }
 
             OnReady?.Invoke(this, args!);
-            ShardHandler.ReadyEventArgs = null;
+            _shardHandler.ReadyEventArgs = null;
         }
 
         /// <summary>
@@ -160,7 +161,7 @@ namespace DiscordBotLibrary
             HashSet<Intents> missingIntents = [];
             foreach (Intents intent in neededIntents)
             {
-                if (!ClientConfig.Intents.HasFlag(intent))
+                if (!_clientConfig.Intents.HasFlag(intent))
                 {
                     missingIntents.Add(intent);
                 }
@@ -179,16 +180,8 @@ namespace DiscordBotLibrary
         /// <param name="presenceUpdate"></param>
         /// <returns></returns>
         public async Task UpdatePresence(SelfPresenceUpdate presenceUpdate)
-        {
-            var payload = new
-            {
-                op = OpCode.PresenceUpdate,
-                d = presenceUpdate
-            };
-
-            await ShardHandler.SendGlobalWebSocketMessageAsync(payload);
-        }
-
+            => await _shardHandler.SendGlobalWebSocketMessageAsync<SelfPresenceUpdate>(new(OpCode.PresenceUpdate, presenceUpdate));
+        
         public async Task<bool> LeaveGuildAsync(ulong guildId)
         {
             Logger.LogInfo($"Left guild: {InternalGuilds[guildId].Name}({guildId})");
@@ -215,7 +208,6 @@ namespace DiscordBotLibrary
                 throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
             }
 
-            _voiceChannelHandler ??= new VoiceChannelHandler();
             await _voiceChannelHandler.ConnectToVcAsync(guildId, channelId, selfDeaf, selfMute);
         }
 
@@ -224,10 +216,8 @@ namespace DiscordBotLibrary
         /// </summary>
         /// <returns></returns>
         public async Task DisconnectFromVcAsync(ulong guildId)
-        {
-            if (_voiceChannelHandler != null)
-                await _voiceChannelHandler.DisconnectFromVcAsync(guildId);
-        }
+            => await _voiceChannelHandler.DisconnectFromVcAsync(guildId);
+
 
         internal void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
             => _voiceChannelHandler!.ReceivedVoiceServerUpdate(voiceServerUpdate);
@@ -295,7 +285,7 @@ namespace DiscordBotLibrary
             };
 
             RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
-            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
+            await _shardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
 
             List<GuildMember> fetchedMembers = await taskCompletionSource.Task;
             members.AddRange(fetchedMembers);
@@ -355,7 +345,7 @@ namespace DiscordBotLibrary
             TaskCompletionSource<List<GuildMember>> taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
             RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
 
-            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
+            await _shardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
             return await taskCompletionSource.Task;
         }
 
@@ -386,7 +376,7 @@ namespace DiscordBotLibrary
             TaskCompletionSource<List<GuildMember>> taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
             RequestGuildMembersCache requestGuildMembersCache = new(taskCompletionSource, requestGuildMembers, cacheFetchedMembers);
 
-            await ShardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
+            await _shardHandler.RequestGuildMembersAsync(requestGuildMembersCache);
             return await taskCompletionSource.Task;
         }
 
@@ -396,12 +386,12 @@ namespace DiscordBotLibrary
 
         public async Task<SoundboardSound[]> GetSoundboardSoundsAsync(ulong guildId)
         {
-            Dictionary<ulong, SoundboardSound[]> dict = await ShardHandler.RequestSoundboardSoundsAsync([guildId]);
+            Dictionary<ulong, SoundboardSound[]> dict = await _shardHandler.RequestSoundboardSoundsAsync([guildId]);
             return dict.First().Value;
         }
 
         public async Task<Dictionary<ulong, SoundboardSound[]>> GetSoundboardSoundsAsync(ulong[] guildIds)
-            => await ShardHandler.RequestSoundboardSoundsAsync(guildIds);
+            => await _shardHandler.RequestSoundboardSoundsAsync(guildIds);
 
         #endregion
 
@@ -431,7 +421,10 @@ namespace DiscordBotLibrary
         #region GetMethods
 
         internal static DiscordClient GetDiscordClient()
-            => ServiceProvider.GetRequiredService<DiscordClient>();
+            => _serviceProvider.GetRequiredService<DiscordClient>();
+
+        internal int GetTotalShardCount()
+            => _shardHandler.TotalShards;
 
         /// <summary>
         /// If this method returns null one of the params is invalid

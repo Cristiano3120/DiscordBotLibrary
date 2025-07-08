@@ -1,11 +1,17 @@
 ﻿using System.Collections.Concurrent;
-using DiscordBotLibrary.Sharding;
 
 namespace DiscordBotLibrary.VoiceChannelHandling
 {
-    internal class VoiceChannelHandler
+    internal sealed class VoiceChannelHandler
     {
-        internal ConcurrentDictionary<ulong, InternVoiceChannelConn> VoiceConnections { get; private set; } = new();
+        private readonly ConcurrentDictionary<ulong, InternVoiceChannelConn> _voiceConnections;
+        private readonly ShardHandler _shardHandler;
+
+        public VoiceChannelHandler(ShardHandler shardHandler)
+        {
+            _voiceConnections = new ConcurrentDictionary<ulong, InternVoiceChannelConn>();
+            _shardHandler = shardHandler;
+        }
 
         public async Task ConnectToVcAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
@@ -18,25 +24,20 @@ namespace DiscordBotLibrary.VoiceChannelHandling
                 SelfMute = selfMute,
             };
 
-            var payload = new
-            {
-                op = OpCode.VoiceStateUpdate,
-                d = updateVoiceState,
-            };
-
-            await ShardHandler.SendShardSpecificMessageAsync(guildId, payload);
+            Payload<UpdateVoiceState> payload = new(OpCode.VoiceStateUpdate, updateVoiceState);
+            await _shardHandler.SendShardSpecificMessageAsync(guildId, payload);
 
             Func<ulong, InternVoiceChannelConn> addFunc
                 = (_) => new InternVoiceChannelConn(guildId, channelId, selfDeaf, selfMute);
             Func<ulong, InternVoiceChannelConn, InternVoiceChannelConn> UpdateFunc
                 = (_, _) => new InternVoiceChannelConn(guildId, channelId, selfDeaf, selfMute);
 
-            VoiceConnections.AddOrUpdate(guildId, addFunc, UpdateFunc);
+            _voiceConnections.AddOrUpdate(guildId, addFunc, UpdateFunc);
         }
 
         public async Task DisconnectFromVcAsync(ulong guildId)
         {
-            if (!VoiceConnections.TryRemove(guildId, out _))
+            if (!_voiceConnections.TryRemove(guildId, out _))
             {
                 return;
             }
@@ -49,19 +50,17 @@ namespace DiscordBotLibrary.VoiceChannelHandling
                 SelfMute = false,
             };
 
-            var payload = new
-            {
-                op = OpCode.VoiceStateUpdate,
-                d = updateVoiceState,
-            };
-
-            await ShardHandler.SendShardSpecificMessageAsync(guildId, payload);
+            Payload<UpdateVoiceState> payload = new(OpCode.VoiceStateUpdate, updateVoiceState);
+            await _shardHandler.SendShardSpecificMessageAsync(guildId, payload);
         }
 
         public void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
         {
-            VoiceConnections.TryGetValue(voiceServerUpdate.GuildId, out InternVoiceChannelConn? voiceChannelConn);
+            _voiceConnections.TryGetValue(voiceServerUpdate.GuildId, out InternVoiceChannelConn? voiceChannelConn);
             voiceChannelConn?.ReceivedVoiceServerUpdate(voiceServerUpdate);
         }
+
+        public IReadOnlyDictionary<ulong, VoiceChannelConn> GetVoiceConns()
+            => _voiceConnections.ToDictionary(kvp => kvp.Key, kvp => (VoiceChannelConn)kvp.Value);
     }
 }

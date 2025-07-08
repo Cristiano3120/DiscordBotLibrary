@@ -1,26 +1,26 @@
 ﻿namespace DiscordBotLibrary.Sharding
 {
-    internal static class ShardHandler
+    internal class ShardHandler
     {
-        public static ReadyEventArgs? ReadyEventArgs { get; set; } = new();
-        public static int TotalShards { get; private set; }
+        public ReadyEventArgs? ReadyEventArgs { get; set; } = new();
+        public int TotalShards { get; private set; }
 
-        private static HashSet<int> _shardIds = new();
-        private static Shard[] _shards = [];
-
-        public static async Task Start()
+        private HashSet<int> _shardIds = new();
+        private Shard[] _shards = [];
+        
+        public async Task StartAsync(DiscordClientConfig config)
         {
-            await InitAndConnectShardsAsync();
+            await InitAndConnectShardsAsync(config);
         }
 
         #region StartShards
-        private static async Task InitAndConnectShardsAsync()
+        private async Task InitAndConnectShardsAsync(DiscordClientConfig config)
         {
             GatewayShardingInfo gatewayShardingInfo = await FetchGatewayShardingInfoAsync();
-            await StartShardsAsync(gatewayShardingInfo);
+            await StartShardsAsync(config, gatewayShardingInfo);
         }
 
-        private static async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync()
+        private async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync()
         {
             DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
 
@@ -45,7 +45,7 @@
             return gatewayShardingInfo;
         }
 
-        private static async Task StartShardsAsync(GatewayShardingInfo gatewayShardingInfo)
+        private async Task StartShardsAsync(DiscordClientConfig config, GatewayShardingInfo gatewayShardingInfo)
         {
             List<List<int>> shards = [];
             for (int i = 0; i < gatewayShardingInfo.SessionStartLimit.MaxConcurrency; i++)
@@ -69,7 +69,7 @@
                     if (round < shards[bucket].Count)
                     {
                         int shardId = shards[bucket][round];
-                        tasks.Add(StartShardAsync(shardId));
+                        tasks.Add(StartShardAsync(config, shardId));
                     }
                 }
 
@@ -84,9 +84,11 @@
             }
         }
 
-        private static async Task StartShardAsync(int shardId)
+        private async Task StartShardAsync(DiscordClientConfig config, int shardId)
         {
-            Shard shard = new(shardId);
+            HandleDiscordPayload handleDiscordPayload = new(DiscordClient.GetDiscordClient(), this);
+            Shard shard = new(config, handleDiscordPayload, shardId);
+
             await shard.StartShardAsync();
             _shards[shardId] = shard;
         }
@@ -95,13 +97,13 @@
 
         #region WssRequests
 
-        public static async Task RequestGuildMembersAsync(RequestGuildMembersCache requestGuildMembersCache)
+        public async Task RequestGuildMembersAsync(RequestGuildMembersCache requestGuildMembersCache)
         {
             int shardId = GetResponsibleShardId(requestGuildMembersCache.RequestGuildMembers.GuildId);
             await _shards[shardId].SendGuildMemberRequestAsync(requestGuildMembersCache);
         }
 
-        public static async Task<Dictionary<ulong, SoundboardSound[]>> RequestSoundboardSoundsAsync(ulong[] guildIds)
+        public async Task<Dictionary<ulong, SoundboardSound[]>> RequestSoundboardSoundsAsync(ulong[] guildIds)
         {
             if (guildIds.Length == 0)
                 throw new ArgumentException("Can't request soundboard sounds with an empty array.");
@@ -145,7 +147,7 @@
 
         #endregion
 
-        public static void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
+        public void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
         {
             _shardIds.Add(shardReadyEventArgs.Shard![0]);
             ReadyEventArgs!.Guilds = [.. ReadyEventArgs.Guilds, .. shardReadyEventArgs.Guilds];
@@ -158,13 +160,13 @@
             }
         }
 
-        public static async Task SendShardSpecificMessageAsync(ulong guildId, object payload)
+        public async Task SendShardSpecificMessageAsync<T>(ulong guildId, Payload<T> payload)
         {
             int shardID = GetResponsibleShardId(guildId);
             await _shards[shardID].SendPayloadWssAsync(payload);
         }
 
-        public static async Task SendGlobalWebSocketMessageAsync(object payload)
+        public async Task SendGlobalWebSocketMessageAsync<T>(Payload<T> payload)
         {
             foreach (Shard shard in _shards)
             {
@@ -172,7 +174,7 @@
             }
         }
 
-        private static int GetResponsibleShardId(ulong guildId)
+        private int GetResponsibleShardId(ulong guildId)
             => (int)((guildId >> 22) % (ulong)TotalShards);
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.Sharding.Identify
+﻿namespace DiscordBotLibrary.WssPayloadStructures.Identify
 {
     internal readonly struct Properties
     {

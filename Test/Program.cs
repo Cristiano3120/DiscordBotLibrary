@@ -29,7 +29,7 @@ namespace Test
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
 
-            Logger logger = await client.Start();
+            Logger logger = await client.StartAsync();
 
             TaskScheduler.UnobservedTaskException += (sender, args) =>
             {
@@ -77,7 +77,7 @@ namespace Test
             Channel? chillII = await guild.GetChannelAsync(1341856648842444892);
             Channel? crisChannel = guild.GetChannelThatUserIsIn(crisId);
             Channel? channel = guild.GetChannel(x => x.Id == 1391798016301596703);
-            await crisChannel?.ModifyBitrateAsync(uint.MaxValue);
+            //await crisChannel?.ModifyBitrateAsync(uint.MaxValue);
 
             Channel? chat = guild.GetChannel(x => x.Name == "chat");
         }

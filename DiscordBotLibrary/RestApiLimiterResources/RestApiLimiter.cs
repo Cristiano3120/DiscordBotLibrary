@@ -14,21 +14,18 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         private readonly ConcurrentDictionary<string, HttpRateLimitInfo> _rateLimitInfo = new();
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _routeLocks = new();
 
-        private readonly DiscordClient _discordClient;
         private readonly HttpClient _httpClient;
         
         private bool IsGlobalTimeout => _globalTimeout != TimeSpan.Zero;
         private TimeSpan _globalTimeout = TimeSpan.Zero;
 
-        public RestApiLimiter(DiscordClient discordClient)
+        public RestApiLimiter(DiscordClientConfig clientConfig)
         {
-            _discordClient = discordClient;
-
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri($"https://discord.com/api/v{_discordClient.ClientConfig.Version}/"),
+                BaseAddress = new Uri($"https://discord.com/api/v{clientConfig.Version}/"),
             };
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", _discordClient.ClientConfig.Token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bot", clientConfig.Token);
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("CacxCord (https://github.com/Cristiano3120/DiscordBotLibrary , v1.0)");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
