@@ -15,7 +15,7 @@ namespace DiscordBotLibrary.VoiceChannelHandling
 
         public async Task ConnectToVcAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
-            DiscordClient.Logger.LogDebug($"Connecting to voice channel {channelId} in guild {guildId} with selfDeaf={selfDeaf} and selfMute={selfMute}");
+            DiscordClient.Logger.Log(LogLevel.Debug, $"Connecting to voice channel {channelId} in guild {guildId} with selfDeaf={selfDeaf} and selfMute={selfMute}");
             UpdateVoiceState updateVoiceState = new()
             {
                 GuildId = guildId,

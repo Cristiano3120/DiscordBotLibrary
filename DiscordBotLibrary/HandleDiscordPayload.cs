@@ -25,7 +25,7 @@ namespace DiscordBotLibrary
             ResumeConnInfos resumeConnInfos = eventParams.ResumeConnInfos;
             if (resumeConnInfos != ResumeConnInfos.EmptyConnInfos)
             {
-                DiscordClient.Logger.LogDebug("Resuming connection.");
+                DiscordClient.Logger.Log(LogLevel.Debug, "Resuming connection.");
 
                 ResumePayload resumePayload = new(eventParams.Token, resumeConnInfos.SessionId, eventParams.LastSequenceNumber);
                 Payload<ResumePayload> payload = new(OpCode.Resume, resumePayload);
@@ -86,7 +86,7 @@ namespace DiscordBotLibrary
         internal void HandleGuildCreateEvent(JToken jToken)
         {
             DiscordGuild discordGuild = jToken.Deserialize<DiscordGuild>();
-            _discordClient.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (_, _) => discordGuild);
+            _discordClient.InternalGuilds.AddOrUpdate(discordGuild.Id, discordGuild, (id, existingGuild) => discordGuild);
             _discordClient.InvokeOnGuildCreate(discordGuild);
         }
 

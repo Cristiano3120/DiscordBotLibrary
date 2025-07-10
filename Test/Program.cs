@@ -5,6 +5,7 @@ using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
 using Microsoft.Extensions.DependencyInjection;
 using Channel = DiscordBotLibrary.ChannelResources.Channel;
+using DotNetEnv;
 
 namespace Test
 {
@@ -15,32 +16,32 @@ namespace Test
 
         static async Task Main()
         {
-            StreamReader streamReader = new(@"C:\Users\Crist\Desktop\LibraryTestToken.txt");
+            Env.Load();
             DiscordClientConfig discordClientConfig = new()
             {
-                LogLevel = LogLevel.Debug,
-                Token = streamReader.ReadToEnd(),
+                Token = Environment.GetEnvironmentVariable("LIBRARY_TOKEN") ?? throw new ArgumentNullException("Token is null"),
                 Intents = Intents.All,
             };
 
-            DiscordClient client = new(discordClientConfig);
+            DiscordClient client = new(discordClientConfig, new LoggerConfig(logLevel: LogLevel.Debug));
 
             client.OnPresenceUpdate += Client_OnPresenceUpdate;
             client.OnGuildCreate += Client_OnGuildCreate;
             client.OnReady += Client_OnReady;
+            client.OnGuildsReceived += Client_OnGuildsReceived;
 
             Logger logger = await client.StartAsync();
 
             TaskScheduler.UnobservedTaskException += (sender, args) =>
             {
-                logger.LogErrorToFileOnly(args.Exception);
+                logger.LogError(args.Exception, true);
                 args.SetObserved();
             };
 
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 Exception ex = (Exception)args.ExceptionObject;
-                logger.LogErrorToFileOnly(ex);
+                logger.LogError(ex, true);
             };
 
             ServiceCollection services = new();
@@ -54,7 +55,7 @@ namespace Test
         private static async void Client_OnReady(DiscordClient client, ReadyEventArgs args)
         {
             Console.WriteLine("Ready!");
-            await client.UpdatePresence(new SelfPresenceUpdate()
+            await client.UpdatePresenceAsync(new SelfPresenceUpdate()
             {
                 Status = PresenceStatus.Online,
                 Activities =
@@ -67,18 +68,17 @@ namespace Test
                     },
                 ],
             });
+        }
 
+        private static async void Client_OnGuildsReceived(DiscordClient client, IReadOnlyDictionary<ulong, DiscordGuild> args)
+        {
             const ulong crisDc = 1126185640745246731;
             const ulong familyDc = 1341844969085862021;
             const ulong cacxCordDc = 1381712720935518369;
             const ulong crisId = 912014865898549378;
 
             DiscordGuild guild = client.GetGuild(familyDc)!;
-            Channel? chillII = await guild.GetChannelAsync(1341856648842444892);
             Channel? crisChannel = guild.GetChannelThatUserIsIn(crisId);
-            Channel? channel = guild.GetChannel(x => x.Id == 1391798016301596703);
-            //await crisChannel?.ModifyBitrateAsync(uint.MaxValue);
-
             Channel? chat = guild.GetChannel(x => x.Name == "chat");
         }
 
@@ -89,7 +89,7 @@ namespace Test
 
         private static void Client_OnPresenceUpdate(DiscordClient discordClient, Presence args)
         {
-
+            
         }
     }
 }

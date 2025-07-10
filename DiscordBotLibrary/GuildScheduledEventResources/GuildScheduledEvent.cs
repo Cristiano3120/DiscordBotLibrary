@@ -80,7 +80,6 @@
         /// TYPE: Snowflake
         /// </summary>
         [JsonProperty("entity_id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong? EntityId { get; init; }
 
         /// <summary>

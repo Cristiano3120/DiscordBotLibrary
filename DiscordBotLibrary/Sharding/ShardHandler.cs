@@ -1,11 +1,14 @@
 ﻿namespace DiscordBotLibrary.Sharding
 {
-    internal class ShardHandler
+    internal sealed class ShardHandler(DiscordClient discordClient)
     {
-        public ReadyEventArgs? ReadyEventArgs { get; set; } = new();
-        public int TotalShards { get; private set; }
+        public int TotalShards => _shards.Length;
 
-        private HashSet<int> _shardIds = new();
+        private readonly DiscordClient _discordClient = discordClient;
+        /// <summary>
+        /// If this is 0 all shards are ready. The starting value is the ammount of shards that should be started.
+        /// </summary>
+        private int? _shardsReady;
         private Shard[] _shards = [];
         
         public async Task StartAsync(DiscordClientConfig config)
@@ -22,23 +25,25 @@
 
         private async Task<GatewayShardingInfo> FetchGatewayShardingInfoAsync()
         {
-            DiscordClient.Logger.LogDebug("Fetching sharding information from Discord API");
+            DiscordClient.Logger.Log(LogLevel.Debug, "Fetching sharding information from Discord API");
 
-            string response = await DiscordClient.GetDiscordClient().RestApiLimiter.GetStringAsync("https://discord.com/api/v10/gateway/bot");
+            string response = await _discordClient.RestApiLimiter.GetStringAsync("https://discord.com/api/v10/gateway/bot");
             GatewayShardingInfo gatewayShardingInfo = JsonConvert.DeserializeObject<GatewayShardingInfo>(response, DiscordClient.ReceiveJsonSerializerOptions);
 
             TimeSpan waitTime = TimeSpan.FromMilliseconds(gatewayShardingInfo.SessionStartLimit.ResetAfter);
             DateTime resumeTime = DateTime.UtcNow + waitTime;
 
-            DiscordClient.Logger.LogInfo($"Used {gatewayShardingInfo.SessionStartLimit.Remaining} out of " +
+            DiscordClient.Logger.Log(LogLevel.Info, $"Used {gatewayShardingInfo.SessionStartLimit.Remaining} out of " +
                 $"{gatewayShardingInfo.SessionStartLimit.Total} logins");
-            DiscordClient.Logger.LogInfo($"Remaining logins will be reseted at: {resumeTime}");
+            DiscordClient.Logger.Log(LogLevel.Info, $"Remaining logins will be reseted at: {resumeTime}");
 
-            TotalShards = gatewayShardingInfo.Shards;
-            _shards = new Shard[gatewayShardingInfo.Shards];
+            int shards = gatewayShardingInfo.Shards;
+            _shards = new Shard[shards];
+            _shardsReady = shards;
+
             if (gatewayShardingInfo.Shards > gatewayShardingInfo.SessionStartLimit.Remaining)
             {
-                DiscordClient.Logger.LogDebug($"Login limit reached. Waiting until {resumeTime}");
+                DiscordClient.Logger.Log(LogLevel.Debug, $"Login limit reached. Waiting until {resumeTime}");
                 await Task.Delay(waitTime);
             }
 
@@ -73,12 +78,12 @@
                     }
                 }
 
-                DiscordClient.Logger.LogDebug($"Started {tasks.Count + _shards.Where(x => x is not null).Count()} out of {gatewayShardingInfo.Shards} shards");
+                DiscordClient.Logger.Log(LogLevel.Debug, $"Started {tasks.Count + _shards.Where(x => x is not null).Count()} out of {gatewayShardingInfo.Shards} shards");
                 await Task.WhenAll(tasks);
 
                 if (round < maxRounds - 1)
                 {
-                    DiscordClient.Logger.LogDebug($"Waiting 5 seconds till the next shards will be started");
+                    DiscordClient.Logger.Log(LogLevel.Debug, $"Waiting 5 seconds till the next shards will be started");
                     await Task.Delay(5000);
                 }
             }
@@ -86,11 +91,26 @@
 
         private async Task StartShardAsync(DiscordClientConfig config, int shardId)
         {
-            HandleDiscordPayload handleDiscordPayload = new(DiscordClient.GetDiscordClient(), this);
+            HandleDiscordPayload handleDiscordPayload = new(_discordClient, this);
             Shard shard = new(config, handleDiscordPayload, shardId);
 
             await shard.StartShardAsync();
             _shards[shardId] = shard;
+        }
+
+        public void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
+        {
+            _shardsReady--;
+            foreach (UnavailableGuild discordGuild in shardReadyEventArgs.Guilds)
+            {
+                _discordClient.InternalGuilds.TryAdd(discordGuild.Id, new(discordGuild));
+            }
+            
+            if (_shardsReady == 0)
+            {
+                _discordClient.ShardsReady(shardReadyEventArgs);
+                _shardsReady = null!;
+            }
         }
 
         #endregion
@@ -146,19 +166,6 @@
 
 
         #endregion
-
-        public void ShardReady(ShardReadyEventArgs shardReadyEventArgs)
-        {
-            _shardIds.Add(shardReadyEventArgs.Shard![0]);
-            ReadyEventArgs!.Guilds = [.. ReadyEventArgs.Guilds, .. shardReadyEventArgs.Guilds];
-
-            if (_shardIds.Count == TotalShards)
-            {
-                DiscordClient client = DiscordClient.GetDiscordClient();
-                _ = client.ShardsReady(ReadyEventArgs);
-                _shardIds = null!;
-            }
-        }
 
         public async Task SendShardSpecificMessageAsync<T>(ulong guildId, Payload<T> payload)
         {

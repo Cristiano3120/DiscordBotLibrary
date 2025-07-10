@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Buffers;
+using System.Net.WebSockets;
 using System.Text;
 using DiscordBotLibrary.WssPayloadStructures.Identify;
 
@@ -45,43 +46,49 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task ReceiveMessagesAsync()
         {
-            byte[] buffer = new byte[16384];
+            byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(16384);
+            Memory<byte> buffer = new(rentedBuffer);
             MemoryStream ms = new();
 
             while (_webSocket.State == WebSocketState.Open)
             {
                 try
                 {
-                    WebSocketReceiveResult receivedDataInfo = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    ValueWebSocketReceiveResult receivedDataInfo = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
                     if (receivedDataInfo.MessageType == WebSocketMessageType.Close)
                     {
                         await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                         break;
                     }
 
-                    await ms.WriteAsync(buffer.AsMemory(0, receivedDataInfo.Count));
+                    await ms.WriteAsync(buffer.Slice(0, receivedDataInfo.Count));
                     if (!receivedDataInfo.EndOfMessage)
                     {
                         continue;
                     }
 
                     string message = Encoding.UTF8.GetString(ms.ToArray(), 0, (int)ms.Length);
-                    DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, message, PayloadType.Received, _shardId);
+                    DiscordClient.Logger.LogWssPayload(PayloadType.Received, message, _shardId);
 
-                    JToken jsonDocument = JToken.Parse(message);
-                    await HandleReceivedMessage(jsonDocument);
+                    JToken jToken = JToken.Parse(message);
+                    await HandleReceivedMessage(jToken);
 
-                    ClearMs(ms);
+                    ms.Position = 0;
+                    ms.SetLength(0);
                 }
                 catch (Exception ex)
                 {
                     DiscordClient.Logger.LogError(ex);
                     _cts.Cancel();
                 }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(rentedBuffer);
+                }
             }
 
-            DiscordClient.Logger.LogDebug("Connection closed!");
-            DiscordClient.Logger.LogDebug($"CloseCode: {_webSocket.CloseStatus}, Reason: {_webSocket.CloseStatusDescription}");
+            DiscordClient.Logger.Log(LogLevel.Debug, "Connection closed!");
+            DiscordClient.Logger.Log(LogLevel.Debug, $"CloseCode: {_webSocket.CloseStatus}, Reason: {_webSocket.CloseStatusDescription}");
         }
 
         private async Task HandleReceivedMessage(JToken jToken)
@@ -96,7 +103,7 @@ namespace DiscordBotLibrary.Sharding
                         _lastSequenceNumber = await HandleDiscordPayload.HandleDispatch(this, jToken);
                         break;
                     case OpCode.Hello:
-                        DiscordClient.Logger.LogInfo("Received Hello message.");
+                        DiscordClient.Logger.Log(LogLevel.Info, "Received Hello message.");
                         HelloEventParams helloEventParams = new()
                         {
                             JToken = jToken,
@@ -109,14 +116,14 @@ namespace DiscordBotLibrary.Sharding
                         await HandleDiscordPayload.HandleHelloEventAsync(helloEventParams);
                         break;
                     case OpCode.HeartbeatAck:
-                        DiscordClient.Logger.LogDebug("Heartbeat acknowledged.");
+                        DiscordClient.Logger.Log(LogLevel.Debug, "Heartbeat acknowledged.");
                         break;
                     case OpCode.Reconnect:
-                        DiscordClient.Logger.LogWarning("Reconnect requested.");
+                        DiscordClient.Logger.Log(LogLevel.Warning, "Reconnect requested.");
                         await HandleDiscordPayload.HandleResumeConnAsync(_webSocket, ResumeConnInfos);
                         break;
                     case OpCode.InvalidSession:
-                        DiscordClient.Logger.LogWarning("Invalid session.");
+                        DiscordClient.Logger.Log(LogLevel.Warning, "Invalid session.");
                         await HandleDiscordPayload.HandleSessionInvalidAsync(this, jToken, ResumeConnInfos, _webSocket);
                         break;
                 }
@@ -167,7 +174,7 @@ namespace DiscordBotLibrary.Sharding
                         await _handleDiscordPayload.HandleChannelPinsUpdateEvent(jToken);
                         break;
                     default:
-                        DiscordClient.Logger.LogWarning($"Unhandled event: {events}.");
+                        DiscordClient.Logger.Log(LogLevel.Warning, $"Unhandled event: {events}.");
                         break;
                 }
             }
@@ -191,7 +198,7 @@ namespace DiscordBotLibrary.Sharding
 
             if (!await _wsGatewayLimiter.TrySendAsync(_webSocket, jsonStr))
             {
-                DiscordClient.Logger.LogInfo($"Shard{_shardId}: Gateway limit reached!");
+                DiscordClient.Logger.Log(LogLevel.Info, $"Shard{_shardId}: Gateway limit reached!");
             }
         }
 
@@ -199,7 +206,7 @@ namespace DiscordBotLibrary.Sharding
         {
             try
             {
-                DiscordClient.Logger.LogPayload(ConsoleColor.Cyan, jsonStr, PayloadType.Sent, _shardId);
+                DiscordClient.Logger.LogWssPayload(PayloadType.Sent, jsonStr, _shardId);
 
                 byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonStr);
                 await _webSocket.SendAsync(jsonBytes, WebSocketMessageType.Text, true, CancellationToken.None);
@@ -212,7 +219,7 @@ namespace DiscordBotLibrary.Sharding
 
         internal async Task SendIdentifyAsync(int shardCount)
         {
-            DiscordClient.Logger.LogInfo("Sending IdentifyPayload payload");
+            DiscordClient.Logger.Log(LogLevel.Info, "Sending IdentifyPayload payload");
 
             const string clientId = "DiscordBotLibrary";
             IdentifyPayload identifyPayload = new()
@@ -236,7 +243,7 @@ namespace DiscordBotLibrary.Sharding
         {
             while (_webSocket.State == WebSocketState.Open)
             {
-                DiscordClient.Logger.LogDebug($"Sending heartbeat. Sequence: {_lastSequenceNumber}");
+                DiscordClient.Logger.Log(LogLevel.Debug, $"Sending heartbeat. Sequence: {_lastSequenceNumber}");
 
                 Payload<int?> payload = new(OpCode.Heartbeat, _lastSequenceNumber);
                 await SendPayloadWssAsync(payload);
@@ -268,13 +275,5 @@ namespace DiscordBotLibrary.Sharding
         }
 
         #endregion
-
-        private static void ClearMs(MemoryStream ms)
-        {
-            byte[] buffer = ms.GetBuffer();
-            Array.Clear(buffer, 0, buffer.Length);
-            ms.Position = 0;
-            ms.SetLength(0);
-        }
     }
 }

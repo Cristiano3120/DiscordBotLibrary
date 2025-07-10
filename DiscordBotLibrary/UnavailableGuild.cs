@@ -10,7 +10,6 @@
         /// ID of the unavailable guild.
         /// </summary>
         [JsonProperty("id")]
-        [JsonConverter(typeof(SnowflakeConverter))]
         public ulong Id { get; init; }
 
         /// <summary>
@@ -18,5 +17,12 @@
         /// </summary>
         [JsonProperty("unavailable")]
         public bool Unavailable { get; init; }
+
+        public static implicit operator UnavailableGuild(DiscordGuild discordGuild)
+            => new()
+            {
+                Id = discordGuild.Id,
+                Unavailable = true
+            };
     }
 }

@@ -57,7 +57,6 @@ namespace DiscordBotLibrary
         };
 
         #endregion
-
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
         internal RestApiLimiter RestApiLimiter { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
@@ -91,17 +90,17 @@ namespace DiscordBotLibrary
         #endregion
 
         public event Action<DiscordClient, ReadyEventArgs>? OnReady;
-
+        public event Action<DiscordClient, IReadOnlyDictionary<ulong, DiscordGuild>>? OnGuildsReceived;
         #endregion
 
         #region Constructors
-        public DiscordClient() : this(DiscordClientConfig.Default) { }
+        public DiscordClient() : this(DiscordClientConfig.Default, new()) { }
 
-        public DiscordClient(DiscordClientConfig clientConfig)
+        public DiscordClient(DiscordClientConfig clientConfig, LoggerConfig loggerConfig)
         {
             _clientConfig = clientConfig;
-            Logger = new Logger(clientConfig.LogLevel);
-            _shardHandler = new();
+            Logger = new Logger(loggerConfig);
+            _shardHandler = new(this);
             _voiceChannelHandler = new VoiceChannelHandler(_shardHandler);
             RestApiLimiter = new(_clientConfig);
 
@@ -121,7 +120,7 @@ namespace DiscordBotLibrary
         {
             try
             {
-                Logger.LogInfo("Starting Discord client...");
+                Logger.Log(LogLevel.Info, "Starting Discord client...");
 
                 await _shardHandler.StartAsync(_clientConfig);
                 return Logger;
@@ -133,20 +132,42 @@ namespace DiscordBotLibrary
             }
         }
 
-        internal async Task ShardsReady(ReadyEventArgs? args)
+        internal void ShardsReady(ShardReadyEventArgs args)
         {
-            while (true)
+            ReadyEventArgs? readyEventArgs = new()
             {
-                if (args?.Guilds.Length == InternalGuilds.Count)
+                Application = args.Application,
+                DiscordUser = args.DiscordUser,
+                Guilds = [..InternalGuilds.Values],
+            };
+
+            _ = CheckIfGuildsComplete();
+            OnReady?.Invoke(this, readyEventArgs!);
+        }
+
+        private async Task CheckIfGuildsComplete()
+        {
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
+
+            try
+            {
+                while (!cts.IsCancellationRequested)
                 {
-                    break;
+                    if (!InternalGuilds.IsEmpty && InternalGuilds.All(x => x.Value.Unavailable == false))
+                    {
+                        OnGuildsReceived?.Invoke(this, InternalGuilds);
+                        return;
+                    }
+
+                    await Task.Delay(100, cts.Token);
                 }
 
-                await Task.Delay(100);
+                OnGuildsReceived?.Invoke(this, InternalGuilds);
             }
-
-            OnReady?.Invoke(this, args!);
-            _shardHandler.ReadyEventArgs = null;
+            catch (TaskCanceledException)
+            {
+                OnGuildsReceived?.Invoke(this, InternalGuilds);
+            }
         }
 
         /// <summary>
@@ -179,12 +200,12 @@ namespace DiscordBotLibrary
         /// </summary>
         /// <param name="presenceUpdate"></param>
         /// <returns></returns>
-        public async Task UpdatePresence(SelfPresenceUpdate presenceUpdate)
+        public async Task UpdatePresenceAsync(SelfPresenceUpdate presenceUpdate)
             => await _shardHandler.SendGlobalWebSocketMessageAsync<SelfPresenceUpdate>(new(OpCode.PresenceUpdate, presenceUpdate));
         
         public async Task<bool> LeaveGuildAsync(ulong guildId)
         {
-            Logger.LogInfo($"Left guild: {InternalGuilds[guildId].Name}({guildId})");
+            Logger.Log(LogLevel.Info, $"Left guild: {InternalGuilds[guildId].Name}({guildId})");
             string endpoint = RestApiEndpoints.GetGuildEndpoint(guildId, ChannelEndpoint.Delete);
             return await RestApiLimiter.DeleteAsync(endpoint, CallerInfos.Create());
         }
@@ -195,33 +216,18 @@ namespace DiscordBotLibrary
         /// Connects the bot to a voice channel in a specific guild.
         /// </summary>
         /// <returns></returns>
-        [DebuggerStepThrough]
-        public async Task ConnectToVcAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
-        {
-            if (!InternalGuilds.TryGetValue(guildId, out DiscordGuild? discordGuild))
-            {
-                throw new ArgumentException($"No guild found with that guild id", nameof(guildId));
-            }
-
-            if (discordGuild.GetChannel(channelId)?.Type is not ChannelType.Voice)
-            {
-                throw new ArgumentException($"The channel either doesnt exist in this guild or is not a voice channel");
-            }
-
-            await _voiceChannelHandler.ConnectToVcAsync(guildId, channelId, selfDeaf, selfMute);
-        }
-
+        internal async Task JoinVoiceChannelAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
+            => await _voiceChannelHandler.ConnectToVcAsync(guildId, channelId, selfDeaf, selfMute);
+        
         /// <summary>
         /// Disconnects the bot from the voice channel in a specific guild.
         /// </summary>
         /// <returns></returns>
-        public async Task DisconnectFromVcAsync(ulong guildId)
+        internal async Task LeaveVoiceChannelAsync(ulong guildId)
             => await _voiceChannelHandler.DisconnectFromVcAsync(guildId);
-
 
         internal void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
             => _voiceChannelHandler!.ReceivedVoiceServerUpdate(voiceServerUpdate);
-
 
         #endregion
 
@@ -245,7 +251,7 @@ namespace DiscordBotLibrary
 
             if (userIds.Length == 0)
             {
-                Logger.LogError("No user IDs provided for RequestGuildMembersByIdAsync().");
+                Logger.LogError("No user IDs provided for RequestGuildMembersByIdAsync().", CallerInfos.Create());
                 return null;
             }
 
@@ -440,14 +446,6 @@ namespace DiscordBotLibrary
         public Channel? GetChannel(ulong guildId, ulong channelId)
             => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
                 ? guild.GetChannel(channelId)
-                : null;
-
-        /// <summary>
-        /// If this method returns null one of the params is invalid
-        /// </summary>
-        public async Task<Message[]?> GetPinnedMessagesAsync(ulong guildId, ulong channelId)
-            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
-                ? await guild.GetPinnedMessagesAsync(channelId)
                 : null;
 
         #endregion

@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,10 +15,9 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         private readonly ConcurrentDictionary<string, HttpRateLimitInfo> _rateLimitInfo = new();
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _routeLocks = new();
 
-        private readonly HttpClient _httpClient;
-        
         private bool IsGlobalTimeout => _globalTimeout != TimeSpan.Zero;
         private TimeSpan _globalTimeout = TimeSpan.Zero;
+        private readonly HttpClient _httpClient;
 
         public RestApiLimiter(DiscordClientConfig clientConfig)
         {
@@ -30,252 +30,121 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        #region External methods
-
         public async Task<T?> GetAsync<T>(string endpoint, CallerInfos callerInfos)
-        {
-            SemaphoreSlim semaphoreSlim = default!;
-            try
-            {
-                DiscordClient.Logger.LogDebug($"[GetAsync<T>(string endpoint)] requesting {endpoint}");
-                string formattedEndpoint = FormatEndpoint(endpoint);
+            => await HandleRequestAsync<T, T>(HttpRequestType.Get, default!, callerInfos, endpoint);
 
-                semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                HttpResponseMessage? response = await GetDeleteRequestAsync(HttpRequestType.Get, endpoint, callerInfos);
-                if (response is null)
-                    return default;
-
-                HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
-
-                if (!string.IsNullOrEmpty(newInfo.BucketId))
-                {
-                    _rateLimitInfo[newInfo.BucketId] = newInfo;
-                    _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
-                }
-
-                string json = await response.Content.ReadAsStringAsync();
-                T? result = JsonConvert.DeserializeObject<T>(json, DiscordClient.ReceiveJsonSerializerOptions);
-
-                return result ?? throw new InvalidOperationException(
-                    $"Deserialization returned null. Response: {json} (expected: {typeof(T)})"
-                );
-            }
-            finally
-            {
-                semaphoreSlim.Release();
-            }
-        }
-
-        /// <summary>
-        /// <c>True</c> when deletion was sucessful
-        /// </summary>
-        [DebuggerStepThrough]
         public async Task<bool> DeleteAsync(string endpoint, CallerInfos callerInfos)
-        {
-            SemaphoreSlim semaphoreSlim = default!;
-            try
-            {
-                DiscordClient.Logger.LogDebug($"[DeleteAsync<T>(string endpoint)] requesting {endpoint}");
-                string formattedEndpoint = FormatEndpoint(endpoint);
+            => await HandleRequestAsync<bool, bool>(HttpRequestType.Delete, default!, callerInfos, endpoint);
 
-                semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                HttpResponseMessage? response = await GetDeleteRequestAsync(HttpRequestType.Delete, endpoint, callerInfos);
-                if (response is null)
-                    return false;
-
-                HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
-
-                if (!string.IsNullOrEmpty(newInfo.BucketId))
-                {
-                    _rateLimitInfo[newInfo.BucketId] = newInfo;
-                    _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
-                }
-
-                return true;
-            }
-            finally
-            {
-                semaphoreSlim.Release();
-            }
-        }
-
-        [DebuggerStepThrough]
         public async Task<TOutput?> PostAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
-        {
-            SemaphoreSlim semaphoreSlim = default!;
-            try
-            {
-                DiscordClient.Logger.LogDebug($"[PostAsync<T>(string endpoint)] requesting {endpoint}");
-                string formattedEndpoint = FormatEndpoint(endpoint);
-
-                semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                (HttpResponseMessage? response, TOutput? newObj) = await PostPatchRequestAsync<TInput, TOutput>(HttpRequestType.Post, content, endpoint, callerInfos);
-                if (response is null)
-                    return default;
-
-                HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
-
-                if (!string.IsNullOrEmpty(newInfo.BucketId))
-                {
-                    _rateLimitInfo[newInfo.BucketId] = newInfo;
-                    _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
-                }
-
-                return newObj;
-            }
-            finally
-            {
-                semaphoreSlim.Release();
-            }
-        }
+            => await HandleRequestAsync<TInput, TOutput>(HttpRequestType.Post, content, callerInfos, endpoint);
 
         public async Task<TOutput?> PatchAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
+            => await HandleRequestAsync<TInput, TOutput>(HttpRequestType.Patch, content, callerInfos, endpoint);
+
+        public async Task<string> GetStringAsync(string endpoint)
+            => await _httpClient.GetStringAsync(endpoint);
+
+        private async Task<TOutput?> HandleRequestAsync<TInput, TOutput>(HttpRequestType httpRequestType, TInput input, CallerInfos callerInfos,
+            string endpoint)
         {
-            SemaphoreSlim semaphoreSlim = default!;
+            SemaphoreSlim? semaphoreSlim = null;
             try
             {
-                DiscordClient.Logger.LogDebug($"[PatchAsync<T>(string endpoint)] requesting {endpoint}");
-                string formattedEndpoint = FormatEndpoint(endpoint);
-
-                semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
-                (HttpResponseMessage? response, TOutput? newObj) = await PostPatchRequestAsync<TInput, TOutput>(HttpRequestType.Patch, content, endpoint, callerInfos);
-                if (response is null)
-                    return default;
-
-                HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
-
-                if (!string.IsNullOrEmpty(newInfo.BucketId))
+                while (true)
                 {
-                    _rateLimitInfo[newInfo.BucketId] = newInfo;
-                    _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
-                }
+                    DiscordClient.Logger.Log(LogLevel.Debug, $"[{httpRequestType}]: requesting {endpoint}");
+                    string formattedEndpoint = FormatEndpoint(endpoint);
 
-                return newObj;
+                    semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
+
+                    HttpResponseMessage response = httpRequestType switch
+                    {
+                        HttpRequestType.Get => await _httpClient.GetAsync(endpoint),
+                        HttpRequestType.Delete => await _httpClient.DeleteAsync(endpoint),
+                        HttpRequestType.Post => await _httpClient.PostAsync(endpoint, new StringContent(JsonConvert.SerializeObject(input, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json")),
+                        HttpRequestType.Patch => await _httpClient.PatchAsync(endpoint, new StringContent(JsonConvert.SerializeObject(input, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json")),
+                        _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Get, HttpRequestType.Delete, HttpRequestType.Post or HttpRequestType.Patch"),
+                    };
+
+                    string json = await response.Content.ReadAsStringAsync();
+                    JToken jsonToken = JToken.Parse(json);
+                    string prettyJson = jsonToken.ToString(Formatting.Indented);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        DiscordClient.Logger.LogHttpPayload(PayloadType.Received, httpRequestType, json);
+                        HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
+                        if (!string.IsNullOrEmpty(newInfo.BucketId))
+                        {
+                            _rateLimitInfo[newInfo.BucketId] = newInfo;
+                            _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
+                        }
+
+                        //TOutput is bool when deleting a resource
+                        if (typeof(TOutput) == typeof(bool))
+                            return (TOutput)(object)true;
+
+                        TOutput? result = JsonConvert.DeserializeObject<TOutput>(json, DiscordClient.ReceiveJsonSerializerOptions);
+                        return result ?? throw new InvalidOperationException($"Deserialization returned null." +
+                            $" Response: {json} \n (expected: {typeof(TOutput)})");
+                    }
+
+                    DiscordClient.Logger.LogError($"While sending a [{httpRequestType}] request to the endpoint: {endpoint}", callerInfos);
+                    if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
+                    {
+                        DiscordClient.Logger.CustomLog(ConsoleColor.Red, LogLevel.Error, $"[API RESPONSE]: {prettyJson}\n");
+                        return default;
+                    }
+                }
             }
             finally
             {
-                semaphoreSlim.Release();
+                semaphoreSlim?.Release();
             }
         }
 
-        #endregion
-
-        #region Requests
-
-        [DebuggerStepThrough]
-        private async Task<HttpResponseMessage?> GetDeleteRequestAsync(HttpRequestType requestType
-            , string endpoint, CallerInfos callerInfos)
-        {
-            HttpResponseMessage response;
-            while (true)
-            {
-                response = requestType switch
-                {
-                    HttpRequestType.Get => await _httpClient.GetAsync(endpoint),
-                    HttpRequestType.Delete => await _httpClient.DeleteAsync(endpoint),
-                    _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Get or HttpRequestType.Delete"),
-                };
-
-                if (response.IsSuccessStatusCode)
-                    return response;
-
-                if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
-                    return null;
-            }
-        }
-
-        private async Task<(HttpResponseMessage? responseMessage, TOutput? newObj)> PostPatchRequestAsync<TInput, TOutput>
-            (HttpRequestType requestType, TInput content, string endpoint, CallerInfos callerInfos)
-        {
-            HttpResponseMessage response;
-            StringContent stringContent = new(JsonConvert.SerializeObject(content, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json");
-
-            while (true)
-            {
-                response = requestType switch
-                {
-                    HttpRequestType.Patch => await _httpClient.PatchAsync(endpoint, stringContent),
-                    HttpRequestType.Post => await _httpClient.PostAsync(endpoint, stringContent),
-                    _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Patch or HttpRequestType.Post"),
-                };
-
-                string jsonString = await response.Content.ReadAsStringAsync();
-                JToken jsonToken = JToken.Parse(jsonString);
-                string prettyJson = jsonToken.ToString(Formatting.Indented);
-
-                HttpRateLimitInfo httpRateLimitInfo = GetRateLimitInfo(response.Headers);
-
-                DiscordClient.Logger.LogDebug($"[Request]: {FormatEndpoint(endpoint)} [{httpRateLimitInfo.BucketId}] " +
-                    $"[{requestType}] [{(int)response.StatusCode}] [{response.ReasonPhrase}] [Retry-after: {httpRateLimitInfo.RetryAfter}]");
-                DiscordClient.Logger.LogHttpPayload(PayloadType.Sent, requestType, await stringContent.ReadAsStringAsync());
-                DiscordClient.Logger.LogError($"[Response]: {prettyJson}");
-                
-                if (response.IsSuccessStatusCode)
-                    break;
-
-                if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
-                    return (null, default);
-            }
-
-            string returnedContent = await response.Content.ReadAsStringAsync();
-            TOutput? newObj = JsonConvert.DeserializeObject<TOutput>(returnedContent, DiscordClient.SendJsonSerializerSettings);
-
-            if (newObj is null)
-            {
-                JToken jToken = JToken.Parse(returnedContent);
-                string prettyJson = jToken.ToString(Formatting.Indented);
-                throw new ArgumentException($"You expected {typeof(TOutput)} but the Rest API returned something else. Returned content:\n{prettyJson}");
-            }
-
-            return (response, newObj);
-        }
-
-        #endregion
-
-        #region HandleHttpErrors
+        #region HandleErrorCode
 
         /// <summary>
         /// True if the error is handable. If false cancel the method
         /// </summary>
-        [DebuggerStepThrough]
         private async Task<bool> HandleErrorCode(HttpResponseMessage response, CallerInfos callerInfos, string endpoint, int statusCode)
         {
+            DiscordClient.Logger.CustomLog(ConsoleColor.Red, LogLevel.Error, $"[API RESPONSE]: {response.StatusCode} - {response.ReasonPhrase}");
             switch (statusCode)
             {
                 case 400:
-                    DiscordClient.Logger.LogError($"The data you sent is invalid in some form" +
-                        $"[file {callerInfos.FilePath}, in {callerInfos.CallerName}(), at line: {callerInfos.LineNum}");
+                    DiscordClient.Logger.LogError($"The data you sent is invalid in some form", callerInfos);
                     return false;
                 case 403:
-                    DiscordClient.Logger.LogError($"You do not have the permissions to execute that" +
-                        $"[file {callerInfos.FilePath}, in {callerInfos.CallerName}(), at line: {callerInfos.LineNum}");
+                    DiscordClient.Logger.LogError($"You do not have the permissions to execute that", callerInfos);
                     return false;
                 case 404:
-                    DiscordClient.Logger.LogError($"The resource you are trying to access doesn´t exist" +
-                        $"[file {callerInfos.FilePath}, in {callerInfos.CallerName}(), at line: {callerInfos.LineNum}");
+                    DiscordClient.Logger.LogError($"The resource you are trying to access doesn´t exist", callerInfos);
                     return false;
                 case 429:
                     await HandleError429(response, endpoint);
                     return true;
                 default:
-                    throw new HttpRequestException($"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
+                    throw new HttpRequestException($"[HTTP ERROR]: {(int)response.StatusCode} - {response.ReasonPhrase}");
             }
         }
 
         private async Task HandleError429(HttpResponseMessage response, string endpoint)
         {
-            DiscordClient.Logger.LogDebug($"[RateLimit] Hit while requesting {endpoint}");
+            DiscordClient.Logger.Log(LogLevel.Debug, $"[RateLimit]: while requesting {endpoint}");
 
             if (CheckIfGlobal(await response.Content.ReadAsStringAsync(), out TimeSpan timeToWait))
             {
-                DiscordClient.Logger.LogWarning($"[GlobalRateLimit] Blocked for {timeToWait.TotalSeconds:F2}s");
+                DiscordClient.Logger.Log(LogLevel.Warning, $"[GlobalRateLimit]: Blocked for {timeToWait.TotalSeconds:F2}s");
+
                 _globalTimeout = timeToWait;
                 await Task.Delay(timeToWait);
                 _globalTimeout = TimeSpan.Zero;
             }
 
             HttpRateLimitInfo retryInfo = GetRateLimitInfo(response.Headers);
-
             TimeSpan retryDelay = retryInfo.RetryAfter
                 ?? (retryInfo.ResetAt.HasValue
                     ? retryInfo.ResetAt.Value - DateTimeOffset.UtcNow
@@ -283,19 +152,18 @@ namespace DiscordBotLibrary.RestApiLimiterResources
 
             if (retryDelay > TimeSpan.Zero)
             {
-                DiscordClient.Logger.LogDebug($"[RateLimit] Retrying in {retryDelay.TotalSeconds:F2}s");
+                DiscordClient.Logger.Log(LogLevel.Debug, $"[RateLimit]: Retrying in {retryDelay.TotalSeconds:F2}s");
                 await Task.Delay(retryDelay);
             }
         }
 
         #endregion
 
-        #region Helper methods
         private async Task<SemaphoreSlim> WaitIfNeededAsync(string endpoint)
         {
             if (IsGlobalTimeout)
             {
-                DiscordClient.Logger.LogDebug($"[GlobalRateLimit] waiting {_globalTimeout:F2}s");
+                DiscordClient.Logger.Log(LogLevel.Debug, $"[GlobalRateLimit] waiting {_globalTimeout:F2}s");
                 await Task.Delay(_globalTimeout);
             }
 
@@ -311,7 +179,7 @@ namespace DiscordBotLibrary.RestApiLimiterResources
 
                     if (delay > TimeSpan.Zero)
                     {
-                        DiscordClient.Logger.LogDebug($"[RateLimit] waiting {delay.TotalSeconds:F2}s for bucket {bucketId}");
+                        DiscordClient.Logger.Log(LogLevel.Debug, $"[RateLimit] waiting {delay.TotalSeconds:F2}s for bucket {bucketId}");
                         await Task.Delay(delay);
                     }
                 }
@@ -390,11 +258,6 @@ namespace DiscordBotLibrary.RestApiLimiterResources
 
             return standardized.ToLowerInvariant();
         }
-
-        #endregion
-
-        internal async Task<string> GetStringAsync(string endpoint)
-            => await _httpClient.GetStringAsync(endpoint);
 
         [GeneratedRegex(@"\d{16,19}", RegexOptions.Compiled)]
         private static partial Regex GenerateIdRegex();

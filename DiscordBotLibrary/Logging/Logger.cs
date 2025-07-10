@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 using System.Net.Http;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.Json.Nodes;
 using DiscordBotLibrary.MessageResources;
@@ -9,88 +10,34 @@ namespace DiscordBotLibrary.Logging
 {
     public sealed class Logger
     {
-        private readonly HashSet<string> _sensitiveKeys = ["token"];
-
-        private const byte _maxAmmountLoggingFiles = 10;
+        private string[] _sensitiveKeys = ["token"];
+        private readonly LoggerConfig _loggerConfig;
         private readonly string _pathToLogFile;
-        private readonly LogLevel _logLevel;
 
-        public Logger(LogLevel logLevel)
+        public Logger(LoggerConfig loggerConfig)
         {
-            _pathToLogFile = MaintainLoggingSystem(_maxAmmountLoggingFiles);
-            _logLevel = logLevel;
+            _loggerConfig = loggerConfig;
+            _pathToLogFile = MaintainLoggingSystem();
         }
 
-        private static string MaintainLoggingSystem(int maxAmmountLoggingFiles)
+        public void Log(LogLevel logLevel, string message)
         {
-            string pathToLoggingDic = GetDynamicPath(@"Logging/");
-            if (!Directory.Exists(pathToLoggingDic))
+            switch (logLevel)
             {
-                Directory.CreateDirectory(pathToLoggingDic);
+                case LogLevel.Info:
+                    Write(ConsoleColor.White, LogLevel.Info, message, null);
+                    break;
+                case LogLevel.Warning:
+                    Write(ConsoleColor.Yellow, LogLevel.Warning, message, null);
+                    break;
+                case LogLevel.Debug:
+                    Write(ConsoleColor.DarkGray, LogLevel.Debug, message, null);
+                    break;
             }
-            else
-            {
-                string[] files = Directory.GetFiles(pathToLoggingDic, "*.md");
-
-                if (files.Length >= maxAmmountLoggingFiles)
-                {
-                    files = [.. files.OrderBy(File.GetCreationTime)];
-                    // +1 to make room for a new File
-                    int filesToRemove = files.Length - maxAmmountLoggingFiles + 1;
-
-                    for (int i = 0; i < filesToRemove; i++)
-                    {
-                        File.Delete(files[i]);
-                    }
-                }
-            }
-
-            string timestamp = DateTime.Now.ToString("dd-MM-yyyy/HH-mm-ss");
-            string pathToNewFile = GetDynamicPath($"Logging/{timestamp}.md");
-            File.Create(pathToNewFile).Close();
-
-            return pathToNewFile;
         }
 
-        private void Write(ConsoleColor color, LogLevel level, string tag, string message)
+        public void LogError<T>(T exception, bool logOnlyToFile = false) where T : Exception
         {
-            Console.ForegroundColor = color;
-            if (_logLevel >= level)
-            {
-                string log = $"[{DateTime.Now}] [{tag}]: {message}";
-                Console.WriteLine(log);
-                using (StreamWriter streamWriter = new(_pathToLogFile, true))
-                {
-                    streamWriter.WriteLine(log);
-                }
-            }
-            Console.ResetColor();
-        }
-
-        public void LogInfo(string message)
-        {
-            Write(ConsoleColor.White, LogLevel.Info, nameof(LogLevel.Info), message);
-        }
-
-        public void LogWarning(string message)
-        {
-            Write(ConsoleColor.Yellow, LogLevel.Warning, nameof(LogLevel.Warning), message);
-        }
-
-        /// <summary>
-        /// Logs the error in red in the console with the error message and the file, method, line and column where the error occured
-        /// </summary>
-        /// <typeparam name="T">Has to be of type <c>EXCEPTION</c>, <c>UnobservedTaskExceptionEventArgs</c>, <c>NpgsqlException</c> <c>string</c> </typeparam>
-        /// <exception cref="ArgumentException"></exception>
-        public void LogError<T>(T exception)
-        {
-            string tag = nameof(LogLevel.Error);
-            if (exception is string str)
-            {
-                Write(ConsoleColor.Red, LogLevel.Error, tag, str);
-                return;
-            }
-
             if (exception is UnobservedTaskExceptionEventArgs unobservedEx)
             {
                 foreach (Exception innerEx in unobservedEx.Exception.Flatten().InnerExceptions)
@@ -100,20 +47,20 @@ namespace DiscordBotLibrary.Logging
                 return;
             }
 
-            Exception ex = exception as Exception
-                ?? throw new ArgumentException($"Type {typeof(T).Name} must be of type EXCEPTION, UnobservedTaskExceptionEventArgs, NpgsqlExceptin or string.");
+            Exception ex = exception;
 
             StackTrace stackTrace = new(ex, true);
-            StackFrame? stackFrame = null;
-            foreach (StackFrame item in stackTrace.GetFrames())
-            {
-                //Looking for the frame contains the infos about the error
-                if (item.GetMethod()?.Name is not null && item.GetFileName() is not null)
+            StackFrame? stackFrame = stackTrace
+                .GetFrames()?.FirstOrDefault(x =>
                 {
-                    stackFrame = item;
-                    break;
-                }
-            }
+                    MethodBase? method = x.GetMethod();
+                    string? ns = method?.DeclaringType?.Namespace;
+
+                    return x.GetFileName() is not null
+                        && method is not null
+                        && ns is not null
+                        && ns.Contains("DiscordBotLibrary", StringComparison.Ordinal);
+                });
 
             if (stackFrame is not null)
             {
@@ -126,73 +73,143 @@ namespace DiscordBotLibrary.Logging
                 filename = filename[index..];
 
                 string errorInfos = $"ERROR in file {filename}, in {methodName}, at line: {lineNum}, at column: {columnNum}";
-                Write(ConsoleColor.Red, LogLevel.Error, tag, errorInfos);
+                Write(ConsoleColor.Red, LogLevel.Error, errorInfos, null, logOnlyToFile);
             }
 
-            Write(ConsoleColor.Red, LogLevel.Error, tag, $"ERROR: {ex.Message}");
-            Write(ConsoleColor.Red, LogLevel.Error, tag, ex.ToString());
+            Write(ConsoleColor.Red, LogLevel.Error, $"ERROR: {ex.Message}", null, logOnlyToFile);
+            Write(ConsoleColor.Red, LogLevel.Error, $"{ex}\n", null, logOnlyToFile);
 
             if (ex.InnerException is not null)
                 LogError(ex.InnerException);
         }
 
-        public void LogErrorToFileOnly(Exception ex)
+        /// <summary>
+        /// [ERROR]: While be infront of every log message.
+        /// </summary>
+        public void LogError(string exception, CallerInfos callerInfos)
         {
-            string log = $"[{DateTime.Now}] [{nameof(LogLevel.Error)}]: {ex}";
+            string errorInfos = $"ERROR in file {callerInfos.FilePath}, in {callerInfos.CallerName}(...)";
+            Write(ConsoleColor.Red, LogLevel.Error, errorInfos, null);
+            Write(ConsoleColor.Red, LogLevel.Error, $"{exception}\n", null);
+        }
+
+        internal void LogWssPayload(PayloadType payloadType, string payload, int shardId)
+        {
+            ConsoleColor color = payloadType switch
+            {
+                PayloadType.Received => ConsoleColor.DarkGreen,
+                PayloadType.Sent => ConsoleColor.DarkCyan,
+                _ => throw new NotImplementedException($"This PayloadType is not implemented yet. " +
+                    $"At: {CallerInfos.Create().CallerName}")
+            };
+
+            JsonNode jsonNode = JsonNode.Parse(payload)!;
+            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString(), true);
+
+            if (opCode is OpCode.Dispatch)
+            {
+                FilterEventData(jsonNode, LogRules.OnlyThose, Event.GUILD_CREATE);
+            }
+            else
+            {
+                FilterOpCode(jsonNode, LogRules.None, receivedOpCode: opCode);
+            }
+
+            jsonNode["op"] = opCode.ToString();
+            JsonObject obj = FilterSensitiveData(jsonNode.AsObject());
+
+            Write(color, LogLevel.Debug, $"{obj}\n", $"{payloadType}[Id: {shardId}]");
+        }
+
+        /// <summary>
+        /// Formats the HTTP payload and writes it to the console and the log file.
+        /// </summary>
+        internal void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
+        {
+            string prettyJson = JToken.Parse(content).ToString(Formatting.Indented);
+            ConsoleColor color = payloadType switch
+            {
+                PayloadType.Received => ConsoleColor.DarkGreen,
+                PayloadType.Sent => ConsoleColor.DarkCyan,
+                _ => throw new NotImplementedException($"This PayloadType is not implemented yet. " +
+                    $"At: {CallerInfos.Create().CallerName}")
+            };
+
+            Write(color, LogLevel.Debug, prettyJson, $"{payloadType}({requestType})");
+        }
+
+        public void CustomLog(ConsoleColor color, LogLevel level, string message, string? tag = null, bool logOnlyToFile = false)
+            => Write(color, level, message, tag, logOnlyToFile);
+        
+        private string MaintainLoggingSystem()
+        {
+            string pathToLoggingDic = Helper.GetDynamicPath(_loggerConfig.PathToLoggingFolder);
+            if (!Directory.Exists(pathToLoggingDic))
+            {
+                Directory.CreateDirectory(pathToLoggingDic);
+            }
+            else
+            {
+                string[] files = Directory.GetFiles(pathToLoggingDic, "*.md");
+
+                if (files.Length >= _loggerConfig.MaxAmmountOfLoggingFiles)
+                {
+                    files = [.. files.OrderBy(File.GetCreationTime)];
+                    // +1 to make room for a new File
+                    int filesToRemove = files.Length - _loggerConfig.MaxAmmountOfLoggingFiles + 1;
+
+                    for (int i = 0; i < filesToRemove; i++)
+                    {
+                        File.Delete(files[i]);
+                    }
+                }
+            }
+
+            string timestamp = DateTime.Now.ToString("dd-MM-yyyy/HH-mm-ss");
+            string pathToNewFile = Helper.GetDynamicPath($"{pathToLoggingDic}{timestamp}.md");
+            File.Create(pathToNewFile).Close();
+
+            return pathToNewFile;
+        }
+
+        /// <summary>
+        /// <paramref name="tag"/> is gonna be level.ToString()
+        /// </summary>
+        private void Write(ConsoleColor color, LogLevel level
+            , string message, string? tag, bool logOnlyToFile = false)
+        {
+            if (_loggerConfig.LogLevel < level)
+                return;
+
+            if (string.IsNullOrEmpty(tag))
+                tag = level.ToString();
+
+            string log = $"[{DateTime.Now}] [{tag}]: {message}";
+            if (!logOnlyToFile)
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(log);
+                Console.ResetColor();
+            }
+
             using (StreamWriter streamWriter = new(_pathToLogFile, true))
             {
                 streamWriter.WriteLine(log);
             }
         }
 
-        public void LogDebug(string message)
-        {
-            Write(ConsoleColor.Cyan, LogLevel.Debug, nameof(LogLevel.Debug), message);
-        }
-
-        internal void LogPayload(ConsoleColor color, string payload, PayloadType payloadType, int shardId)
-        {
-            Console.ForegroundColor = color;
-            JsonNode jsonNode = JsonNode.Parse(payload)!;
-            OpCode opCode = Enum.Parse<OpCode>(jsonNode["op"]!.ToString(), true);
-
-            if (opCode is OpCode.Dispatch)
-            {
-                FilterEventData(jsonNode, LogRules.None);
-            }
-            else
-            {
-                FilterOpCode(jsonNode, opCode, LogRules.None);
-            }
-
-            jsonNode["op"] = opCode.ToString();
-
-            JsonObject obj = FilterSensitiveData(jsonNode.AsObject());
-
-            Write(color, LogLevel.Debug, $"{payloadType}[Id: {shardId}]", obj.ToString());
-            Console.WriteLine("");
-        }
-
-        internal static void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
-        {
-            JToken parsedJson = JToken.Parse(content);
-            string prettyJson = parsedJson.ToString(Formatting.Indented);
-            DiscordClient.Logger.LogDebug($"[{payloadType}({requestType})]: {prettyJson}");
-        }
-
         #region Filter
-
-        private JsonObject FilterSensitiveData(JsonObject jsonNode)
+        private JsonObject FilterSensitiveData(JsonObject jsonObj)
         {
-            if (jsonNode["d"] is not JsonObject dObj)
-                return jsonNode;
+            if (jsonObj["d"] is not JsonObject dObj)
+                return jsonObj;
 
             foreach (string key in _sensitiveKeys)
             {
                 dObj.Remove(key);
             }
 
-            return jsonNode;
+            return jsonObj;
         }
 
         /// <summary>
@@ -220,29 +237,24 @@ namespace DiscordBotLibrary.Logging
                 return;
             }
 
-            if (logRules is LogRules.OnlyThose && !events.Contains(dispatchEvent) || logRules is LogRules.OnlyTheOthers && events.Contains(dispatchEvent))
+            if (logRules is LogRules.OnlyThose && !events.Contains(dispatchEvent)
+                || logRules is LogRules.OnlyTheOthers && events.Contains(dispatchEvent))
             {
                 jsonNode["d"] = "";
             }
         }
 
-        private static void FilterOpCode(JsonNode jsonNode, OpCode opCode, LogRules logRules, params OpCode[] opCodes)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Member als statisch markieren", Justification = "<Ausstehend>")]
+        private void FilterOpCode(JsonNode jsonNode, LogRules logRules, OpCode receivedOpCode, params OpCode[] opCodes)
         {
-            if (logRules is LogRules.None)
-            {
-                jsonNode["d"] = "";
-                return;
-            }
-
-            if (logRules is LogRules.OnlyThose && !opCodes.Contains(opCode) || logRules is LogRules.OnlyTheOthers && opCodes.Contains(opCode))
+            if (logRules is LogRules.None || logRules is LogRules.OnlyThose && !opCodes.Contains(receivedOpCode)
+                || logRules is LogRules.OnlyTheOthers && opCodes.Contains(receivedOpCode))
             {
                 jsonNode["d"] = "";
             }
         }
 
         #endregion
-
-        #region ExternalAddMethods
 
         /// <summary>
         /// Adds a key to the list of sensitive keys. The key removed in the log/console
@@ -250,23 +262,14 @@ namespace DiscordBotLibrary.Logging
         /// By default, the key "token" is added to the list of sensitive keys.
         /// </summary>
         /// <param name="key"></param>
-        public void AddSensitiveKey(string key)
-            => _sensitiveKeys.Add(key);
-
-        #endregion
-
-        public static string GetDynamicPath(string relativePath)
+        public void AddSensitiveKeys(params string[] keys)
         {
-            string projectBasePath = AppContext.BaseDirectory;
-            int binIndex = projectBasePath.IndexOf($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+            if (keys == null || keys.Length == 0)
+                return;
 
-            if (binIndex == -1)
-            {
-                throw new Exception("Could not determine project base path!");
-            }
-
-            projectBasePath = projectBasePath[..binIndex];
-            return Path.Combine(projectBasePath, relativePath);
+            int originalLength = _sensitiveKeys.Length;
+            Array.Resize(ref _sensitiveKeys, originalLength + keys.Length);
+            Array.Copy(keys, 0, _sensitiveKeys, originalLength, keys.Length);
         }
     }
 }

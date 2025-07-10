@@ -1,19 +1,32 @@
 ﻿namespace DiscordBotLibrary.Json
 {
-    public class SnowflakeConverter : JsonConverter<ulong>
+    public class SnowflakeConverter : JsonConverter
     {
-        public override ulong ReadJson(JsonReader reader, Type objectType, ulong existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override bool CanConvert(Type objectType)
+            => objectType == typeof(ulong) || objectType == typeof(ulong?);
+
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                return objectType == typeof(ulong) 
+                    ? throw new JsonSerializationException($"Snowflake at {reader.Path} must not be null.") 
+                    : null;
+            }
+
             string? snowflakeString = reader.Value?.ToString();
 
-            return ulong.TryParse(snowflakeString, out ulong result) 
-                ? result 
-                : throw new JsonSerializationException("Invalid Snowflake format");
+            return ulong.TryParse(snowflakeString, out ulong result)
+                ? (object)result
+                : throw new JsonSerializationException($"Invalid Snowflake format at {reader.Path}");
         }
 
-        public override void WriteJson(JsonWriter writer, ulong value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            writer.WriteValue(value.ToString());
+            if (value is ulong snowflake)
+                writer.WriteValue(snowflake.ToString());
+            else
+                writer.WriteNull();
         }
     }
 }

@@ -140,5 +140,14 @@ namespace DiscordBotLibrary.GuildResources
         /// <summary>Guild shows a system message when someone boosts, even if tierless.</summary>
         [EnumMember(Value = "TIERLESS_BOOSTING_SYSTEM_MESSAGE")]
         TierlessBoostingSystemMessage,
+
+        [EnumMember(Value = "NON_COMMUNITY_RAID_ALERTS")]
+        NonCommunityRaidAlerts,
+
+        [EnumMember(Value = "CHANNEL_ICON_EMOJIS_GENERATED")]
+        ChannelIconEmojisGenerated,
+
+        [EnumMember(Value = "GUESTS_ENABLED")]
+        GuestsEnabled,
     }
 }

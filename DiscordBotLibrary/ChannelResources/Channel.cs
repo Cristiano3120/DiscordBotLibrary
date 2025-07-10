@@ -1,8 +1,6 @@
 ﻿using System.Buffers.Text;
 using DiscordBotLibrary.ChannelResources.ChannelEditResources;
 using DiscordBotLibrary.ChannelResources.ChannelEnums;
-using DiscordBotLibrary.GuildResources;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscordBotLibrary.ChannelResources
 {
@@ -28,7 +26,6 @@ namespace DiscordBotLibrary.ChannelResources
         /// TYPE: Snowflake  
         /// The ID of the guild (may be missing for some channel objects received over gateway guild dispatches).
         /// </summary>
-        [JsonProperty]
         public ulong? GuildId { get; internal set; }
 
         /// <summary>
@@ -762,15 +759,56 @@ namespace DiscordBotLibrary.ChannelResources
 
         private static void LogInvalidInput(string msg, CallerInfos callerInfos)
         {
-            DiscordClient.Logger.LogError($"[{callerInfos.CallerName}]: " +
-                $"{msg}");
+            DiscordClient.Logger.LogError($"[{callerInfos.CallerName}]: {msg}", CallerInfos.Create());
         }
 
         private bool CheckPermissions()
             => true;
-            //=> !Permissions.HasValue || Permissions.Value.HasFlag(DiscordPermissions.ManageChannels);
-        
+        //=> !Permissions.HasValue || Permissions.Value.HasFlag(DiscordPermissions.ManageChannels);
+
         #endregion
+
+        #endregion
+
+        #region Voice
+        public async Task<bool> JoinVoiceChannel(bool selfDeaf = false, bool selfMute = false)
+        {
+            if (!GuildId.HasValue)
+            {
+                DiscordClient.Logger.LogError("This channel is not a guild channel. " +
+                    "You can only join voice channels in guilds.", CallerInfos.Create());
+                return false;
+            }
+
+            DiscordGuild? guild = DiscordClient.GetDiscordClient().GetGuild(GuildId.Value);
+            if (guild is null)
+            {                 
+                DiscordClient.Logger.LogError($"Guild with ID {GuildId.Value} not found.", CallerInfos.Create());
+                return false;
+            }
+
+            return await guild.JoinVoiceChannelAsync(this, selfDeaf, selfMute);
+        }
+
+        public async Task LeaveVoiceChannel()
+        {
+            if (!GuildId.HasValue)
+            {
+                DiscordClient.Logger.LogError("This channel is not a guild channel. " +
+                    "You can only leave voice channels in guilds.", CallerInfos.Create());
+                return;
+            }
+
+            DiscordGuild? guild = DiscordClient.GetDiscordClient().GetGuild(GuildId.Value);
+            if (guild is null)
+            {
+                DiscordClient.Logger.LogError($"Guild with ID {GuildId.Value} not found.", CallerInfos.Create());
+                return;
+            }
+
+            await guild.LeaveVoiceChannelAsync();
+        }
+
 
         #endregion
 

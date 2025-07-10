@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary.Params
 {
     internal sealed record HelloEventParams
     {
