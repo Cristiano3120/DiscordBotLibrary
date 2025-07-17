@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using DiscordBotLibrary.ChannelResources.ChannelEnums;
+using DiscordBotLibrary.ChannelResources.Channel;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
 
@@ -57,6 +57,7 @@ namespace DiscordBotLibrary
         };
 
         #endregion
+
         internal ConcurrentDictionary<ulong, DiscordGuild> InternalGuilds { get; private set; } = [];
         internal RestApiLimiter RestApiLimiter { get; private set; } = default!;
         internal static Logger Logger { get; private set; } = default!;
@@ -69,6 +70,8 @@ namespace DiscordBotLibrary
         #endregion
 
         #region External fields
+        public User? CurrentUser { get; internal set; }
+        public Application? Application { get; internal set; }
         public IReadOnlyDictionary<ulong, DiscordGuild> Guilds => InternalGuilds;
         public IReadOnlyDictionary<ulong, VoiceChannelConn> VoiceConnections
             => _voiceChannelHandler.GetVoiceConns();
@@ -440,12 +443,25 @@ namespace DiscordBotLibrary
                 ? guild
                 : null;
 
+        public DiscordGuild? GetGuild(Func<DiscordGuild, bool> predicate)
+            => InternalGuilds.Values.FirstOrDefault(predicate);
+
+        public async Task<DiscordGuild?> GetGuildAsync(ulong guildId)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// If this method returns null one of the params is invalid
         /// </summary>
         public Channel? GetChannel(ulong guildId, ulong channelId)
             => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
                 ? guild.GetChannel(channelId)
+                : null;
+
+        public Channel? GetChannel(ulong guildId, Func<Channel, bool> predicate)
+            => InternalGuilds.TryGetValue(guildId, out DiscordGuild? guild)
+                ? guild.GetChannel(predicate)
                 : null;
 
         #endregion

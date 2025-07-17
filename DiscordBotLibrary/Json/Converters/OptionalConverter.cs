@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Reflection;
 
-namespace DiscordBotLibrary.Json
+namespace DiscordBotLibrary.Json.Converters
 {
     internal class OptionalConverter : JsonConverter
     {

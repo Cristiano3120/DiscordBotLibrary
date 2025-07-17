@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.GuildMemberResources
+﻿using DiscordBotLibrary.Json.Converters.BitsetConverters;
+
+namespace DiscordBotLibrary.GuildMemberResources
 {
     /// <summary>
     /// Represents a guild member in a Discord server.
@@ -33,7 +35,7 @@
         /// Array of role object IDs (snowflakes).
         /// </summary>
         [JsonProperty("roles")]
-        public string[] Roles { get; init; } = [];
+        public ulong[] Roles { get; init; } = [];
 
         /// <summary>
         /// When the user joined the guild.
@@ -75,8 +77,8 @@
         /// Total permissions of the member in the channel, including overwrites.
         /// Returned only in the interaction object (optional).
         /// </summary>
-        [JsonProperty("permissions")]
-        public string? Permissions { get; init; }
+        [JsonConverter(typeof(PermissionsConverter))]
+        public DiscordPermissions? Permissions { get; init; }
 
         /// <summary>
         /// When the user's timeout will expire and the user will be able to communicate again.

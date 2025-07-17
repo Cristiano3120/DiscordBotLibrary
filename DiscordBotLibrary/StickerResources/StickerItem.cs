@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.StickerResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.StickerResources
 {
     public record StickerItem
     {

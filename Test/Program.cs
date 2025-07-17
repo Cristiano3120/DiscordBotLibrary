@@ -4,7 +4,7 @@ using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
 using Microsoft.Extensions.DependencyInjection;
-using Channel = DiscordBotLibrary.ChannelResources.Channel;
+using Channel = DiscordBotLibrary.ChannelResources.Channel.Channel;
 using DotNetEnv;
 
 namespace Test
@@ -80,6 +80,8 @@ namespace Test
             DiscordGuild guild = client.GetGuild(familyDc)!;
             Channel? crisChannel = guild.GetChannelThatUserIsIn(crisId);
             Channel? chat = guild.GetChannel(x => x.Name == "chat");
+
+            await crisChannel.ModifyPermissionOverwritesAsync();
         }
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)

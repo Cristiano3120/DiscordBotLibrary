@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.GuildResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.GuildResources
 {
     public class Guild
     {
@@ -50,7 +52,7 @@
         /// The user id of the owner of the guild
         /// </summary>
         [JsonProperty("owner_id")]
-        public string OwnerId { get; init; } = default!;
+        public ulong OwnerId { get; init; } = default!;
 
         /// <summary>
         /// Total permissions for the user in the guild (excludes overwrites and implicit permissions)

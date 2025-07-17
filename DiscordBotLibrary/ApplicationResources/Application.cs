@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ApplicationResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.ApplicationResources
 {
     /// <summary>
     /// Represents a application object in Discord.

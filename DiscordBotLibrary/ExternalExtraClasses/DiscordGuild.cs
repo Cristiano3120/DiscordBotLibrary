@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
+using DiscordBotLibrary.ChannelResources.Channel;
 using DiscordBotLibrary.ChannelResources.ChannelEnums;
 
 namespace DiscordBotLibrary.ExternalExtraClasses
@@ -85,6 +86,7 @@ namespace DiscordBotLibrary.ExternalExtraClasses
         /// <summary>
         /// Gets the soundboard sounds in the guild.
         /// </summary>
+        [JsonProperty]
         public SoundboardSound[] SoundboardSounds { get; internal set; } = [];
 
         #endregion
@@ -263,6 +265,9 @@ namespace DiscordBotLibrary.ExternalExtraClasses
             return channel;
         }
 
+        public Role? GetRole(ulong roleId)
+            => Roles.FirstOrDefault(x => x.Id == roleId);
+        
         #endregion
 
         #region VoiceChannelHandling

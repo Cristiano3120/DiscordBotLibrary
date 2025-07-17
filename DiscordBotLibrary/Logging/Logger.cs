@@ -84,7 +84,7 @@ namespace DiscordBotLibrary.Logging
         }
 
         /// <summary>
-        /// [ERROR]: While be infront of every log message.
+        /// [ERROR]: Will be infront of every log message.
         /// </summary>
         public void LogError(string exception, CallerInfos callerInfos)
         {
@@ -108,7 +108,7 @@ namespace DiscordBotLibrary.Logging
 
             if (opCode is OpCode.Dispatch)
             {
-                FilterEventData(jsonNode, LogRules.OnlyThose, Event.GUILD_CREATE);
+                FilterEventData(jsonNode, LogRules.OnlyTheOthers, Event.GUILD_CREATE);
             }
             else
             {

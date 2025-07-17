@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.TeamResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.TeamResources
 {
     /// <summary>
     /// Represents a team object in Discord.

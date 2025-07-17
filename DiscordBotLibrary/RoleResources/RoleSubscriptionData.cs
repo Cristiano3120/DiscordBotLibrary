@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.RoleResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.RoleResources
 {
     public record RoleSubscriptionData
     {

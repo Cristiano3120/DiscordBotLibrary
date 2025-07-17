@@ -1,4 +1,5 @@
-﻿using Activity = DiscordBotLibrary.ActivityResources.Activity;
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+using Activity = DiscordBotLibrary.ActivityResources.Activity;
 
 namespace DiscordBotLibrary.PresenceUpdateResources
 {

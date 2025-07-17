@@ -17,7 +17,7 @@
         /// channel or category-specific permissions
         /// </summary>
         [JsonProperty("permission_overwrites", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public Optional<Overwrite> PermissionOverwrites { get; set; }
+        public Optional<Overwrite[]> PermissionOverwrites { get; set; }
 
         internal BaseChannelEdit() { }
     }

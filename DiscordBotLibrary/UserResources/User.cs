@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.UserResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.UserResources
 {
     /// <summary>
     /// Represents a Discord user object.

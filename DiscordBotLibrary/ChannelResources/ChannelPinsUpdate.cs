@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ChannelResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.ChannelResources
 {
     public record ChannelPinsUpdate
     {

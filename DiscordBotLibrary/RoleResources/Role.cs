@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.RoleResources
+﻿using DiscordBotLibrary.Json.Converters.BitsetConverters;
+
+namespace DiscordBotLibrary.RoleResources
 {
     /// <summary>
     /// Represents a role within a Discord guild.
@@ -9,7 +11,7 @@
         /// Gets the unique identifier for the role.
         /// </summary>
         [JsonProperty("id")]
-        public string Id { get; init; } = default!;
+        public ulong Id { get; init; } = default!;
 
         /// <summary>
         /// Gets the name of the role.
@@ -50,10 +52,9 @@
 
         /// <summary>
         /// Gets the permission bit set for this role.
-        /// Represented as a string bitmask.
         /// </summary>
-        [JsonProperty("permissions")]
-        public string Permissions { get; init; } = default!;
+        [JsonConverter(typeof(PermissionsConverter))]
+        public DiscordPermissions Permissions { get; init; } = default!;
 
         /// <summary>
         /// Gets a value indicating whether this role is managed by an integration.

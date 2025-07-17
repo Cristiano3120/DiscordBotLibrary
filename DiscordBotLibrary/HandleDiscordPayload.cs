@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using DiscordBotLibrary.ChannelResources.Channel;
 
 namespace DiscordBotLibrary
 {
@@ -74,6 +75,11 @@ namespace DiscordBotLibrary
         internal void HandleReadyEvent(Shard shard, JToken jToken)
         {
             ShardReadyEventArgs readyEventArgs = jToken.Deserialize<ShardReadyEventArgs>();
+
+            DiscordClient client = DiscordClient.GetDiscordClient();
+            client.CurrentUser = readyEventArgs.DiscordUser;
+            client.Application = readyEventArgs.Application;
+
 
             _shardHandler.ShardReady(readyEventArgs);
             shard.ResumeConnInfos = new ResumeConnInfos

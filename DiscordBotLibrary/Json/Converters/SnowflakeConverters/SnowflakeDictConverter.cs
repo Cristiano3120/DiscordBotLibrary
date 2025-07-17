@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json.Converters.SnowflakeConverters
 {
     internal class SnowflakeDictConverter<TKey, TValue> : JsonConverter<Dictionary<TKey, TValue>> where TKey : notnull
     {

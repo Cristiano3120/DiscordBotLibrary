@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json.Converters.SnowflakeConverters
 {
     public sealed class SnowflakeArrayConverter : JsonConverter<ulong[]>
     {

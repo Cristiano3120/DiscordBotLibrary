@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace DiscordBotLibrary.Json
+namespace DiscordBotLibrary.Json.Converters
 {
     public class ActivityButtonConverter : JsonConverter<ActivityButton[]>
     {

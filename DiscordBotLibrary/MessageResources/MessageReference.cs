@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.MessageResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.MessageResources
 {
     public record MessageReference
     {

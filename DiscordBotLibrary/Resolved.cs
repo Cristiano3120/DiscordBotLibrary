@@ -1,4 +1,7 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.ChannelResources.Channel;
+using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary
 {
     public sealed record Resolved
     {

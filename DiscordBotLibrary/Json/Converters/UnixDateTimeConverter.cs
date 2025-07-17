@@ -1,4 +1,4 @@
-﻿namespace DiscordBotLibrary.Json
+﻿namespace DiscordBotLibrary.Json.Converters
 {
     internal class UnixDateTimeConverter : JsonConverter<DateTime?>
     {

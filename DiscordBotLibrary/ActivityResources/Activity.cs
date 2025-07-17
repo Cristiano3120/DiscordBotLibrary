@@ -1,4 +1,7 @@
-﻿namespace DiscordBotLibrary.ActivityResources
+﻿using DiscordBotLibrary.Json.Converters;
+using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.ActivityResources
 {
     /// <summary>
     /// Represents a user's activity (e.g., playing a game, listening to music) in their Discord presence.

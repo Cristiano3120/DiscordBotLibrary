@@ -1,4 +1,5 @@
-﻿using DiscordBotLibrary.UserResources;
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+using DiscordBotLibrary.UserResources;
 
 namespace DiscordBotLibrary.StickerResources
 {

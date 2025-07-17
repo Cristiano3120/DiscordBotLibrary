@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.InteractionResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.InteractionResources
 {
     public class InteractionMetadata
     {

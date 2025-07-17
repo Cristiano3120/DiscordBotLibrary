@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.ExternalExtraClasses
+﻿using DiscordBotLibrary.ChannelResources.Channel;
+
+namespace DiscordBotLibrary.ExternalExtraClasses
 {
     public sealed record ChannelPins
     {

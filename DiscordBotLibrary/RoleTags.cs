@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents tags associated with a Discord role, providing metadata like bot ownership,

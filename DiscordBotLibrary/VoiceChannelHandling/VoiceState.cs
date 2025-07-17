@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.VoiceChannelHandling
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.VoiceChannelHandling
 {
     /// <summary>
     /// Represents a voice state in a Discord server.

@@ -8,7 +8,7 @@
         /// <typeparam name="T"></typeparam>
         /// <param name="jToken"></param>
         /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <exception cref="JsonException"></exception>
         public static T Deserialize<T>(this JToken token)
             => JsonConvert.DeserializeObject<T>(token["d"]!.ToString(), DiscordClient.ReceiveJsonSerializerOptions) 
                 ?? throw new JsonException("d property is missing");

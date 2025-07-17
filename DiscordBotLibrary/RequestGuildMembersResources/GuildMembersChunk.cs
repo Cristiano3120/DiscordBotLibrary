@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary.RequestGuildMembersResources
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary.RequestGuildMembersResources
 {
 
     internal sealed class GuildMembersChunk

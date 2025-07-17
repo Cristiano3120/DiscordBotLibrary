@@ -1,4 +1,6 @@
-﻿namespace DiscordBotLibrary
+﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+
+namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents a forum tag in a Discord forum channel.

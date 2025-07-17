@@ -2,9 +2,12 @@
 {
     public readonly struct Overwrite
     {
-        public ulong Id { get; init; }
+        /// <summary>
+        /// role or user id
+        /// </summary>
+        public required ulong Id { get; init; }
 
-        public OverwriteType Type { get; init; }
+        public required OverwriteType Type { get; init; }
 
         public DiscordPermissions Allow { get; init; }
 

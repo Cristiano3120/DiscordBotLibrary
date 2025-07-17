@@ -1,4 +1,6 @@
-﻿using DiscordBotLibrary.EmbedResources;
+﻿using DiscordBotLibrary.ChannelResources.Channel;
+using DiscordBotLibrary.EmbedResources;
+using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
 using DiscordBotLibrary.ReactionResources;
 
 namespace DiscordBotLibrary.MessageResources

@@ -30,5 +30,10 @@ global using DiscordBotLibrary.WssPayloadStructures;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
 global using Newtonsoft.Json.Converters;
-global using UnixDateTimeConverter = DiscordBotLibrary.Json.UnixDateTimeConverter;
+global using DiscordBotLibrary.Json.Converters;
+global using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
+global using DiscordBotLibrary.Json.Converters.BitsetConverters;
+global using DiscordBotLibrary.ChannelResources.ChannelEnums;
+global using DiscordBotLibrary.ChannelResources.ChannelEditResources;
+global using UnixDateTimeConverter = DiscordBotLibrary.Json.Converters.UnixDateTimeConverter;
 
