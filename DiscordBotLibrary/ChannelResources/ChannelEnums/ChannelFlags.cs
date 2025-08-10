@@ -4,7 +4,7 @@
     /// Flags that specify the properties of a channel.
     /// </summary>
     [Flags]
-    public enum ChannelFlags
+    public enum ChannelFlags : int
     {
         None = 0,
 

@@ -1,6 +1,4 @@
-﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents metadata associated with a Discord thread.

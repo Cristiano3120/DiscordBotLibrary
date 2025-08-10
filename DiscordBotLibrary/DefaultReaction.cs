@@ -1,11 +1,9 @@
-﻿using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
-
-namespace DiscordBotLibrary
+﻿namespace DiscordBotLibrary
 {
     /// <summary>
     /// Represents a default reaction for a thread.
     /// </summary>
-    public readonly struct DefaultReaction
+    public readonly record struct DefaultReaction
     {
         /// <summary>
         /// The id of a guild's custom emoji

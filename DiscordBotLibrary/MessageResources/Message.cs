@@ -1,4 +1,4 @@
-﻿using DiscordBotLibrary.ChannelResources.Channel;
+﻿using DiscordBotLibrary.ChannelResources.PartialChannel;
 using DiscordBotLibrary.EmbedResources;
 using DiscordBotLibrary.Json.Converters.SnowflakeConverters;
 using DiscordBotLibrary.ReactionResources;

@@ -54,20 +54,20 @@ namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
         /// <para>limited to 20</para>
         /// </summary>
         [JsonProperty("available_tags", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public Optional<ForumTag[]> Tag { get; set; }
+        public Optional<ForumTag[]> AvailableTags { get; set; }
 
         /// <summary>
         /// the emoji to show in the add reaction button on a thread in a GUILD_FORUM or a GUILD_MEDIA channel
         /// </summary>
         [JsonProperty("default_reaction_emoji", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public Optional<DefaultReaction> Reaction { get; set; }
+        public Optional<DefaultReaction> DefaultReaction { get; set; }
 
         /// <summary>
         /// the initial rate_limit_per_user to set on newly created threads in a channel.
         /// <para>this field is copied to the thread at creation time and does not live update.</para>
         /// </summary>
         [JsonProperty("default_thread_rate_limit_per_user", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public Optional<uint> ThreadRateLimit { get; set; }
+        public Optional<Slowmode> ThreadRateLimit { get; set; }
 
         /// <summary>
         /// the default sort order type used to order posts in GUILD_FORUM and GUILD_MEDIA channels

@@ -1,5 +1,5 @@
 ﻿using System.Net.WebSockets;
-using DiscordBotLibrary.ChannelResources.Channel;
+using DiscordBotLibrary.ChannelResources.PartialChannel;
 
 namespace DiscordBotLibrary
 {

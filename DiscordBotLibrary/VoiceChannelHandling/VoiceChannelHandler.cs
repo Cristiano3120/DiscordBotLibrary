@@ -1,17 +1,20 @@
 ﻿using System.Collections.Concurrent;
+using DiscordBotLibrary.ChannelResources;
 
 namespace DiscordBotLibrary.VoiceChannelHandling
 {
-    internal sealed class VoiceChannelHandler
+    public sealed class VoiceChannelHandler
     {
         private readonly ConcurrentDictionary<ulong, InternVoiceChannelConn> _voiceConnections;
         private readonly ShardHandler _shardHandler;
 
-        public VoiceChannelHandler(ShardHandler shardHandler)
+        internal VoiceChannelHandler(ShardHandler shardHandler)
         {
             _voiceConnections = new ConcurrentDictionary<ulong, InternVoiceChannelConn>();
             _shardHandler = shardHandler;
         }
+
+        private VoiceChannelHandler() { }
 
         public async Task ConnectToVcAsync(ulong guildId, ulong channelId, bool selfDeaf = false, bool selfMute = false)
         {
@@ -46,21 +49,67 @@ namespace DiscordBotLibrary.VoiceChannelHandling
             {
                 GuildId = guildId,
                 ChannelId = null,
-                SelfDeaf = false,
-                SelfMute = false,
             };
 
             Payload<UpdateVoiceState> payload = new(OpCode.VoiceStateUpdate, updateVoiceState);
             await _shardHandler.SendShardSpecificMessageAsync(guildId, payload);
         }
 
-        public void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
+        public async Task MuteAsync(ulong guildId, bool selfMute)
+        {
+            if (!_voiceConnections.TryGetValue(guildId, out InternVoiceChannelConn? voiceChannelConn))
+            {
+                return;
+            }
+
+            if (voiceChannelConn.SelfMute == selfMute)
+            {
+                return;
+            }
+
+            UpdateVoiceState updateVoiceState = new()
+            {
+                GuildId = guildId,
+                ChannelId = voiceChannelConn.ChannelId,
+                SelfDeaf = voiceChannelConn.SelfDeaf,
+                SelfMute = selfMute,
+            };
+
+            Payload<UpdateVoiceState> payload = new(OpCode.VoiceStateUpdate, updateVoiceState);
+            await _shardHandler.SendShardSpecificMessageAsync(guildId, payload);
+        }
+
+        public async Task DeafenAsync(ulong guildId, bool selfDeaf)
+        {
+            if (!_voiceConnections.TryGetValue(guildId, out InternVoiceChannelConn? voiceChannelConn))
+            {
+                return;
+            }
+
+            if (voiceChannelConn.SelfDeaf == selfDeaf)
+            {
+                return;
+            }
+
+            UpdateVoiceState updateVoiceState = new()
+            {
+                GuildId = guildId,
+                ChannelId = voiceChannelConn.ChannelId,
+                SelfMute = voiceChannelConn.SelfMute,
+                SelfDeaf = selfDeaf,
+            };
+
+            Payload<UpdateVoiceState> payload = new(OpCode.VoiceStateUpdate, updateVoiceState);
+            await _shardHandler.SendShardSpecificMessageAsync(guildId, payload);
+        }
+
+        internal void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
         {
             _voiceConnections.TryGetValue(voiceServerUpdate.GuildId, out InternVoiceChannelConn? voiceChannelConn);
             voiceChannelConn?.ReceivedVoiceServerUpdate(voiceServerUpdate);
         }
 
-        public IReadOnlyDictionary<ulong, VoiceChannelConn> GetVoiceConns()
+        internal IReadOnlyDictionary<ulong, VoiceChannelConn> GetVoiceConns()
             => _voiceConnections.ToDictionary(kvp => kvp.Key, kvp => (VoiceChannelConn)kvp.Value);
     }
 }

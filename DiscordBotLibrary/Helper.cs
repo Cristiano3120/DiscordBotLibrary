@@ -15,5 +15,20 @@
             projectBasePath = projectBasePath[..binIndex];
             return Path.Combine(projectBasePath, relativePath);
         }
+
+        /// <returns><paramref name="parsedContent"/> will be == <paramref name="content"/> if the parsing fails </returns>
+        public static bool TryParse(string content, out string parsedContent)
+        {
+            parsedContent = content;
+            try
+            {
+                parsedContent = JToken.Parse(content).ToString(Formatting.Indented);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

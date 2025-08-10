@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
 using System.Net.Http;
 using System.Reflection;
@@ -10,6 +11,7 @@ namespace DiscordBotLibrary.Logging
 {
     public sealed class Logger
     {
+        private readonly ConcurrentQueue<string> _logQueue = new();
         private string[] _sensitiveKeys = ["token"];
         private readonly LoggerConfig _loggerConfig;
         private readonly string _pathToLogFile;
@@ -126,7 +128,7 @@ namespace DiscordBotLibrary.Logging
         /// </summary>
         internal void LogHttpPayload(PayloadType payloadType, HttpRequestType requestType, string content)
         {
-            string prettyJson = JToken.Parse(content).ToString(Formatting.Indented);
+            _ = Helper.TryParse(content, out string parsedContent);
             ConsoleColor color = payloadType switch
             {
                 PayloadType.Received => ConsoleColor.DarkGreen,
@@ -135,7 +137,7 @@ namespace DiscordBotLibrary.Logging
                     $"At: {CallerInfos.Create().CallerName}")
             };
 
-            Write(color, LogLevel.Debug, prettyJson, $"{payloadType}({requestType})");
+            Write(color, LogLevel.Debug, parsedContent, $"{payloadType}({requestType})");
         }
 
         public void CustomLog(ConsoleColor color, LogLevel level, string message, string? tag = null, bool logOnlyToFile = false)
@@ -178,23 +180,57 @@ namespace DiscordBotLibrary.Logging
         private void Write(ConsoleColor color, LogLevel level
             , string message, string? tag, bool logOnlyToFile = false)
         {
-            if (_loggerConfig.LogLevel < level)
-                return;
-
-            if (string.IsNullOrEmpty(tag))
-                tag = level.ToString();
-
-            string log = $"[{DateTime.Now}] [{tag}]: {message}";
-            if (!logOnlyToFile)
+            string log = string.Empty;
+            try
             {
-                Console.ForegroundColor = color;
-                Console.WriteLine(log);
-                Console.ResetColor();
+                if (_loggerConfig.LogLevel < level)
+                    return;
+
+                if (string.IsNullOrEmpty(tag))
+                    tag = level.ToString();
+
+                log = $"[{DateTime.Now}] [{tag}]: {message}";
+                if (!logOnlyToFile)
+                {
+                    Console.ForegroundColor = color;
+                    Console.WriteLine(log);
+                    Console.ResetColor();
+                }
+
+                using (StreamWriter streamWriter = new(_pathToLogFile, true))
+                {
+                    streamWriter.WriteLine(log);
+                }
             }
-
-            using (StreamWriter streamWriter = new(_pathToLogFile, true))
+            catch (IOException)
             {
-                streamWriter.WriteLine(log);
+                _logQueue.Enqueue(log);
+                _ = WriteQueueToFile();
+            }
+        }
+
+        private async Task WriteQueueToFile()
+        {
+            byte maxRetries = 3;
+            ushort delayMs = 100;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    using StreamWriter streamWriter = new(_pathToLogFile, true);
+                    while (_logQueue.TryDequeue(out string? log))
+                    {
+                        streamWriter.WriteLine(log);
+                    }
+
+                    return;
+                }
+                catch (IOException)
+                {
+                    await Task.Delay(delayMs);
+                    delayMs *= 2;
+                }
             }
         }
 

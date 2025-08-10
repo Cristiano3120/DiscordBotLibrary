@@ -1,6 +1,4 @@
-﻿using DiscordBotLibrary.ChannelResources.ChannelEnums;
-
-namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
+﻿namespace DiscordBotLibrary.ChannelResources.ChannelEditResources
 {
     public sealed class AnnouncmentChannelEdit : BaseChannelEdit
     {

@@ -1,11 +1,15 @@
 ﻿using DiscordBotLibrary;
 using DiscordBotLibrary.ActivityResources;
-using DiscordBotLibrary.ExternalExtraClasses;
 using DiscordBotLibrary.Logging;
 using DiscordBotLibrary.PresenceUpdateResources;
 using Microsoft.Extensions.DependencyInjection;
-using Channel = DiscordBotLibrary.ChannelResources.Channel.Channel;
+using DiscordBotLibrary.ChannelResources.PartialChannel;
 using DotNetEnv;
+using DiscordBotLibrary.DiscordClientResources;
+using DiscordBotLibrary.ChannelResources.ChannelEnums;
+using DiscordBotLibrary.ChannelResources.StartThreadParamsResources;
+using DiscordBotLibrary.ThreadMemberResources;
+using DiscordBotLibrary.RestApiLimiterResources;
 
 namespace Test
 {
@@ -76,13 +80,17 @@ namespace Test
             const ulong familyDc = 1341844969085862021;
             const ulong cacxCordDc = 1381712720935518369;
             const ulong crisId = 912014865898549378;
+            const ulong slaysId = 772060595951763476;
 
             DiscordGuild guild = client.GetGuild(familyDc)!;
             Channel? crisChannel = guild.GetChannelThatUserIsIn(crisId);
-            Channel? chat = guild.GetChannel(x => x.Name == "chat");
+            VoiceChannelHandler voiceChannelHandler = client.GetVoiceChannelHandler();
 
-            await crisChannel.ModifyPermissionOverwritesAsync();
+            await voiceChannelHandler.ConnectToVcAsync(guild.Id, 1341856648842444892, selfDeaf: true, selfMute: false);
+            await voiceChannelHandler.MuteAsync(guild.Id, true);
+            await voiceChannelHandler.DisconnectFromVcAsync(guild.Id);
         }
+
 
         private static void Client_OnGuildCreate(DiscordClient discordClient, DiscordGuild args)
         {

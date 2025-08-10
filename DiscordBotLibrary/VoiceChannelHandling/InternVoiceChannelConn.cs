@@ -2,27 +2,27 @@
 {
     internal sealed class InternVoiceChannelConn
     {
-        private readonly ulong _guildId;
-        private readonly ulong _channelId;
-        private readonly bool _selfDeaf;
-        private readonly bool _selfMute;
-        private string _token;
-        private string? _endpoint;
+        internal ulong GuildId { get; init; }
+        internal ulong ChannelId { get; init; }
+        internal bool SelfDeaf { get; init; }
+        internal bool SelfMute { get; init; }
+        internal string Token { get; private set; }
+        internal string? Endpoint { get; private set; }
 
 
         public InternVoiceChannelConn(ulong guildId, ulong channelId, bool selfDeaf, bool selfMute)
         {
-            _guildId = guildId;
-            _channelId = channelId;
-            _selfDeaf = selfDeaf;
-            _selfMute = selfMute;
-            _token = string.Empty;
+            GuildId = guildId;
+            ChannelId = channelId;
+            SelfDeaf = selfDeaf;
+            SelfMute = selfMute;
+            Token = string.Empty;
         }
 
         public void ReceivedVoiceServerUpdate(VoiceServerUpdate voiceServerUpdate)
         {
-            _token = voiceServerUpdate.Token;
-            _endpoint = voiceServerUpdate.Endpoint;
+            Token = voiceServerUpdate.Token;
+            Endpoint = voiceServerUpdate.Endpoint;
         }
 
         public static explicit operator VoiceChannelConn(InternVoiceChannelConn internVcConn)

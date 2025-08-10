@@ -1,8 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -42,6 +40,9 @@ namespace DiscordBotLibrary.RestApiLimiterResources
         public async Task<TOutput?> PatchAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
             => await HandleRequestAsync<TInput, TOutput>(HttpRequestType.Patch, content, callerInfos, endpoint);
 
+        public async Task<TOutput?> PutAsync<TInput, TOutput>(TInput content, string endpoint, CallerInfos callerInfos)
+            => await HandleRequestAsync<TInput, TOutput>(HttpRequestType.Put, content, callerInfos, endpoint);
+
         public async Task<string> GetStringAsync(string endpoint)
             => await _httpClient.GetStringAsync(endpoint);
 
@@ -49,51 +50,50 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             string endpoint)
         {
             SemaphoreSlim? semaphoreSlim = null;
+            string formattedEndpoint = FormatEndpoint(endpoint);
+
             try
             {
                 while (true)
                 {
-                    DiscordClient.Logger.Log(LogLevel.Debug, $"[{httpRequestType}]: requesting {endpoint}");
-                    string formattedEndpoint = FormatEndpoint(endpoint);
-
+                    DiscordClient.Logger.Log(LogLevel.Debug, $"[{httpRequestType}]: {formattedEndpoint}");
                     semaphoreSlim = await WaitIfNeededAsync(formattedEndpoint);
 
                     HttpResponseMessage response = httpRequestType switch
                     {
                         HttpRequestType.Get => await _httpClient.GetAsync(endpoint),
                         HttpRequestType.Delete => await _httpClient.DeleteAsync(endpoint),
-                        HttpRequestType.Post => await _httpClient.PostAsync(endpoint, new StringContent(JsonConvert.SerializeObject(input, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json")),
-                        HttpRequestType.Patch => await _httpClient.PatchAsync(endpoint, new StringContent(JsonConvert.SerializeObject(input, DiscordClient.SendJsonSerializerSettings), Encoding.UTF8, "application/json")),
-                        _ => throw new InvalidEnumArgumentException("This method only allows HttpRequestType.Get, HttpRequestType.Delete, HttpRequestType.Post or HttpRequestType.Patch"),
+                        HttpRequestType.Post => await SendJsonAsync(httpRequestType, endpoint, input),
+                        HttpRequestType.Patch => await SendJsonAsync(httpRequestType, endpoint, input),
+                        HttpRequestType.Put => await SendJsonAsync(httpRequestType, endpoint, input),
+                        _ => throw new InvalidEnumArgumentException(nameof(httpRequestType), (int)httpRequestType, typeof(HttpRequestType))
                     };
 
                     string json = await response.Content.ReadAsStringAsync();
-                    JToken jsonToken = JToken.Parse(json);
-                    string prettyJson = jsonToken.ToString(Formatting.Indented);
+                    DiscordClient.Logger.LogHttpPayload(PayloadType.Received, httpRequestType, $"{json}");
 
                     if (response.IsSuccessStatusCode)
                     {
-                        DiscordClient.Logger.LogHttpPayload(PayloadType.Received, httpRequestType, json);
-                        HttpRateLimitInfo newInfo = GetRateLimitInfo(response.Headers);
-                        if (!string.IsNullOrEmpty(newInfo.BucketId))
-                        {
-                            _rateLimitInfo[newInfo.BucketId] = newInfo;
-                            _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
-                        }
+                        UpdateRateLimitInfo(response.Headers, formattedEndpoint);
 
-                        //TOutput is bool when deleting a resource
+                        // Return true if expected output is bool
                         if (typeof(TOutput) == typeof(bool))
                             return (TOutput)(object)true;
 
                         TOutput? result = JsonConvert.DeserializeObject<TOutput>(json, DiscordClient.ReceiveJsonSerializerOptions);
-                        return result ?? throw new InvalidOperationException($"Deserialization returned null." +
-                            $" Response: {json} \n (expected: {typeof(TOutput)})");
+                        if (result is null)
+                        {
+                            throw new InvalidOperationException($"Deserialization returned null. Expected: {typeof(TOutput)}. Response:\n{json}");
+                        }
+
+                        return result;
                     }
 
-                    DiscordClient.Logger.LogError($"While sending a [{httpRequestType}] request to the endpoint: {endpoint}", callerInfos);
-                    if (!await HandleErrorCode(response, callerInfos, endpoint, (int)response.StatusCode))
+                    DiscordClient.Logger.LogError($"{httpRequestType} request to {formattedEndpoint} failed with status {(int)response.StatusCode}"
+                        ,callerInfos);
+
+                    if (!await HandleErrorCode(response, callerInfos, formattedEndpoint, (int)response.StatusCode))
                     {
-                        DiscordClient.Logger.CustomLog(ConsoleColor.Red, LogLevel.Error, $"[API RESPONSE]: {prettyJson}\n");
                         return default;
                     }
                 }
@@ -101,6 +101,33 @@ namespace DiscordBotLibrary.RestApiLimiterResources
             finally
             {
                 semaphoreSlim?.Release();
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendJsonAsync<T>(HttpRequestType httpRequestType, string endpoint, T? input)
+        {
+            StringContent content = new(JsonConvert.SerializeObject(input, DiscordClient.SendJsonSerializerSettings),
+                Encoding.UTF8,
+                "application/json");
+
+            DiscordClient.Logger.LogHttpPayload(PayloadType.Sent, httpRequestType, $"{await content.ReadAsStringAsync()}\n");
+
+            return httpRequestType switch
+            {
+                HttpRequestType.Post => await _httpClient.PostAsync(endpoint, content),
+                HttpRequestType.Patch => await _httpClient.PatchAsync(endpoint, content),
+                HttpRequestType.Put => await _httpClient.PutAsync(endpoint, content),
+                _ => throw new InvalidOperationException($"Unsupported method {httpRequestType} in SendJsonAsync<T>(...)")
+            };
+        }
+
+        private void UpdateRateLimitInfo(HttpResponseHeaders headers, string formattedEndpoint)
+        {
+            HttpRateLimitInfo newInfo = GetRateLimitInfo(headers);
+            if (!string.IsNullOrEmpty(newInfo.BucketId))
+            {
+                _rateLimitInfo[newInfo.BucketId] = newInfo;
+                _routeToBucketId[formattedEndpoint] = newInfo.BucketId;
             }
         }
 

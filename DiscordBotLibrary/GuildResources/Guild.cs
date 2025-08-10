@@ -57,8 +57,8 @@ namespace DiscordBotLibrary.GuildResources
         /// <summary>
         /// Total permissions for the user in the guild (excludes overwrites and implicit permissions)
         /// </summary>
-        [JsonProperty("permissions")]
-        public string? Permissions { get; init; }
+        [JsonConverter(typeof(PermissionsConverter))]
+        public DiscordPermissions? Permissions { get; init; }
 
         /// <summary>
         /// The voice region of the guild (deprecated)

@@ -1,23 +1,25 @@
-﻿using System.Text.Json.Serialization;
-using DiscordBotLibrary.GuildMemberResources;
-
-namespace DiscordBotLibrary.ThreadMemberResources
+﻿namespace DiscordBotLibrary.ThreadMemberResources
 {
-    public readonly struct ThreadMember
+    public sealed record ThreadMember
     {
+        /// <summary>
+        /// omitted on the member sent within each thread in the GUILD_CREATE event.
+        /// </summary>
         [JsonProperty("id")]
-        public string? ThreadId { get; init; }
+        public ulong? ThreadId { get; init; }
 
-        [JsonProperty("user_id")]
-        public string? UserId { get; init; }
+        /// <summary>
+        /// omitted on the member sent within each thread in the GUILD_CREATE event.
+        /// </summary>
+        public ulong? UserId { get; init; }
 
-        [JsonProperty("join_timestamp")]
         public DateTime JoinTimestamp { get; init; }
 
-        [JsonProperty("flags")]
         public ThreadMemberFlags Flags { get; init; }
 
-        [JsonProperty("member")]
+        /// <summary>
+        /// Only present when with_member is set to true when calling List Thread Members or Get Thread Member.
+        /// </summary>
         public GuildMember? Member { get; init; }
     }
 }
